@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.21)
-project(TemplatePlugin)
+project(GenshiCraft-llplugin)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_BUILD_TYPE Release)
@@ -8,14 +8,14 @@ file(GLOB_RECURSE SRC_FILES_DIR
         ${PROJECT_SOURCE_DIR}/SDK/Header/*.cpp
         ${PROJECT_SOURCE_DIR}/SDK/Header/*.hpp
         ${PROJECT_SOURCE_DIR}/SDK/Header/*.h
-        ${PROJECT_SOURCE_DIR}/Template/*.cpp
-        ${PROJECT_SOURCE_DIR}/Template/*.hpp
-        ${PROJECT_SOURCE_DIR}/Template/*.h
+        ${PROJECT_SOURCE_DIR}/src/*.cpp
+        ${PROJECT_SOURCE_DIR}/src/*.hpp
+        ${PROJECT_SOURCE_DIR}/src/*.h
         )
 
 include_directories(SDK/Header)
 include_directories(SDK/Header/third-party)
-include_directories(Template)
+include_directories(src)
 
 link_directories(.)
 
@@ -32,9 +32,9 @@ add_link_options(
         /MANIFESTUAC:NO /OPT:ICF /ERRORREPORT:PROMPT /NOLOGO /DELAYLOAD:"bedrock_server.dll" /TLBID:1
 )
 
-add_library(TemplatePlugin SHARED ${SRC_FILES_DIR})
+add_library(GenshiCraft-llplugin SHARED ${SRC_FILES_DIR})
 
-add_custom_command(TARGET TemplatePlugin PRE_BUILD
+add_custom_command(TARGET GenshiCraft-llplugin PRE_BUILD
         COMMAND cmd /c ${PROJECT_SOURCE_DIR}/prepareLib.cmd ${PROJECT_SOURCE_DIR}
         COMMENT "Preparing Library"
         )
