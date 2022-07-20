@@ -5,8 +5,8 @@
 #define PLUGIN_VERSION_RELEASE 2
 
 // Plugin Information, used in dllmain.cpp for register plugin
-#define PLUGIN_NAME                 "GenshiCraft-llplugin"
-#define PLUGIN_INTRODUCTION         "The LiteLoader 2.0 plugin for GenshiCraft"
+#define PLUGIN_NAME                 "GenshiCraft"
+#define PLUGIN_INTRODUCTION         "Play Genshin Impact in Minecraft!"
 #define PLUGIN_AUTHOR               "Futrime"
 #define PLUGIN_VERSION_MAJOR        1
 #define PLUGIN_VERSION_MINOR        0

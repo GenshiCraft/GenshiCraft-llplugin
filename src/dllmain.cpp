@@ -7,10 +7,9 @@
 #pragma comment(lib, "../SDK/Lib/SymDBHelper.lib")
 #pragma comment(lib, "../SDK/Lib/LiteLoader.lib")
 
-BOOL APIENTRY DllMain( HMODULE hModule,
-                       DWORD  ul_reason_for_call,
-                       LPVOID lpReserved
-                     )
+BOOL APIENTRY DllMain(HMODULE hModule,
+                      DWORD ul_reason_for_call,
+                      LPVOID lpReserved)
 {
     switch (ul_reason_for_call)
     {
@@ -19,13 +18,11 @@ BOOL APIENTRY DllMain( HMODULE hModule,
             PLUGIN_NAME,
             PLUGIN_INTRODUCTION,
             LL::Version(PLUGIN_VERSION_MAJOR, PLUGIN_VERSION_MINOR, PLUGIN_VERSION_REVISION, PLUGIN_LLVERSION_STATUS),
-            std::map<std::string, std::string> {
+            std::map<std::string, std::string>{
 #ifdef PLUGIN_AUTHOR
-                { "Author", PLUGIN_AUTHOR },
-#endif // PLUGIN_AUTHOR
-                    //{ "Key", "Value" }
-            }
-        );
+                {"Author", PLUGIN_AUTHOR},
+#endif
+            });
         break;
     case DLL_THREAD_ATTACH:
     case DLL_THREAD_DETACH:
@@ -37,9 +34,11 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 
 void PluginInit();
 
-extern "C" {
+extern "C"
+{
     // Do something after all the plugins loaded
-    _declspec(dllexport) void onPostInit() {
+    _declspec(dllexport) void onPostInit()
+    {
         std::ios::sync_with_stdio(false);
         PluginInit();
     }
