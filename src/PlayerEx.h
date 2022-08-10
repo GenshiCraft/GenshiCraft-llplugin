@@ -113,6 +113,13 @@ class PlayerEx {
   const std::string& GetXUID() const;
 
   /**
+   * @brief Increase the stamina
+   * 
+   * @param value The stamina to increase
+   */
+  void IncreaseStamina(int value);
+
+  /**
    * @brief Check if the player is opening a container
    *
    * @return True if the player is opening a container

@@ -43,6 +43,12 @@ namespace genshicraft {
  *
  */
 void CheckProtocolVersion();
+/**
+ * @brief Get the clocks in seconds
+ *
+ * @return The clocks
+ */
+double GetNowClock();
 
 /**
  * @brief Initialize the plugin
@@ -57,6 +63,22 @@ void Init();
  * @return True if the action can be performed
  */
 bool OnMobHurt(Event::MobHurtEvent& event);
+
+/**
+ * @brief The handler for PlayerDropItemEvent
+ * 
+ * @param event The event
+ * @return True if the action can be performed
+ */
+bool OnPlayerDropItem(Event::PlayerDropItemEvent& event);
+
+/**
+ * @brief THe handler for PlayerExperienceAddEvent
+ * 
+ * @param event The event
+ * @return True if the action can be performed
+ */
+bool OnPlayerExperienceAdd(Event::PlayerExperienceAddEvent& event);
 
 /**
  * @brief The handler for PlayerInventoryChangeEvent
@@ -100,7 +122,7 @@ bool OnPlayerOpenContainerScreen(Event::PlayerOpenContainerScreenEvent& event);
 
 /**
  * @brief The handler for PlayerRespawnEvent
- * 
+ *
  * @param event The event
  * @return Always true
  */

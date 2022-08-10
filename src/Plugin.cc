@@ -40,8 +40,10 @@
 #include <MC/Container.hpp>
 #include <MC/ItemStack.hpp>
 #include <MC/Player.hpp>
+#include <chrono>
 
 #include "Command.h"
+#include "Damage.h"
 #include "PlayerEx.h"
 #include "Version.h"
 #include "Weapon.h"
@@ -65,6 +67,14 @@ void CheckProtocolVersion() {
 #endif  // TARGET_BDS_PROTOCOL_VERSION
 }
 
+double GetNowClock() {
+  return static_cast<double>(
+             std::chrono::duration_cast<std::chrono::milliseconds>(
+                 std::chrono::steady_clock::now().time_since_epoch())
+                 .count()) /
+         1000;
+}
+
 void Init() {
   CheckProtocolVersion();
 
@@ -73,6 +83,8 @@ void Init() {
   Weapon::Init();
 
   Event::MobHurtEvent::subscribe_ref(OnMobHurt);
+  Event::PlayerDropItemEvent::subscribe_ref(OnPlayerDropItem);
+  Event::PlayerExperienceAddEvent::subscribe_ref(OnPlayerExperienceAdd);
   Event::PlayerInventoryChangeEvent::subscribe_ref(OnPlayerInventoryChange);
   Event::PlayerJoinEvent::subscribe_ref(OnPlayerJoin);
   Event::PlayerLeftEvent::subscribe_ref(OnPlayerLeft);
@@ -88,8 +100,22 @@ bool OnMobHurt(Event::MobHurtEvent& event) {
   if (event.mDamageSource->isEntitySource() &&
       event.mDamageSource->getEntity()->getTypeName() == "minecraft:player") {
     auto player = static_cast<Player*>(event.mDamageSource->getEntity());
-    player->sendTitlePacket(std::to_string(static_cast<int>(event.mDamage)),
-                            TitleType::SetActionBar, 0, 1, 0);
+    auto playerex = PlayerEx::Get(player->getXuid());
+
+    double damage = event.mDamage * 10;
+
+    if (playerex->GetCharacter()->HasWeapon()) {
+      damage = playerex->GetCharacter()->GetDamageNormalAttack().Get();
+    }
+
+    if (damage > 0.0001) {
+      event.mDamage = static_cast<float>(damage / 10);
+
+      player->sendTitlePacket(std::to_string(static_cast<int>(damage)),
+                              TitleType::SetActionBar, 0, 1, 0);
+    } else {
+      return false;
+    }
   }
 
   if (event.mMob->getTypeName() == "minecraft:player") {
@@ -104,6 +130,27 @@ bool OnMobHurt(Event::MobHurtEvent& event) {
   return true;
 }
 
+bool OnPlayerDropItem(Event::PlayerDropItemEvent& event) {
+  auto playerex = PlayerEx::Get(event.mPlayer->getXuid());
+  if (!playerex->GetPlayer()
+           ->isSneaking()) {  // if the player is pressing Q without Shift
+    if (playerex->GetCharacter()->HasWeapon()) {
+      // Perform elemental burst
+
+      return false;
+    }
+  }
+
+  return true;
+}
+
+bool OnPlayerExperienceAdd(Event::PlayerExperienceAddEvent& event) {
+  auto playerex = PlayerEx::Get(event.mPlayer->getXuid());
+  playerex->GetCharacter()->IncreaseEnergy(event.mExp);
+
+  return true;
+}
+
 bool OnPlayerRespawn(Event::PlayerRespawnEvent& event) {
   PlayerEx::OnPlayerRespawn(event.mPlayer);
 
@@ -112,7 +159,7 @@ bool OnPlayerRespawn(Event::PlayerRespawnEvent& event) {
 
 bool OnPlayerInventoryChange(Event::PlayerInventoryChangeEvent& event) {
   auto playerex = PlayerEx::Get(event.mPlayer->getXuid());
-  if (playerex == nullptr) {  // if the player is not loaded
+  if (!playerex) {  // if the player is not loaded
     return true;
   }
 
@@ -144,10 +191,16 @@ bool OnPlayerOpenContainer(Event::PlayerOpenContainerEvent& event) {
 
 bool OnPlayerOpenContainerScreen(Event::PlayerOpenContainerScreenEvent& event) {
   auto playerex = PlayerEx::Get(event.mPlayer->getXuid());
-  if (!playerex->IsOpeningContainer()) {  // if the player is opening their
-                                          // inventory
-    // something to do
+  if (!playerex->IsOpeningContainer() &&
+      !playerex->GetPlayer()->isSneaking()) {  // if the player is pressing E
+                                               // without pressing Shift
+    if (playerex->GetCharacter()->HasWeapon()) {
+      // Perform elemental skill
+
+      return false;
+    }
   }
+
   playerex->SetIsOpeningContainer(false);
   return true;
 }

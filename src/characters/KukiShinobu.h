@@ -38,6 +38,10 @@
 
 namespace genshicraft {
 
+/**
+ * @brief The KukiShinobu class contains interfaces for Kuki Shinobu.
+ *
+ */
 class KukiShinobu : public Character {
  public:
   /**
@@ -64,6 +68,48 @@ class KukiShinobu : public Character {
   KukiShinobu() = delete;
 
   /**
+   * @brief Get the CD of elemental burst
+   *
+   * @return 15.
+   */
+  double GetCDElementalBurstMax() const override;
+
+  /**
+   * @brief Get the CD remaining of elemental skill
+   *
+   * @return 15.
+   */
+  double GetCDElementalSkillMax() const override;
+
+  /**
+   * @brief Get the Damage object of elemental burst
+   *
+   * @return The Damage object
+   */
+  Damage GetDamageElementalBurst() override;
+
+  /**
+   * @brief Get the Damage object of elemental skill
+   *
+   * @return The Damage object
+   */
+  Damage GetDamageElementalSkill() override;
+
+  /**
+   * @brief Get the Damage object of normal attack
+   *
+   * @return The Damage object
+   */
+  Damage GetDamageNormalAttack() override;
+
+  /**
+   * @brief Get the max energy
+   *
+   * @return 60
+   */
+  int GetEnergyMax() const override;
+
+  /**
    * @brief Get the name
    *
    * @return "Kuki Shinobu"
@@ -84,21 +130,36 @@ class KukiShinobu : public Character {
    */
   struct Character::Stats GetStats() const override;
 
+  /**
+   * @brief Check if the character is holding a weapon
+   *
+   * @return True if the character is holding a weapon
+   */
+  bool HasWeapon() const override;
+
  private:
   static const int
-      kMaxHPBase[7];  // the inferred 0-level max HP of each ascension phase
-  static const int kMaxHPDiff;  // the difference of max HP between levels
+      kStatsATKBase[7];  // the inferred 0-level ATK of each ascension phase
+  static const int kStatsATKDiff;  // the difference of ATK between levels
 
   static const int
-      kATKBase[7];  // the inferred 0-level ATK of each ascension phase
-  static const int kATKDiff;  // the difference of ATK between levels
+      kStatsDEFBase[7];  // the inferred 0-level DEF of each ascension phase
+  static const int kStatsDEFDiff;  // the difference of DEF between levels
 
-  static const int
-      kDEFBase[7];  // the inferred 0-level DEF of each ascension phase
-  static const int kDEFDiff;  // the difference of DEF between levels
+  static const int kStatsMaxHPBase[7];  // the inferred 0-level max HP of each
+                                        // ascension phase
+  static const int kStatsMaxHPDiff;  // the difference of max HP between levels
 
   static const double
-      kMaxHPPercent[7];  // the max HP % attributes of each ascension phase
+      kStatsMaxHPPercent[7];  // the max HP % attributes of each ascension phase
+
+  static const double kTalentNormalAttackChargedAttackDMG[12];
+
+  static const int kTalentNormalAttackChargedAttackStaminaCost;
+
+  static const double kTalentNormalAttackHitDMG[5][12];
+
+  static const double kTalentNormalAttackLowPlungeDMG[12];
 };
 
 }  // namespace genshicraft

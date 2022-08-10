@@ -34,6 +34,7 @@
 #include <string>
 
 #include "Character.h"
+#include "Damage.h"
 #include "PlayerEx.h"
 #include "Plugin.h"
 #include "Weapon.h"
@@ -54,54 +55,146 @@ KukiShinobu::KukiShinobu(PlayerEx* playerex, int ascension_phase,
   }
 }
 
+double KukiShinobu::GetCDElementalBurstMax() const { return 15.; };
+
+double KukiShinobu::GetCDElementalSkillMax() const { return 15.; };
+
+Damage KukiShinobu::GetDamageElementalBurst() {
+  if (this->GetCDElementalBurst() < 0.0001 && this->IsEnergyFull()) {
+    this->last_elemental_burst_clock_ = GetNowClock();
+    this->IncreaseEnergy(-60);
+    return Damage();
+  }
+  return Damage();
+}
+
+Damage KukiShinobu::GetDamageElementalSkill() {
+  if (this->GetCDElementalSkill() < 0.0001) {
+    this->last_elemental_skill_clock_ = GetNowClock();
+    return Damage();
+  }
+  return Damage();
+}
+
+Damage KukiShinobu::GetDamageNormalAttack() {
+  static int hit_count = 1;
+  static auto last_hit_clock = GetNowClock();
+
+  Damage damage;
+  damage.SetStats(this->GetStats());
+
+  if (!(this->GetPlayerEx()->GetPlayer()->isOnGround()) &&
+      (this->GetPlayerEx()->GetPlayer()->isSneaking())) {  // plunge
+    damage.SetAmplifier(this->kTalentNormalAttackLowPlungeDMG
+                            [this->GetTalentNormalAttackLevel()]);
+  } else if ((this->GetPlayerEx()->GetPlayer()->isSneaking()) &&
+             (this->GetPlayerEx()->GetStamina() >
+              this->kTalentNormalAttackChargedAttackStaminaCost)) {  // charged
+                                                                     // attack
+
+    damage.SetAmplifier(this->kTalentNormalAttackChargedAttackDMG
+                            [this->GetTalentNormalAttackLevel()]);
+    this->GetPlayerEx()->IncreaseStamina(
+        -(this->kTalentNormalAttackChargedAttackStaminaCost));
+  } else {
+    // Reset hit count if not attacking in 5s
+    if (GetNowClock() - last_hit_clock > 5) {
+      hit_count = 1;
+    }
+    damage.SetAmplifier(
+        this->kTalentNormalAttackHitDMG[hit_count]
+                                       [this->GetTalentNormalAttackLevel()]);
+                                       
+    ++hit_count;
+    if (hit_count > 4) {
+      hit_count = 1;
+    }
+
+    last_hit_clock = GetNowClock();
+  }
+
+  return damage;
+}
+
+int KukiShinobu::GetEnergyMax() const { return 60; }
+
 std::string KukiShinobu::GetName() const { return "Kuki Shinobu"; }
 
 int KukiShinobu::GetRarity() const { return 4; }
 
 struct Character::Stats KukiShinobu::GetStats() const {
   struct Character::Stats stats;
-  stats.max_HP_base = KukiShinobu::kMaxHPBase[this->GetAscensionPhase()] +
-                      KukiShinobu::kMaxHPDiff * this->GetLevel();
-  stats.ATK_base = KukiShinobu::kATKBase[this->GetAscensionPhase()] +
-                   KukiShinobu::kATKDiff * this->GetLevel();
-  stats.DEF_base = KukiShinobu::kDEFBase[this->GetAscensionPhase()] +
-                   KukiShinobu::kDEFDiff * this->GetLevel();
+  stats.max_HP_base = KukiShinobu::kStatsMaxHPBase[this->GetAscensionPhase()] +
+                      KukiShinobu::kStatsMaxHPDiff * this->GetLevel();
+  stats.ATK_base = KukiShinobu::kStatsATKBase[this->GetAscensionPhase()] +
+                   KukiShinobu::kStatsATKDiff * this->GetLevel();
+  stats.DEF_base = KukiShinobu::kStatsDEFBase[this->GetAscensionPhase()] +
+                   KukiShinobu::kStatsDEFDiff * this->GetLevel();
 
-  if (this->GetPlayerEx()
-          ->GetWeapon()) {  // if the player is holding a GenshiCraft weapon
-    stats.max_HP_base += this->GetPlayerEx()->GetWeapon()->GetATK();
+  if (this->HasWeapon()) {  // if the player is holding a GenshiCraft weapon
+    stats.ATK_base += this->GetPlayerEx()->GetWeapon()->GetATK();
   }
 
   stats.max_HP = static_cast<int>(
       stats.max_HP_base *
-      (1 + KukiShinobu::kMaxHPPercent[this->GetAscensionPhase()]));
+      (1 + KukiShinobu::kStatsMaxHPPercent[this->GetAscensionPhase()]));
   stats.ATK = stats.ATK_base;
   stats.DEF = stats.DEF_base;
 
   stats.max_stamina = this->GetPlayerEx()->GetStaminaMax();
 
-  if (this->GetPlayerEx()
-          ->GetWeapon()) {  // if the player is holding a GenshiCraft weapon
+  if (this->HasWeapon()) {  // if the player is holding a GenshiCraft weapon
     stats = this->GetPlayerEx()->GetWeapon()->ApplyModifiers(stats);
   }
 
   return stats;
 }
 
-const int KukiShinobu::kMaxHPBase[7] = {945,  1717, 2265, 2995,
-                                        3543, 4090, 4638};
+bool KukiShinobu::HasWeapon() const {
+  if (this->GetPlayerEx()->GetWeapon() &&
+      this->GetPlayerEx()->GetWeapon()->GetType() == Weapon::Type::kSword) {
+    return true;
+  } else {
+    return false;
+  }
+}
 
-const int KukiShinobu::kMaxHPDiff = 85;
+const int KukiShinobu::kStatsATKBase[7] = {17, 39, 58, 75, 90, 104, 118};
 
-const int KukiShinobu::kATKBase[7] = {17, 39, 58, 75, 90, 104, 118};
+const int KukiShinobu::kStatsATKDiff = 1;
 
-const int KukiShinobu::kATKDiff = 1;
+const int KukiShinobu::kStatsDEFBase[7] = {58, 109, 146, 193, 228, 263, 299};
 
-const int KukiShinobu::kDEFBase[7] = {58, 109, 146, 193, 228, 263, 299};
+const int KukiShinobu::kStatsDEFDiff = 5;
 
-const int KukiShinobu::kDEFDiff = 5;
+const int KukiShinobu::kStatsMaxHPBase[7] = {945,  1717, 2265, 2995,
+                                             3543, 4090, 4638};
 
-const double KukiShinobu::kMaxHPPercent[7] = {0,    0,    0.06, 0.12,
-                                              0.12, 0.18, 0.24};
+const int KukiShinobu::kStatsMaxHPDiff = 85;
+
+const double KukiShinobu::kStatsMaxHPPercent[7] = {0,    0,    0.06, 0.12,
+                                                   0.12, 0.18, 0.24};
+
+const double KukiShinobu::kTalentNormalAttackChargedAttackDMG[12] = {
+    0,      1.2240, 1.3236, 1.4232, 1.5656, 1.6652,
+    1.7790, 1.9356, 2.0921, 2.2487, 2.4195, 2.5903};
+
+const int KukiShinobu::kTalentNormalAttackChargedAttackStaminaCost = 20;
+
+const double KukiShinobu::kTalentNormalAttackHitDMG[5][12] = {
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0.4876, 0.5273, 0.5670, 0.6237, 0.6634, 0.7088, 0.7711, 0.8335, 0.8959,
+     0.9639, 1.0319},
+    {0, 0.4455, 0.4817, 0.5180, 0.5698, 0.6061, 0.6475, 0.7045, 0.7615, 0.8184,
+     0.8806, 0.9428},
+    {0, 0.5934, 0.6417, 0.6900, 0.7590, 0.8073, 0.8625, 0.9384, 1.0143, 1.0902,
+     1.1730, 1.2558},
+    {0, 0.7611, 0.8230, 0.8850, 0.9735, 1.0355, 1.1063, 1.2036, 1.3009, 1.3983,
+     1.5045, 1.6107},
+};
+
+const double KukiShinobu::kTalentNormalAttackLowPlungeDMG[12] = {
+    0,      1.2784, 1.3824, 1.4865, 1.6351, 1.7392,
+    1.8581, 2.0216, 2.1851, 2.3486, 2.5270, 2.7054};
 
 }  // namespace genshicraft

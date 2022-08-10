@@ -43,9 +43,21 @@ namespace genshicraft {
 
 int Character::GetAscensionPhase() const { return this->ascension_phase_; }
 
+double Character::GetCDElementalBurst() const {
+  auto past_time = GetNowClock() - this->last_elemental_burst_clock_;
+  return std::max(this->GetCDElementalBurstMax() - past_time, 0.);
+};
+
+double Character::GetCDElementalSkill() const {
+  auto past_time = GetNowClock() - this->last_elemental_skill_clock_;
+  return std::max(this->GetCDElementalSkillMax() - past_time, 0.);
+};
+
 int Character::GetCharacterEXP() const { return this->character_EXP_; }
 
 int Character::GetConstellation() const { return this->constellation_; }
+
+int Character::GetEnergy() const { return this->energy_; }
 
 int Character::GetHP() const { return this->HP_; }
 
@@ -91,6 +103,12 @@ void Character::IncreaseConstellation() {
   this->constellation_ = std::min(this->constellation_ + 1, 6);
 }
 
+void Character::IncreaseEnergy(int value) {
+  this->energy_ += value;
+  this->energy_ = std::min(this->energy_, this->GetEnergyMax());
+  this->energy_ = std::max(this->energy_, 0);
+}
+
 void Character::IncreaseHP(int value) {
   if (value > 0 && this->HP_ == 0) {
     return;
@@ -101,6 +119,10 @@ void Character::IncreaseHP(int value) {
 }
 
 bool Character::IsDead() const { return (this->HP_ == 0); }
+
+bool Character::IsEnergyFull() const {
+  return (this->energy_ == this->GetEnergyMax());
+}
 
 void Character::Revive() {
   if (this->HP_ == 0) {
@@ -145,9 +167,12 @@ Character::Character(PlayerEx* playerex, int ascension_phase, int character_EXP,
                      int talent_elemental_burst_level,
                      int talent_elemental_skill_level,
                      int talent_normal_attack_level)
-    : ascension_phase_(ascension_phase),
+    : last_elemental_burst_clock_(GetNowClock()),
+      last_elemental_skill_clock_(GetNowClock()),
+      ascension_phase_(ascension_phase),
       character_EXP_(character_EXP),
       constellation_(constellation),
+      energy_(0),
       HP_(HP),
       playerex_(playerex),
       talent_elemental_burst_level_(talent_elemental_burst_level),

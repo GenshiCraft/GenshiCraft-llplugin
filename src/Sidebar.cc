@@ -49,13 +49,21 @@ Sidebar::Sidebar(PlayerEx* playerex) : playerex_(playerex) {
 void Sidebar::Refresh() {
   std::vector<std::pair<std::string, int>> content;
 
+  // Character name
+  auto character_name =
+      std::string((this->playerex_->GetCharacter()->HasWeapon()) ? "§f"
+                                                                 : "§c") +
+      this->playerex_->GetCharacter()->GetName();
+
   // Stamina
   auto stamina_progress = static_cast<double>(this->playerex_->GetStamina()) /
                           this->playerex_->GetStaminaMax();
   content.push_back(
       {"Stamina " + Sidebar::GenerateProgressBar(
                         stamina_progress, this->playerex_->GetStaminaMax() / 10,
-                        (stamina_progress < 0.3) ? "§c" : "§e"),
+                        (stamina_progress < 0.3)
+                            ? "§c"
+                            : ((stamina_progress > 0.999) ? "§a" : "§e")),
        0});
 
   // HP
@@ -63,14 +71,45 @@ void Sidebar::Refresh() {
       static_cast<double>(this->playerex_->GetCharacter()->GetHP()) /
       this->playerex_->GetCharacter()->GetStats().max_HP;
   content.push_back(
-      {"HP " + Sidebar::GenerateProgressBar(
-                   HP_progress, 24, (HP_progress < 0.3) ? "§c" : "§a"),
+      {"HP " + Sidebar::GenerateProgressBar(HP_progress, 36,
+                                            (HP_progress < 0.3) ? "§c" : "§a"),
        1});
+
+  // Elemental Skill CD
+  auto elemental_skill_CD_progress =
+      1 - static_cast<double>(
+              this->playerex_->GetCharacter()->GetCDElementalSkill()) /
+              this->playerex_->GetCharacter()->GetCDElementalSkillMax();
+  content.push_back(
+      {"Skill CD " + Sidebar::GenerateProgressBar(
+                         elemental_skill_CD_progress, 24,
+                         (elemental_skill_CD_progress > 0.999) ? "§a" : "§e"),
+       2});
+
+  // Elemental Burst CD
+  auto elemental_burst_CD_progress =
+      1 - static_cast<double>(
+              this->playerex_->GetCharacter()->GetCDElementalBurst()) /
+              this->playerex_->GetCharacter()->GetCDElementalBurstMax();
+  content.push_back(
+      {"Burst CD " + Sidebar::GenerateProgressBar(
+                         elemental_burst_CD_progress, 20,
+                         (elemental_burst_CD_progress > 0.999) ? "§a" : "§e"),
+       3});
+
+  // Elemental Burst Energy
+  auto elemental_burst_energy_progress =
+      static_cast<double>(this->playerex_->GetCharacter()->GetEnergy()) /
+      this->playerex_->GetCharacter()->GetEnergyMax();
+  content.push_back(
+      {"Energy " + Sidebar::GenerateProgressBar(
+                       elemental_burst_energy_progress, 24,
+                       (elemental_burst_energy_progress > 0.999) ? "§a" : "§e"),
+       4});
 
   auto player = this->playerex_->GetPlayer();
   player->removeSidebar();
-  player->setSidebar(this->playerex_->GetCharacter()->GetName(), content,
-                     ObjectiveSortOrder::Ascending);
+  player->setSidebar(character_name, content, ObjectiveSortOrder::Ascending);
 }
 
 std::string Sidebar::GenerateProgressBar(double value, int steps,

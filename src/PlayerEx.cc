@@ -157,6 +157,12 @@ std::shared_ptr<Weapon> PlayerEx::GetWeapon() {
 
 const std::string& PlayerEx::GetXUID() const { return this->xuid_; }
 
+void PlayerEx::IncreaseStamina(int value) {
+  this->stamina_ += value;
+  this->stamina_ = std::max(this->stamina_, 0);
+  this->stamina_ = std::min(this->stamina_, this->stamina_max_);
+}
+
 bool PlayerEx::IsOpeningContainer() const {
   return this->is_opening_container_;
 }

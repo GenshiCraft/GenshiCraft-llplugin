@@ -40,6 +40,10 @@
 
 namespace genshicraft {
 
+/**
+ * @brief The DullBlade class contains interfaces for Dull Blade.
+ *
+ */
 class DullBlade : public Weapon {
  public:
   /**
@@ -81,7 +85,7 @@ class DullBlade : public Weapon {
    *
    * @return Weapon::Type::kSword
    */
-  virtual Weapon::Type GetType() const override;
+  Weapon::Type GetType() const override;
 
  private:
   static const int

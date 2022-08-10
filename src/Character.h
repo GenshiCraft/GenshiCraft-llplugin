@@ -36,6 +36,8 @@
 
 namespace genshicraft {
 
+class Damage;
+
 class PlayerEx;
 
 /**
@@ -61,7 +63,7 @@ class Character {
 
     // Advanced stats
     double CRIT_rate = 0.05;
-    double DRIT_DMG = 0.5;
+    double CRIT_DMG = 0.5;
     double healing_bonus = 0.;
     double incoming_healing_bonus = 0.;
     double energy_recharge = 1.;
@@ -97,6 +99,34 @@ class Character {
   int GetAscensionPhase() const;
 
   /**
+   * @brief Get the CD remaining of elemental burst
+   *
+   * @return The CD remaing
+   */
+  double GetCDElementalBurst() const;
+
+  /**
+   * @brief Get the CD remaining of elemental burst
+   *
+   * @return The CD remaing
+   */
+  virtual double GetCDElementalBurstMax() const = 0;
+
+  /**
+   * @brief Get the CD remaining of elemental skill
+   *
+   * @return The CD remaining
+   */
+  double GetCDElementalSkill() const;
+
+  /**
+   * @brief Get the CD of elemental skill
+   *
+   * @return The CD
+   */
+  virtual double GetCDElementalSkillMax() const = 0;
+
+  /**
    * @brief Get the character EXP
    *
    * @return The character EXP (x >= 0)
@@ -109,6 +139,41 @@ class Character {
    * @return The constellation (0 <= x <= 6)
    */
   int GetConstellation() const;
+
+  /**
+   * @brief Get the Damage object of elemental burst
+   *
+   * @return The Damage object
+   */
+  virtual Damage GetDamageElementalBurst() = 0;
+
+  /**
+   * @brief Get the Damage object of elemental skill
+   *
+   * @return The Damage object
+   */
+  virtual Damage GetDamageElementalSkill() = 0;
+
+  /**
+   * @brief Get the Damage object of normal attack
+   *
+   * @return The Damage object
+   */
+  virtual Damage GetDamageNormalAttack() = 0;
+
+  /**
+   * @brief Get the energy
+   *
+   * @return The energy
+   */
+  int GetEnergy() const;
+
+  /**
+   * @brief Get the max energy
+   *
+   * @return The max energy
+   */
+  virtual int GetEnergyMax() const = 0;
 
   /**
    * @brief Get the HP
@@ -174,6 +239,13 @@ class Character {
   int GetTalentNormalAttackLevel() const;
 
   /**
+   * @brief Check if the character is holding a weapon
+   *
+   * @return True if the character is holding a weapon
+   */
+  virtual bool HasWeapon() const = 0;
+
+  /**
    * @brief Increase 1 ascension phase till 6. If not time to ascense, it will
    * not take effect.
    *
@@ -194,6 +266,13 @@ class Character {
   void IncreaseConstellation();
 
   /**
+   * @brief Increase energy
+   *
+   * @param value The value to increase. Negative value for decreasing
+   */
+  void IncreaseEnergy(int value);
+
+  /**
    * @brief Increase the HP. If dead, the HP would not increase
    *
    * @param value The value to increase. Negative value for decreasing
@@ -206,6 +285,13 @@ class Character {
    * @return True if dead
    */
   bool IsDead() const;
+
+  /**
+   * @brief Check if the energy is full
+   * 
+   * @return True if full
+   */
+  bool IsEnergyFull() const;
 
   /**
    * @brief Revive
@@ -233,9 +319,9 @@ class Character {
    * @exception ExceptionInvalidCharacterData The character data is invalid.
    */
   static std::shared_ptr<Character> Make(
-      PlayerEx* playerex, const std::string& name,
-      int ascension_phase = 0, int character_EXP = 0, int constellation = 0,
-      int HP = 0, int talent_elemental_burst_level = 1,
+      PlayerEx* playerex, const std::string& name, int ascension_phase = 0,
+      int character_EXP = 0, int constellation = 0, int HP = 0,
+      int talent_elemental_burst_level = 1,
       int talent_elemental_skill_level = 1, int talent_normal_attack_level = 1);
 
  protected:
@@ -256,10 +342,12 @@ class Character {
    *
    * @exception ExceptionInvalidCharacterData The character data is invalid.
    */
-  Character(PlayerEx* playerex, int ascension_phase,
-            int character_EXP, int constellation, int HP,
-            int talent_elemental_burst_level, int talent_elemental_skill_level,
-            int talent_normal_attack_level);
+  Character(PlayerEx* playerex, int ascension_phase, int character_EXP,
+            int constellation, int HP, int talent_elemental_burst_level,
+            int talent_elemental_skill_level, int talent_normal_attack_level);
+
+  double last_elemental_burst_clock_;  // the clock of last elemental burst
+  double last_elemental_skill_clock_;  // the clock of last elemental skill
 
  private:
   static const int kAcensionPhaseMaxLevelList[7];  // the maximum level of each
@@ -270,6 +358,7 @@ class Character {
   int ascension_phase_;
   int character_EXP_;
   int constellation_;
+  int energy_;
   int HP_;
   PlayerEx* playerex_;
   int talent_elemental_burst_level_;
