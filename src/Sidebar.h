@@ -18,48 +18,62 @@
  */
 
 /**
- * @file Menu.h
+ * @file Sidebar.h
  * @author Futrime (futrime@outlook.com)
- * @brief Declaration of the Menu class
+ * @brief Declaration of the Sidebar class
  * @version 1.0.0
- * @date 2022-07-22
+ * @date 2022-08-08
  *
  * @copyright Copyright (c) 2022 Futrime
  *
  */
 
-#ifndef GENSHICRAFT_MENU_H_
-#define GENSHICRAFT_MENU_H_
+#ifndef GENSHICRAFT_SIDEBAR_H_
+#define GENSHICRAFT_SIDEBAR_H_
+
+#include <string>
+#include <memory>
 
 namespace genshicraft {
 
 class PlayerEx;
 
 /**
- * @brief The Menu class provide menu features to players.
+ * @brief The Sidebar class provide sidebar features to players.
  *
  */
-class Menu {
+class Sidebar {
  public:
   /**
-   * @brief Construct a new Menu object
+   * @brief Construct a new Sidebar object
    *
-   * @param playerex The PlayerEx the Menu object belonging to
+   * @param playerex The PlayerEx the Sidebar object belonging to
    */
-  explicit Menu(PlayerEx* playerex);
+  explicit Sidebar(PlayerEx* playerex);
 
-  Menu() = delete;
+  Sidebar() = delete;
 
   /**
-   * @brief Open the main menu
+   * @brief Refresh the sidebar
    *
    */
-  void OpenMain();
+  void Refresh();
 
  private:
+  /**
+   * @brief Generate a text progress bar
+   *
+   * @param value The value of the progress bar (0 ~ 1)
+   * @param steps The steps of the progress bar (eight steps per chraracter)
+   * @param format_code The formatting codes
+   * @return The text progress bar
+   */
+  static std::string GenerateProgressBar(double value, int steps = 10,
+                                         std::string formatting_codes = "");
+
   PlayerEx* playerex_;
 };
 
 }  // namespace genshicraft
 
-#endif  // GENSHICRAFT_MENU_H_
+#endif  // GENSHICRAFT_SIDEBAR_H_

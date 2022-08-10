@@ -9,17 +9,16 @@ file(GLOB_RECURSE SRC_FILES_DIR
         ${PROJECT_SOURCE_DIR}/SDK/Header/*.hpp
         ${PROJECT_SOURCE_DIR}/SDK/Header/*.h
         ${PROJECT_SOURCE_DIR}/src/*.cc
-        ${PROJECT_SOURCE_DIR}/src/*.hpp
         ${PROJECT_SOURCE_DIR}/src/*.h
+        ${PROJECT_SOURCE_DIR}/src/characters/*.cc
+        ${PROJECT_SOURCE_DIR}/src/characters/*.h
         ${PROJECT_SOURCE_DIR}/src/weapons/*.cc
-        ${PROJECT_SOURCE_DIR}/src/weapons/*.hpp
         ${PROJECT_SOURCE_DIR}/src/weapons/*.h
         )
 
 include_directories(SDK/Header)
 include_directories(SDK/Header/third-party)
 include_directories(src)
-include_directories(src/weapons)
 
 link_directories(.)
 

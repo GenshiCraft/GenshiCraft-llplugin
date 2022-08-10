@@ -32,6 +32,7 @@
 
 #include <EventAPI.h>
 #include <LoggerAPI.h>
+#include <ScheduleAPI.h>
 #include <ServerAPI.h>
 
 #include <MC/Actor.hpp>
@@ -78,15 +79,33 @@ void Init() {
   Event::PlayerOpenContainerEvent::subscribe_ref(OnPlayerOpenContainer);
   Event::PlayerOpenContainerScreenEvent::subscribe_ref(
       OnPlayerOpenContainerScreen);
+  Event::PlayerRespawnEvent::subscribe_ref(OnPlayerRespawn);
+
+  Schedule::repeat(OnTick, 1);
 }
 
 bool OnMobHurt(Event::MobHurtEvent& event) {
   if (event.mDamageSource->isEntitySource() &&
       event.mDamageSource->getEntity()->getTypeName() == "minecraft:player") {
-    Player* player = static_cast<Player*>(event.mDamageSource->getEntity());
+    auto player = static_cast<Player*>(event.mDamageSource->getEntity());
     player->sendTitlePacket(std::to_string(static_cast<int>(event.mDamage)),
                             TitleType::SetActionBar, 0, 1, 0);
   }
+
+  if (event.mMob->getTypeName() == "minecraft:player") {
+    auto victim = static_cast<Player*>(event.mMob);
+    auto victim_playerex = PlayerEx::Get(victim->getXuid());
+    // The character takes damage
+    victim_playerex->GetCharacter()->IncreaseHP(
+        static_cast<int>(-event.mDamage * 10));
+    event.mDamage = 0;
+  }
+
+  return true;
+}
+
+bool OnPlayerRespawn(Event::PlayerRespawnEvent& event) {
+  PlayerEx::OnPlayerRespawn(event.mPlayer);
 
   return true;
 }
@@ -98,7 +117,7 @@ bool OnPlayerInventoryChange(Event::PlayerInventoryChangeEvent& event) {
   }
 
   if (Weapon::CheckIsWeapon(event.mNewItemStack)) {
-    Weapon(event.mNewItemStack, playerex);
+    Weapon::Make(event.mNewItemStack, playerex.get());
   }
 
   return true;
@@ -128,10 +147,11 @@ bool OnPlayerOpenContainerScreen(Event::PlayerOpenContainerScreenEvent& event) {
   if (!playerex->IsOpeningContainer()) {  // if the player is opening their
                                           // inventory
     // something to do
-    return false;
   }
   playerex->SetIsOpeningContainer(false);
   return true;
 }
+
+void OnTick() { PlayerEx::OnTick(); }
 
 }  // namespace genshicraft

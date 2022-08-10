@@ -32,14 +32,17 @@
 #define GENSHICRAFT_PLAYEREX_H_
 
 #include <MC/Player.hpp>
+#include <memory>
 #include <string>
+#include <third-party/Nlohmann/json.hpp>
 #include <vector>
 
+#include "Character.h"
 #include "Menu.h"
+#include "Sidebar.h"
+#include "Weapon.h"
 
 namespace genshicraft {
-
-class Menu;
 
 /**
  * @brief The PlayerEx class contains extended interfaces for players.
@@ -52,13 +55,20 @@ class PlayerEx {
    *
    * @param player A pointer to the player object
    */
-  explicit PlayerEx(Player* player);
+  PlayerEx(Player* player);
 
   /**
    * @brief Destroy the PlayerEx object
-   * 
+   *
    */
   ~PlayerEx();
+
+  /**
+   * @brief Get the current character
+   *
+   * @return The character
+   */
+  std::shared_ptr<Character> GetCharacter();
 
   /**
    * @brief Get the Menu handler
@@ -75,14 +85,51 @@ class PlayerEx {
   Player* GetPlayer();
 
   /**
+   * @brief Get the stamina
+   *
+   * @return The stamina
+   */
+  int GetStamina();
+
+  /**
+   * @brief Get the max stamina
+   *
+   * @return The max stamina
+   */
+  int GetStaminaMax();
+
+  /**
+   * @brief Get the Weapon object
+   *
+   * @return A pointer to the weapon
+   */
+  std::shared_ptr<Weapon> GetWeapon();
+
+  /**
    * @brief Get the XUID
    *
    * @return The XUID
    */
   const std::string& GetXUID() const;
 
+  /**
+   * @brief Check if the player is opening a container
+   *
+   * @return True if the player is opening a container
+   */
   bool IsOpeningContainer() const;
 
+  /**
+   * @brief Refresh items in the inventory
+   *
+   */
+  void RefreshItems();
+
+  /**
+   * @brief Set whether the player is opening a container or not
+   *
+   * @param is_opening_container True if the player is opening a container
+   */
   void SetIsOpeningContainer(bool is_opening_container);
 
   /**
@@ -95,16 +142,17 @@ class PlayerEx {
    * @brief Get a PlayerEx object by XUID
    *
    * @param uuid The UUID of the player
-   * @return A pointer to the PlayerEx object (nullptr if not found)
+   * @return A pointer to the PlayerEx object (null std::shared_ptr if not
+   * found)
    */
-  static PlayerEx* Get(const std::string& xuid);
+  static std::shared_ptr<PlayerEx> Get(const std::string& xuid);
 
   /**
    * @brief Get all PlayerEx objects
    *
    * @return A vector containing pointers to all PlayerEx objects
    */
-  static std::vector<PlayerEx*>& GetAll();
+  static std::vector<std::shared_ptr<PlayerEx>>& GetAll();
 
   /**
    * @brief Load a player
@@ -114,6 +162,19 @@ class PlayerEx {
   static void LoadPlayer(Player* player);
 
   /**
+   * @brief The function should execute when a player respawns
+   *
+   * @param player The player
+   */
+  static void OnPlayerRespawn(Player* player);
+
+  /**
+   * @brief This function should execute per tick.
+   *
+   */
+  static void OnTick();
+
+  /**
    * @brief Unload a player
    *
    * @param player A pointer to the player object
@@ -121,12 +182,22 @@ class PlayerEx {
   static void UnloadPlayer(Player* player);
 
  private:
-  bool is_opening_container_;
-  Menu menu_;         // The menu handler for the player
-  std::string xuid_;  // The XUID of the player
+  static const nlohmann::json
+      kPlayerDataTemplate;  // the player data template for new players
+
+  std::shared_ptr<Character> character_;  // a pointer to the current character
+  std::vector<std::shared_ptr<Character>>
+      character_owned_;        // all characters owned
+  bool is_opening_container_;  // true if the player is opening a container
+  Menu menu_;                  // the menu handler for the player
+  Sidebar sidebar_;            // the sidebar handler for the player
+  int stamina_;                // the stamina
+  int stamina_max_;            // the max value of the stamina
+  std::string xuid_;           // the XUID of the player
 
   static bool is_initialized_;
-  static std::vector<PlayerEx*> all_playerex_;  // All PlayerEx objects
+  static std::vector<std::shared_ptr<PlayerEx>>
+      all_playerex_;  // All PlayerEx objects
 };
 
 }  // namespace genshicraft

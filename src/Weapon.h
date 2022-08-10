@@ -31,18 +31,16 @@
 #ifndef GENSHICRAFT_WEAPON_H_
 #define GENSHICRAFT_WEAPON_H_
 
-#include <EventAPI.h>
-
-#include <MC/Actor.hpp>
 #include <MC/ItemStack.hpp>
-#include <MC/Player.hpp>
 #include <memory>
 #include <string>
 #include <vector>
 
-#include "PlayerEx.h"
+#include "Character.h"
 
 namespace genshicraft {
+
+class PlayerEx;
 
 /**
  * @brief The Weapon class contains interfaces for weapons.
@@ -51,48 +49,102 @@ namespace genshicraft {
 class Weapon {
  public:
   /**
-   * @brief Construct a new Weapon object
+   * @brief The types of weapons
    *
-   * @param item The weapon item
-   * @param playerex The PlayerEx object of the player holding the weapon
    */
-  explicit Weapon(ItemStack *item, PlayerEx *playerex);
+  enum class Type { kSword = 0, kClaymore, kPolearm, kCatalyst, kBow };
+
+  Weapon() = delete;
 
   /**
-   * @brief Get the Ascension Phase
+   * @brief Apply modifiers to character stats
    *
-   * @return The Ascension Phase (0 ~ 6)
+   * @param stats The character stats
    */
-  int GetAscensionPhase();
+  virtual struct Character::Stats ApplyModifiers(
+      const struct Character::Stats &stats) const = 0;
 
   /**
-   * @brief Get the Level of the weapon
+   * @brief Get the ascension phase
    *
-   * @return The Level of the weapon (1 ~ 70 for 1-Star and 2-Star weapons, 1 ~
+   * @return The ascension phase (0 ~ 4 for 1-Star and 2-Star weapons, 0 ~ 6
+   * for others)
+   */
+  int GetAscensionPhase() const;
+
+  /**
+   * @brief Get the ATK
+   *
+   * @return The ATK
+   */
+  virtual int GetATK() const = 0;
+
+  /**
+   * @brief Get the level of the weapon
+   *
+   * @return The level of the weapon (1 ~ 70 for 1-Star and 2-Star weapons, 1 ~
    * 90 for others)
    */
-  int GetLevel();
+  int GetLevel() const;
 
   /**
-   * @brief Get the Rarity of the weapon
+   * @brief Get the rarity of the weapon
    *
-   * @return The Rarity of the weapon (1 ~ 5)
+   * @return The rarity of the weapon (1 ~ 5)
    */
-  int GetRarity();
+  virtual int GetRarity() const = 0;
 
   /**
-   * @brief Get the Refinement
+   * @brief Get the refinement
    *
-   * @return The Refinement (1 ~ 5)
+   * @return The refinement (1 ~ 5)
    */
-  int GetRefinement();
+  int GetRefinement() const;
 
   /**
-   * @brief Get the Weapon EXP
+   * @brief Get the weapon type
    *
-   * @return The Weapon EXP
+   * @return The weapon type
    */
-  int GetWeaponEXP();
+  virtual Type GetType() const = 0;
+
+  /**
+   * @brief Get the weapon EXP
+   *
+   * @return The weapon EXP
+   */
+  int GetWeaponEXP() const;
+
+  /**
+   * @brief Increase 1 ascension phase till 4 (for 1-Star and 2-Star weapons) or
+   * 6 (for others). If not time to ascense, it will not take effect.
+   *
+   */
+  void IncreaseAscensionPhase();
+
+  /**
+   * @brief Increase 1 refinement till 5. 1-Star and 2-Star weapons will not
+   * take effect.
+   *
+   */
+  void IncreaseRefinement();
+
+  /**
+   * @brief Increase the weapon EXP
+   *
+   * @param value The value to increase. Negative value will not take effect.
+   */
+  void IncreaseWeaponEXP(int value);
+
+  /**
+   * @brief Apply the lore to the weapon item
+   *
+   * @param item The weapon item
+   * @param playerex A pointer to the PlayerEx object of the holder
+   *
+   * @exception ExceptionNotAWeapon The item is not a GenshiCraft weapon
+   */
+  void ApplyLore(ItemStack *item, PlayerEx* playerex);
 
   /**
    * @brief Check if the item is a GenshiCraft weapon
@@ -108,31 +160,52 @@ class Weapon {
    */
   static void Init();
 
+  /**
+   * @brief Make a Weapon object
+   *
+   * @param item The weapon item
+   * @param playerex A pointer to the PlayerEx object of the holder
+   * @return A pointer to the weapon object
+   *
+   * @exception ExceptionNotAWeapon The item is not a GenshiCraft weapon
+   */
+  static std::shared_ptr<Weapon> Make(ItemStack *item,
+                                      PlayerEx* playerex);
+
+ protected:
+  /**
+   * @brief Construct a new Weapon object
+   *
+   * @param item The weapon item
+   * @param playerex The PlayerEx object of the player of the holder
+   *
+   * @exception ExceptionNotAWeapon The item is not a GenshiCraft weapon
+   */
+  Weapon(ItemStack *item, PlayerEx* playerex);
+
  private:
-  struct WeaponInfo {
-    std::string identifier;
-    int rarity;
-  };
+  const static int kAcensionPhaseMaxLevelList[7];  // the maximum level of each
+                                                   // acension phase
 
-  const static std::vector<Weapon::WeaponInfo> kWeaponInfoList;
+  const static std::vector<std::string>
+      kIdentifierList;  // identifiers of all weapons
 
-  const static std::vector<int>
-      k1StarLevelWeaponEXPList;  // weapon EXP required by each level of 1-Star
-                                 // weapons
-  const static std::vector<int>
-      k2StarLevelWeaponEXPList;  // weapon EXP required by each level of 2-Star
-                                 // weapons
-  const static std::vector<int>
-      k3StarLevelWeaponEXPList;  // weapon EXP required by each level of 3-Star
-                                 // weapons
-  const static std::vector<int>
-      k4StarLevelWeaponEXPList;  // weapon EXP required by each level of 4-Star
-                                 // weapons
-  const static std::vector<int>
-      k5StarLevelWeaponEXPList;  // weapon EXP required by each level of 5-Star
-                                 // weapons
+  const static int
+      k1StarLevelMinWeaponEXPList[71];  // weapon EXP required by each
+                                        // level of 1-Star weapons
+  const static int
+      k2StarLevelMinWeaponEXPList[71];  // weapon EXP required by each
+                                        // level of 2-Star weapons
+  const static int
+      k3StarLevelMinWeaponEXPList[91];  // weapon EXP required by each
+                                        // level of 3-Star weapons
+  const static int
+      k4StarLevelMinWeaponEXPList[91];  // weapon EXP required by each
+                                        // level of 4-Star weapons
+  const static int
+      k5StarLevelMinWeaponEXPList[91];  // weapon EXP required by each
+                                        // level of 5-Star weapons
 
-  std::string identifier_;  // the Identifier
   int weapon_exp_;          // the Weapon EXP
   int ascension_phase_;     // the Ascension Phase
   int refinement_;          // the Refinement

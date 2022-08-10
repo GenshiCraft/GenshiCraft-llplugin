@@ -1,0 +1,282 @@
+/**
+ *    GenshiCraft. Play Genshin Impact in Minecraft!
+ *    Copyright (C) 2022  Futrime <futrime@outlook.com>
+ *
+ *    This program is free software: you can redistribute it and/or modify
+ *    it under the terms of the GNU Affero General Public License as published
+ *    by the Free Software Foundation, either version 3 of the License, or
+ *    (at your option) any later version.
+ *
+ *    This program is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *    GNU Affero General Public License for more details.
+ *
+ *    You should have received a copy of the GNU Affero General Public License
+ *    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+
+/**
+ * @file Character.h
+ * @author Futrime (futrime@outlook.com)
+ * @brief Declaration of the Character class
+ * @version 1.0.0
+ * @date 2022-08-08
+ *
+ * @copyright Copyright (c) 2022 Futrime
+ *
+ */
+
+#ifndef GENSHICRAFT_CHARACTER_H_
+#define GENSHICRAFT_CHARACTER_H_
+
+#include <memory>
+#include <string>
+
+namespace genshicraft {
+
+class PlayerEx;
+
+/**
+ * @brief The Character class contains interfaces for characters.
+ *
+ */
+class Character {
+ public:
+  /**
+   * @brief The Stats struct is a collection of character stats.
+   *
+   */
+  struct Stats {
+    // Base stats
+    int max_HP;
+    int max_HP_base;
+    int ATK;
+    int ATK_base;
+    int DEF;
+    int DEF_base;
+    int elemental_mastery = 0;
+    int max_stamina;
+
+    // Advanced stats
+    double CRIT_rate = 0.05;
+    double DRIT_DMG = 0.5;
+    double healing_bonus = 0.;
+    double incoming_healing_bonus = 0.;
+    double energy_recharge = 1.;
+    double CD_reduction = 0.;
+    double shield_strength = 0.;
+
+    // Elemental type
+    double pyro_DMG_bonus = 0.;
+    double pyro_RES = 0.;
+    double hydro_DMG_bonus = 0.;
+    double hydro_RES = 0.;
+    double dendro_DMG_bonus = 0.;
+    double dendro_RES = 0.;
+    double electro_DMG_bonus = 0.;
+    double electro_RES = 0.;
+    double anemo_DMG_bonus = 0.;
+    double anemo_RES = 0.;
+    double cryo_DMG_bonus = 0.;
+    double cryo_RES = 0.;
+    double geo_DMG_bonus = 0.;
+    double geo_RES = 0.;
+    double physical_DMG_bonus = 0.;
+    double physical_RES = 0.;
+  };
+
+  Character() = delete;
+
+  /**
+   * @brief Get the ascension phase
+   *
+   * @return The ascension phase (0 <= x <= 6)
+   */
+  int GetAscensionPhase() const;
+
+  /**
+   * @brief Get the character EXP
+   *
+   * @return The character EXP (x >= 0)
+   */
+  int GetCharacterEXP() const;
+
+  /**
+   * @brief Get the constellation
+   *
+   * @return The constellation (0 <= x <= 6)
+   */
+  int GetConstellation() const;
+
+  /**
+   * @brief Get the HP
+   *
+   * @return The HP (x >= 0)
+   */
+  int GetHP() const;
+
+  /**
+   * @brief Get the level (1 <= x <= 90)
+   *
+   * @return
+   */
+  int GetLevel() const;
+
+  /**
+   * @brief Get the name
+   *
+   * @return The name
+   */
+  virtual std::string GetName() const = 0;
+
+  /**
+   * @brief Get the PlayerEx object of the owner
+   *
+   * @return The PlayerEx object
+   */
+  PlayerEx* GetPlayerEx() const;
+
+  /**
+   * @brief Get the rarity
+   *
+   * @return The rarity (4 <= x <= 5)
+   */
+  virtual int GetRarity() const = 0;
+
+  /**
+   * @brief Get the stats
+   *
+   * @return The stats
+   */
+  virtual struct Stats GetStats() const = 0;
+
+  /**
+   * @brief Get the talent elemental burst level
+   *
+   * @return The level (1 <= x <= 13)
+   */
+  int GetTalentElementalBurstLevel() const;
+
+  /**
+   * @brief Get the talent elemental skill level
+   *
+   * @return The level (1 <= x <= 13)
+   */
+  int GetTalentElementalSkillLevel() const;
+
+  /**
+   * @brief Get the talent normal attack level
+   *
+   * @return The level (1 <= x <= 11)
+   */
+  int GetTalentNormalAttackLevel() const;
+
+  /**
+   * @brief Increase 1 ascension phase till 6. If not time to ascense, it will
+   * not take effect.
+   *
+   */
+  void IncreaseAscensionPhase();
+
+  /**
+   * @brief Increase the character EXP
+   *
+   * @param value The value to increase. Negative value will not take effect.
+   */
+  void IncreaseCharacterEXP(int value);
+
+  /**
+   * @brief Increase 1 constellation till 6
+   *
+   */
+  void IncreaseConstellation();
+
+  /**
+   * @brief Increase the HP. If dead, the HP would not increase
+   *
+   * @param value The value to increase. Negative value for decreasing
+   */
+  void IncreaseHP(int value);
+
+  /**
+   * @brief Check if the character is dead
+   *
+   * @return True if dead
+   */
+  bool IsDead() const;
+
+  /**
+   * @brief Revive
+   *
+   */
+  void Revive();
+
+  /**
+   * @brief Make a Character object
+   *
+   * @param playerex A pointer to the PlayerEx object owning the character
+   * @param name The name of the character
+   * @param ascension_phase The ascention phase (0 <= x <= 6)
+   * @param character_EXP The character EXP (x >= 0)
+   * @param constellation The constellation (0 <= x <= 6)
+   * @param HP The HP (x >= 0)
+   * @param talent_elemental_burst_level The level of elemental burst (1 <= x <=
+   * 10)
+   * @param talent_elemental_skill_level The level of elemental skill (1 <= x <=
+   * 10)
+   * @param talent_normal_attakck_level The level of normal attack (1 <= X <=
+   * 10)
+   * @return A pointer to the character object
+   *
+   * @exception ExceptionInvalidCharacterData The character data is invalid.
+   */
+  static std::shared_ptr<Character> Make(
+      PlayerEx* playerex, const std::string& name,
+      int ascension_phase = 0, int character_EXP = 0, int constellation = 0,
+      int HP = 0, int talent_elemental_burst_level = 1,
+      int talent_elemental_skill_level = 1, int talent_normal_attack_level = 1);
+
+ protected:
+  /**
+   * @brief Construct a new Character object
+   *
+   * @param playerex The PlayerEx object of the owner
+   * @param ascension_phase The ascention phase (0 <= x <= 6)
+   * @param character_EXP The character EXP (x >= 0)
+   * @param constellation The constellation (0 <= x <= 6)
+   * @param HP The HP (x >= 0)
+   * @param talent_elemental_burst_level The level of elemental burst (1 <= x <=
+   * 10)
+   * @param talent_elemental_skill_level The level of elemental skill (1 <= x <=
+   * 10)
+   * @param talent_normal_attakck_level The level of normal attack (1 <= X <=
+   * 10)
+   *
+   * @exception ExceptionInvalidCharacterData The character data is invalid.
+   */
+  Character(PlayerEx* playerex, int ascension_phase,
+            int character_EXP, int constellation, int HP,
+            int talent_elemental_burst_level, int talent_elemental_skill_level,
+            int talent_normal_attack_level);
+
+ private:
+  static const int kAcensionPhaseMaxLevelList[7];  // the maximum level of each
+                                                   // acension phase
+  static const int
+      kLevelMinCharacterEXPList[91];  // the minimum character EXP of each level
+
+  int ascension_phase_;
+  int character_EXP_;
+  int constellation_;
+  int HP_;
+  PlayerEx* playerex_;
+  int talent_elemental_burst_level_;
+  int talent_elemental_skill_level_;
+  int talent_normal_attack_level_;
+};
+
+}  // namespace genshicraft
+
+#endif  // GENSHICRAFT_CHARACTER_H_

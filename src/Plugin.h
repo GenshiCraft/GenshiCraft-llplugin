@@ -82,9 +82,35 @@ bool OnPlayerJoin(Event::PlayerJoinEvent& event);
  */
 bool OnPlayerLeft(Event::PlayerLeftEvent& event);
 
+/**
+ * @brief The handler for PlayerOpenContainerEvent
+ *
+ * @param event The event
+ * @return True if the action can be performed
+ */
 bool OnPlayerOpenContainer(Event::PlayerOpenContainerEvent& event);
 
+/**
+ * @brief The handler for PlayerOpenContainerScreenEvent
+ *
+ * @param event The event
+ * @return True if the action can be performed
+ */
 bool OnPlayerOpenContainerScreen(Event::PlayerOpenContainerScreenEvent& event);
+
+/**
+ * @brief The handler for PlayerRespawnEvent
+ * 
+ * @param event The event
+ * @return Always true
+ */
+bool OnPlayerRespawn(Event::PlayerRespawnEvent& event);
+
+/**
+ * @brief This function executes per tick.
+ *
+ */
+void OnTick();
 
 extern Logger logger;  // The logger
 

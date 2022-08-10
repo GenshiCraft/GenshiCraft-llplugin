@@ -32,21 +32,68 @@
 #define GENSHICRAFT_EXCEPTIONS_H_
 
 #include <stdexcept>
+#include <string>
 
 namespace genshicraft {
 
 /**
- * @brief The ExceptionInvalidArgument class represents invalid argument.
+ * @brief The Exception class is the base class for all exceptions.
  *
  */
-class ExceptionInvalidArgument : public std::invalid_argument {
+class Exception : public std::exception {
  public:
-  ExceptionInvalidArgument()
-      : invalid_argument("The argument is invalid."){
-            // empty
-        };
+  Exception(const std::string& what_arg) : what_arg_(what_arg) {}
 
-  using std::invalid_argument::invalid_argument;
+  virtual const char* what() const noexcept { return this->what_arg_.c_str(); }
+
+ private:
+  std::string what_arg_;
+};
+
+/**
+ * @brief The ExceptionCharacter class is the base class for exceptions related
+ * to the Character class.
+ *
+ */
+class ExceptionCharacter : public Exception {
+ public:
+  using Exception::Exception;
+};
+
+/**
+ * @brief The ExceptionInvalidCharacterData class represents that the character
+ * data is invalid.
+ *
+ */
+class ExceptionInvalidCharacterData : public ExceptionCharacter {
+ public:
+  ExceptionInvalidCharacterData()
+      : ExceptionCharacter("The character data is invalid.") {}
+
+  using ExceptionCharacter::ExceptionCharacter;
+};
+
+/**
+ * @brief The ExceptionNotACharacter class represents that the name does not
+ * match any character.
+ *
+ */
+class ExceptionNotACharacter : public ExceptionCharacter {
+ public:
+  ExceptionNotACharacter()
+      : ExceptionCharacter("The name does not match any character.") {}
+
+  using ExceptionCharacter::ExceptionCharacter;
+};
+
+/**
+ * @brief The ExceptionWeapon class is the base class for exceptions related to
+ * the Weapon class.
+ *
+ */
+class ExceptionWeapon : public Exception {
+ public:
+  using Exception::Exception;
 };
 
 /**
@@ -54,14 +101,12 @@ class ExceptionInvalidArgument : public std::invalid_argument {
  * GenshiCraft item.
  *
  */
-class ExceptionNotAWeapon : public ExceptionInvalidArgument {
+class ExceptionNotAWeapon : public ExceptionWeapon {
  public:
   ExceptionNotAWeapon()
-      : ExceptionInvalidArgument("The item is not a GenshiCraft weapon.") {
-    // empty
-  }
+      : ExceptionWeapon("The item is not a GenshiCraft weapon.") {}
 
-  using ExceptionInvalidArgument::ExceptionInvalidArgument;
+  using ExceptionWeapon::ExceptionWeapon;
 };
 
 }  // namespace genshicraft
