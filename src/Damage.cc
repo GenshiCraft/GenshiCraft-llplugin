@@ -28,12 +28,12 @@
  *
  */
 
-#include "Damage.h"
+#include "damage.h"
 
 #include <random>
 
-#include "Character.h"
-#include "Plugin.h"
+#include "character.h"
+#include "plugin.h"
 
 namespace genshicraft {
 

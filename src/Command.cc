@@ -18,7 +18,7 @@
  */
 
 /**
- * @file Command.cc
+ * @file command.cc
  * @author Futrime (futrime@outlook.com)
  * @brief Definition of the Command class
  * @version 1.0.0
@@ -28,7 +28,7 @@
  *
  */
 
-#include "Command.h"
+#include "command.h"
 
 #include <DynamicCommandAPI.h>
 
@@ -37,8 +37,8 @@
 #include <MC/ServerPlayer.hpp>
 #include <unordered_map>
 
-#include "Menu.h"
-#include "PlayerEx.h"
+#include "menu.h"
+#include "playerex.h"
 
 namespace genshicraft {
 

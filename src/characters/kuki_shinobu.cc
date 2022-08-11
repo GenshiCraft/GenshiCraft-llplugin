@@ -18,7 +18,7 @@
  */
 
 /**
- * @file KukiShinobu.cc
+ * @file kuki_shinobu.cc
  * @author Futrime (futrime@outlook.com)
  * @brief Definition of the KukiShinobu class
  * @version 1.0.0
@@ -28,16 +28,16 @@
  *
  */
 
-#include "KukiShinobu.h"
+#include "kuki_shinobu.h"
 
 #include <memory>
 #include <string>
 
-#include "Character.h"
-#include "Damage.h"
-#include "PlayerEx.h"
-#include "Plugin.h"
-#include "Weapon.h"
+#include "character.h"
+#include "damage.h"
+#include "playerex.h"
+#include "plugin.h"
+#include "weapon.h"
 #include "exceptions.h"
 
 namespace genshicraft {

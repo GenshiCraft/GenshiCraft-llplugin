@@ -18,7 +18,7 @@
  */
 
 /**
- * @file PlayerEx.cc
+ * @file playerex.cc
  * @author Futrime (futrime@outlook.com)
  * @brief Definition of the PlayerEx class
  * @version 1.0.0
@@ -28,11 +28,12 @@
  *
  */
 
-#include "PlayerEx.h"
+#include "playerex.h"
 
 #include <EventAPI.h>
 #include <Global.h>
 #include <KVDBAPI.h>
+#include <ScheduleAPI.h>
 
 #include <MC/Level.hpp>
 #include <MC/Player.hpp>
@@ -43,13 +44,12 @@
 #include <third-party/Nlohmann/json.hpp>
 #include <vector>
 
-#include "Character.h"
-#include "Menu.h"
-#include "Plugin.h"
-#include "ScheduleAPI.h"
-#include "Sidebar.h"
-#include "Weapon.h"
+#include "character.h"
 #include "exceptions.h"
+#include "menu.h"
+#include "plugin.h"
+#include "sidebar.h"
+#include "weapon.h"
 
 namespace genshicraft {
 
@@ -252,6 +252,8 @@ void PlayerEx::OnTick() {
     // Maintain the characters
     if (playerex->character_->GetHP() ==
         0) {  // if the current character is dead
+      playerex->character_->IncreaseEnergy(-999999);  // Clear the energy
+
       bool is_switched = false;
       for (auto&& character : playerex->character_owned_) {
         // Switch to the first character alive

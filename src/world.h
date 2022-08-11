@@ -18,61 +18,30 @@
  */
 
 /**
- * @file damage.h
+ * @file world.h
  * @author Futrime (futrime@outlook.com)
- * @brief Declaration of the damage class
+ * @brief Declaration of world interfaces and objects
  * @version 1.0.0
- * @date 2022-08-10
+ * @date 2022-08-11
  *
  * @copyright Copyright (c) 2022 Futrime
  *
  */
 
-#ifndef GENSHICRAFT_DAMAGE_H_
-#define GENSHICRAFT_DAMAGE_H_
+#ifndef GENSHICRAFT_WORLD_H_
+#define GENSHICRAFT_WORLD_H_
 
-#include "character.h"
+#include <MC/Dimension.hpp>
+#include <MC/Vec3.hpp>
 
 namespace genshicraft {
 
-/**
- * @brief The Damage class is used for damage calculation.
- *
- */
-class Damage {
- public:
-  /**
-   * @brief Construct a new Damage object
-   *
-   */
-  Damage();
+namespace world {
 
-  /**
-   * @brief Get the damage value
-   *
-   * @return The damage value
-   */
-  double Get() const;
+int GetWorldLevel(const Vec3& position, const Dimension& dimension);
 
-  /**
-   * @brief Set the amplifier
-   *
-   * @param amplifier The amplifier
-   */
-  void SetAmplifier(double amplifier);
-
-  /**
-   * @brief Set the stats
-   *
-   * @param stats The stats
-   */
-  void SetStats(const Character::Stats& stats);
-
- private:
-  double amplifier_;
-  Character::Stats stats_;
-};
+}  // namespace world
 
 }  // namespace genshicraft
 
-#endif  // GENSHICRAFT_DAMAGE_H_
+#endif

@@ -18,61 +18,50 @@
  */
 
 /**
- * @file damage.h
+ * @file world.cc
  * @author Futrime (futrime@outlook.com)
- * @brief Declaration of the damage class
+ * @brief Definition of global world interfaces and objects
  * @version 1.0.0
- * @date 2022-08-10
+ * @date 2022-08-11
  *
  * @copyright Copyright (c) 2022 Futrime
  *
  */
 
-#ifndef GENSHICRAFT_DAMAGE_H_
-#define GENSHICRAFT_DAMAGE_H_
+#include "world.h"
 
-#include "character.h"
+#include <MC/Dimension.hpp>
+#include <MC/Vec3.hpp>
 
 namespace genshicraft {
 
-/**
- * @brief The Damage class is used for damage calculation.
- *
- */
-class Damage {
- public:
-  /**
-   * @brief Construct a new Damage object
-   *
-   */
-  Damage();
+namespace world {
 
-  /**
-   * @brief Get the damage value
-   *
-   * @return The damage value
-   */
-  double Get() const;
+int GetWorldLevel(const Vec3& position, const Dimension& dimension) {
+  static const double kWorldLevelMinDistanceList[9] = {
+      0, 0, 1024, 2048, 4096, 8192, 16384, 32768, 65536};
 
-  /**
-   * @brief Set the amplifier
-   *
-   * @param amplifier The amplifier
-   */
-  void SetAmplifier(double amplifier);
+  if (dimension.getDimensionId() == 2) {  // the End
+    return 8;
+  }
 
-  /**
-   * @brief Set the stats
-   *
-   * @param stats The stats
-   */
-  void SetStats(const Character::Stats& stats);
+  auto distance = position.x * position.x + position.z * position.z;
 
- private:
-  double amplifier_;
-  Character::Stats stats_;
-};
+  if (dimension.getDimensionId() == 1) {  // the Nether
+    distance *=
+        8;  // the distance in the Nether is 8 times of that in the Main World
+  }
+
+  int world_level = 1;
+  for (int i = 1; i <= 8; ++i) {
+    if (distance > kWorldLevelMinDistanceList[i]) {
+      world_level = i;
+    }
+  }
+
+  return world_level;
+}
+
+}  // namespace world
 
 }  // namespace genshicraft
-
-#endif  // GENSHICRAFT_DAMAGE_H_

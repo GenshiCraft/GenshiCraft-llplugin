@@ -18,9 +18,9 @@
  */
 
 /**
- * @file Plugin.cc
+ * @file plugin.cc
  * @author Futrime (futrime@outlook.com)
- * @brief The entrypoint of the plugin
+ * @brief Definition of global interfaces and objects
  * @version 1.0.0
  * @date 2022-07-22
  *
@@ -28,7 +28,7 @@
  *
  */
 
-#include "Plugin.h"
+#include "plugin.h"
 
 #include <EventAPI.h>
 #include <LoggerAPI.h>
@@ -42,12 +42,12 @@
 #include <MC/Player.hpp>
 #include <chrono>
 
-#include "Command.h"
-#include "Damage.h"
-#include "PlayerEx.h"
-#include "Version.h"
-#include "Weapon.h"
+#include "version.h"
+#include "command.h"
+#include "damage.h"
 #include "exceptions.h"
+#include "playerex.h"
+#include "weapon.h"
 
 namespace genshicraft {
 
@@ -131,6 +131,11 @@ bool OnMobHurt(Event::MobHurtEvent& event) {
 }
 
 bool OnPlayerDropItem(Event::PlayerDropItemEvent& event) {
+  // Prevent keeping inventory
+  if (event.mPlayer->getHealth() == 0) {
+    return true;
+  }
+
   auto playerex = PlayerEx::Get(event.mPlayer->getXuid());
   if (!playerex->GetPlayer()
            ->isSneaking()) {  // if the player is pressing Q without Shift
@@ -139,6 +144,10 @@ bool OnPlayerDropItem(Event::PlayerDropItemEvent& event) {
 
       return false;
     }
+  } else {  // if the player is pressing Shift + Q
+    playerex->GetMenu().OpenMain();
+    
+    return false;
   }
 
   return true;

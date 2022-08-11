@@ -18,7 +18,7 @@
  */
 
 /**
- * @file Command.h
+ * @file command.h
  * @author Futrime (futrime@outlook.com)
  * @brief Declaration of the Command class
  * @version 1.0.0

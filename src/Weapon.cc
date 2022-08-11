@@ -18,7 +18,7 @@
  */
 
 /**
- * @file Weapon.cc
+ * @file weapon.cc
  * @author Futrime (futrime@outlook.com)
  * @brief Definition of the Weapon class
  * @version 1.0.0
@@ -28,7 +28,7 @@
  *
  */
 
-#include "Weapon.h"
+#include "weapon.h"
 
 #include <EventAPI.h>
 #include <ScheduleAPI.h>
@@ -41,12 +41,15 @@
 #include <string>
 #include <vector>
 
-#include "PlayerEx.h"
-#include "Plugin.h"
 #include "exceptions.h"
-#include "weapons/DullBlade.h"
+#include "playerex.h"
+#include "plugin.h"
+#include "weapons/dull_blade.h"
+#include "weapons/silver_sword.h"
 
 namespace genshicraft {
+
+const int Weapon::kAcensionPhaseMaxLevelList[7] = {20, 40, 50, 60, 70, 80, 90};
 
 int Weapon::GetAscensionPhase() const { return this->ascension_phase_; }
 
@@ -165,10 +168,11 @@ void Weapon::ApplyLore(ItemStack* item, PlayerEx* playerex) {
   bool is_updated = false;
   if (old_lore.size() != lore.size()) {
     is_updated = true;
-  }
-  for (int i = 0; i < lore.size(); ++i) {
-    if (old_lore.at(i) != lore.at(i)) {
-      is_updated = true;
+  } else {
+    for (int i = 0; i < lore.size(); ++i) {
+      if (old_lore.at(i) != lore.at(i)) {
+        is_updated = true;
+      }
     }
   }
 
@@ -206,6 +210,10 @@ std::shared_ptr<Weapon> Weapon::Make(ItemStack* item, PlayerEx* playerex) {
 
   if (item->getTypeName() == "genshicraft:dull_blade") {
     return std::make_shared<DullBlade>(item, playerex);
+  }
+
+  if (item->getTypeName() == "genshicraft:silver_sword") {
+    return std::make_shared<SilverSword>(item, playerex);
   }
 
   throw ExceptionNotAWeapon();
@@ -250,10 +258,8 @@ Weapon::Weapon(ItemStack* item, PlayerEx* playerex) {
   this->refinement_ = data->getInt("refinement");
 }
 
-const int Weapon::kAcensionPhaseMaxLevelList[7] = {20, 40, 50, 60, 70, 80, 90};
-
 const std::vector<std::string> Weapon::kIdentifierList = {
-    "genshicraft:dull_blade"};
+    "genshicraft:dull_blade", "genshicraft:silver_sword"};
 
 const int Weapon::k1StarLevelMinWeaponEXPList[71] = {
     0,      0,      125,    325,    600,    950,    1425,   2000,   2700,

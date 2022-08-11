@@ -18,7 +18,7 @@
  */
 
 /**
- * @file KukiShinobu.h
+ * @file kuki_shinobu.h
  * @author Futrime (futrime@outlook.com)
  * @brief Declaration of the KukiShinobu class
  * @version 1.0.0
@@ -28,13 +28,13 @@
  *
  */
 
-#ifndef GENSHICRAFT_CHARACTERS_KUKISHINOBU_H_
-#define GENSHICRAFT_CHARACTERS_KUKISHINOBU_H_
+#ifndef GENSHICRAFT_CHARACTERS_KUKI_SHINOBU_H_
+#define GENSHICRAFT_CHARACTERS_KUKI_SHINOBU_H_
 
 #include <memory>
 
-#include "Character.h"
-#include "PlayerEx.h"
+#include "character.h"
+#include "playerex.h"
 
 namespace genshicraft {
 
@@ -164,4 +164,4 @@ class KukiShinobu : public Character {
 
 }  // namespace genshicraft
 
-#endif  // GENSHICRAFT_CHARACTERS_KUKISHINOBU_H_
+#endif  // GENSHICRAFT_CHARACTERS_KUKI_SHINOBU_H_

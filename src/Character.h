@@ -18,7 +18,7 @@
  */
 
 /**
- * @file Character.h
+ * @file character.h
  * @author Futrime (futrime@outlook.com)
  * @brief Declaration of the Character class
  * @version 1.0.0
@@ -246,7 +246,7 @@ class Character {
   virtual bool HasWeapon() const = 0;
 
   /**
-   * @brief Increase 1 ascension phase till 6. If not time to ascense, it will
+   * @brief Increase 1 ascension phase till 6. If not time to ascend, it will
    * not take effect.
    *
    */

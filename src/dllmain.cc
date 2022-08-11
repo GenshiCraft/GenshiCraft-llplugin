@@ -2,8 +2,8 @@
 
 #include <ios>
 
-#include "Plugin.h"
-#include "Version.h"
+#include "plugin.h"
+#include "version.h"
 
 #pragma comment(lib, "../SDK/Lib/bedrock_server_api.lib")
 #pragma comment(lib, "../SDK/Lib/bedrock_server_var.lib")

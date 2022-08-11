@@ -18,9 +18,9 @@
  */
 
 /**
- * @file Plugin.h
+ * @file plugin.h
  * @author Futrime (futrime@outlook.com)
- * @brief The shared objects of the plugin
+ * @brief Declaration of global interfaces and objects
  * @version 1.0.0
  * @date 2022-08-04
  *
@@ -34,7 +34,7 @@
 #include <EventAPI.h>
 #include <LoggerAPI.h>
 
-#include "Version.h"
+#include "version.h"
 
 namespace genshicraft {
 

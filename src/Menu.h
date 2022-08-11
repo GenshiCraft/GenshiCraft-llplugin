@@ -18,7 +18,7 @@
  */
 
 /**
- * @file Menu.h
+ * @file menu.h
  * @author Futrime (futrime@outlook.com)
  * @brief Declaration of the Menu class
  * @version 1.0.0
@@ -55,6 +55,30 @@ class Menu {
    *
    */
   void OpenMain();
+
+  /**
+   * @brief Open the weapon menu
+   *
+   */
+  void OpenWeapon();
+
+  /**
+   * @brief Open the weapon ascend menu
+   * 
+   */
+  void OpenWeaponAscend();
+
+  /**
+   * @brief Open the weapon enhance menu
+   * 
+   */
+  void OpenWeaponEnhance();
+
+  /**
+   * @brief Open the weapon refine menu
+   * 
+   */
+  void OpenWeaponRefine();
 
  private:
   PlayerEx* playerex_;

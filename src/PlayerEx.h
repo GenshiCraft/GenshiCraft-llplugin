@@ -18,7 +18,7 @@
  */
 
 /**
- * @file PlayerEx.h
+ * @file playerex.h
  * @author Futrime (futrime@outlook.com)
  * @brief Declaration of the PlayerEx class
  * @version 1.0.0
@@ -37,10 +37,10 @@
 #include <third-party/Nlohmann/json.hpp>
 #include <vector>
 
-#include "Character.h"
-#include "Menu.h"
-#include "Sidebar.h"
-#include "Weapon.h"
+#include "character.h"
+#include "menu.h"
+#include "sidebar.h"
+#include "weapon.h"
 
 namespace genshicraft {
 
@@ -114,7 +114,7 @@ class PlayerEx {
 
   /**
    * @brief Increase the stamina
-   * 
+   *
    * @param value The stamina to increase
    */
   void IncreaseStamina(int value);

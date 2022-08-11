@@ -18,7 +18,7 @@
  */
 
 /**
- * @file Sidebar.h
+ * @file sidebar.h
  * @author Futrime (futrime@outlook.com)
  * @brief Declaration of the Sidebar class
  * @version 1.0.0

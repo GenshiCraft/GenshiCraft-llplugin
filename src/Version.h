@@ -20,7 +20,7 @@
 #define TARGET_BDS_PROTOCOL_VERSION 534
 
 
-// File Version Information, used in Resource.rc
+// File Version Information, used in resource.rc
 #define __TO_VERSION_STRING(ver) #ver
 #define TO_VERSION_STRING(ver) __TO_VERSION_STRING(ver)
 

@@ -18,7 +18,7 @@
  */
 
 /**
- * @file DullBlade.h
+ * @file dull_blade.h
  * @author Futrime (futrime@outlook.com)
  * @brief Definition of the DullBlade class
  * @version 1.0.0
@@ -28,13 +28,14 @@
  *
  */
 
-#include "DullBlade.h"
+#include "dull_blade.h"
 
 #include <MC/ItemStack.hpp>
+#include <string>
 
-#include "Character.h"
-#include "PlayerEx.h"
-#include "Weapon.h"
+#include "character.h"
+#include "playerex.h"
+#include "weapon.h"
 #include "exceptions.h"
 
 namespace genshicraft {
@@ -58,6 +59,8 @@ int DullBlade::GetATK() const {
   return (DullBlade::kATKBase[this->GetAscensionPhase()] +
           DullBlade::kATKDiff * this->GetLevel());
 }
+
+std::string DullBlade::GetName() const { return "Dull Blade"; }
 
 int DullBlade::GetRarity() const { return 1; }
 

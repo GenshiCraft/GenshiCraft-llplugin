@@ -18,7 +18,7 @@
  */
 
 /**
- * @file Character.cc
+ * @file character.cc
  * @author Futrime (futrime@outlook.com)
  * @brief Definition of the Character class
  * @version 1.0.0
@@ -28,15 +28,15 @@
  *
  */
 
-#include "Character.h"
+#include "character.h"
 
 #include <algorithm>
 #include <memory>
 #include <string>
 
-#include "PlayerEx.h"
-#include "Plugin.h"
-#include "characters/KukiShinobu.h"
+#include "playerex.h"
+#include "plugin.h"
+#include "characters/kuki_shinobu.h"
 #include "exceptions.h"
 
 namespace genshicraft {
@@ -90,7 +90,7 @@ int Character::GetTalentNormalAttackLevel() const {
 void Character::IncreaseAscensionPhase() {
   if (this->GetLevel() ==
       Character::kAcensionPhaseMaxLevelList
-          [this->ascension_phase_]) {  // if it is time to ascense
+          [this->ascension_phase_]) {  // if it is time to ascend
     this->ascension_phase_ = std::min(this->ascension_phase_ + 1, 6);
   }
 }

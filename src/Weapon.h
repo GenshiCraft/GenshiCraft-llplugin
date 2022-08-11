@@ -18,7 +18,7 @@
  */
 
 /**
- * @file Weapon.h
+ * @file weapon.h
  * @author Futrime (futrime@outlook.com)
  * @brief Declaration of the Weapon class
  * @version 1.0.0
@@ -36,7 +36,7 @@
 #include <string>
 #include <vector>
 
-#include "Character.h"
+#include "character.h"
 
 namespace genshicraft {
 
@@ -48,6 +48,9 @@ class PlayerEx;
  */
 class Weapon {
  public:
+  const static int kAcensionPhaseMaxLevelList[7];  // the maximum level of each
+                                                   // acension phase
+
   /**
    * @brief The types of weapons
    *
@@ -88,6 +91,13 @@ class Weapon {
   int GetLevel() const;
 
   /**
+   * @brief Get the name
+   *
+   * @return The name
+   */
+  virtual std::string GetName() const = 0;
+
+  /**
    * @brief Get the rarity of the weapon
    *
    * @return The rarity of the weapon (1 ~ 5)
@@ -117,7 +127,7 @@ class Weapon {
 
   /**
    * @brief Increase 1 ascension phase till 4 (for 1-Star and 2-Star weapons) or
-   * 6 (for others). If not time to ascense, it will not take effect.
+   * 6 (for others). If not time to ascend, it will not take effect.
    *
    */
   void IncreaseAscensionPhase();
@@ -144,7 +154,7 @@ class Weapon {
    *
    * @exception ExceptionNotAWeapon The item is not a GenshiCraft weapon
    */
-  void ApplyLore(ItemStack *item, PlayerEx* playerex);
+  void ApplyLore(ItemStack *item, PlayerEx *playerex);
 
   /**
    * @brief Check if the item is a GenshiCraft weapon
@@ -169,8 +179,7 @@ class Weapon {
    *
    * @exception ExceptionNotAWeapon The item is not a GenshiCraft weapon
    */
-  static std::shared_ptr<Weapon> Make(ItemStack *item,
-                                      PlayerEx* playerex);
+  static std::shared_ptr<Weapon> Make(ItemStack *item, PlayerEx *playerex);
 
  protected:
   /**
@@ -181,12 +190,9 @@ class Weapon {
    *
    * @exception ExceptionNotAWeapon The item is not a GenshiCraft weapon
    */
-  Weapon(ItemStack *item, PlayerEx* playerex);
+  Weapon(ItemStack *item, PlayerEx *playerex);
 
  private:
-  const static int kAcensionPhaseMaxLevelList[7];  // the maximum level of each
-                                                   // acension phase
-
   const static std::vector<std::string>
       kIdentifierList;  // identifiers of all weapons
 
@@ -206,9 +212,9 @@ class Weapon {
       k5StarLevelMinWeaponEXPList[91];  // weapon EXP required by each
                                         // level of 5-Star weapons
 
-  int weapon_exp_;          // the Weapon EXP
-  int ascension_phase_;     // the Ascension Phase
-  int refinement_;          // the Refinement
+  int weapon_exp_;       // the Weapon EXP
+  int ascension_phase_;  // the Ascension Phase
+  int refinement_;       // the Refinement
 
   static bool is_initialized_;  // the flag indicating if the weapon system is
                                 // initialized

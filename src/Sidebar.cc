@@ -28,7 +28,7 @@
  *
  */
 
-#include "Sidebar.h"
+#include "sidebar.h"
 
 #include <MC/Player.hpp>
 #include <MC/Types.hpp>
@@ -37,8 +37,8 @@
 #include <utility>
 #include <vector>
 
-#include "PlayerEx.h"
-#include "Plugin.h"
+#include "playerex.h"
+#include "plugin.h"
 
 namespace genshicraft {
 

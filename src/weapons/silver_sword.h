@@ -18,9 +18,9 @@
  */
 
 /**
- * @file DullBlade.h
+ * @file SilverSword.h
  * @author Futrime (futrime@outlook.com)
- * @brief Declaration of the DullBlade class
+ * @brief Declaration of the SilverSword class
  * @version 1.0.0
  * @date 2022-08-10
  *
@@ -28,35 +28,35 @@
  *
  */
 
-#ifndef GENSHICRAFT_WEAPONS_DULLBLADE_H_
-#define GENSHICRAFT_WEAPONS_DULLBLADE_H_
+#ifndef GENSHICRAFT_WEAPONS_SILVER_SWORD_H_
+#define GENSHICRAFT_WEAPONS_SILVER_SWORD_H_
 
 #include <MC/ItemStack.hpp>
-#include <memory>
+#include <string>
 
-#include "Character.h"
-#include "PlayerEx.h"
-#include "Weapon.h"
+#include "character.h"
+#include "playerex.h"
+#include "weapon.h"
 
 namespace genshicraft {
 
 /**
- * @brief The DullBlade class contains interfaces for Dull Blade.
+ * @brief The SilverSword class contains interfaces for Dull Blade.
  *
  */
-class DullBlade : public Weapon {
+class SilverSword : public Weapon {
  public:
   /**
-   * @brief Construct a new Dull Blade object
+   * @brief Construct a new Silver Sword object
    *
    * @param item The weapon item
    * @param playerex The PlayerEx object of the holder
    *
    * @exception ExceptionNotAWeapon The item is not a GenshiCraft weapon
    */
-  DullBlade(ItemStack* item, PlayerEx* playerex);
+  SilverSword(ItemStack* item, PlayerEx* playerex);
 
-  DullBlade() = delete;
+  SilverSword() = delete;
 
   /**
    * @brief Apply modifiers to character stats
@@ -74,9 +74,16 @@ class DullBlade : public Weapon {
   int GetATK() const override;
 
   /**
+   * @brief Get the name
+   *
+   * @return "Silver Sword"
+   */
+  std::string GetName() const override;
+
+  /**
    * @brief Get the rarity of the weapon
    *
-   * @return 1
+   * @return 2
    */
   int GetRarity() const override;
 
@@ -96,4 +103,4 @@ class DullBlade : public Weapon {
 
 }  // namespace genshicraft
 
-#endif  // GENSHICRAFT_WEAPONS_DULLBLADE_H_
+#endif  // GENSHICRAFT_WEAPONS_SILVER_SWORD_H_
