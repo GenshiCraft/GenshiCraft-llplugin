@@ -50,14 +50,11 @@ SilverSword::SilverSword(ItemStack* item, PlayerEx* playerex)
   this->ApplyLore(item, playerex);
 }
 
-struct Character::Stats SilverSword::ApplyModifiers(
-    const struct Character::Stats& stats) const {
+Character::Stats SilverSword::GetBaseStats() const {
+  Character::Stats stats;
+  stats.ATK_base = SilverSword::kATKBase[this->GetAscensionPhase()] +
+                   SilverSword::kATKDiff * this->GetLevel();
   return stats;
-}
-
-int SilverSword::GetATK() const {
-  return (SilverSword::kATKBase[this->GetAscensionPhase()] +
-          SilverSword::kATKDiff * this->GetLevel());
 }
 
 std::string SilverSword::GetName() const { return "Silver Sword"; }

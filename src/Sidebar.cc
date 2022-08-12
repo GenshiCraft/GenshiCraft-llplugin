@@ -69,7 +69,7 @@ void Sidebar::Refresh() {
   // HP
   auto HP_progress =
       static_cast<double>(this->playerex_->GetCharacter()->GetHP()) /
-      this->playerex_->GetCharacter()->GetStats().max_HP;
+      this->playerex_->GetCharacter()->GetStats().GetMaxHP();
   content.push_back(
       {"HP " + Sidebar::GenerateProgressBar(HP_progress, 36,
                                             (HP_progress < 0.3) ? "§c" : "§a"),

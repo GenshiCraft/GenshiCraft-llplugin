@@ -31,8 +31,10 @@
 #include "menu.h"
 
 #include <FormUI.h>
+#include <ScheduleAPI.h>
 
 #include <MC/Player.hpp>
+#include <map>
 #include <memory>
 #include <string>
 
@@ -47,10 +49,8 @@ Menu::Menu(PlayerEx* playerex) : playerex_(playerex) {
 }
 
 void Menu::OpenMain() {
-  // Title and content
   Form::SimpleForm form("GenshiCraft Menu", "");
 
-  // Options
   form = form.addButton("Artifacts", "textures/menu/artifacts.bmp");
 
   form = form.addButton("Character", "textures/menu/character.bmp");
@@ -59,8 +59,11 @@ void Menu::OpenMain() {
 
   form = form.addButton("Shop", "textures/menu/shop.bmp");
 
-  form = form.addButton("Weapon", "textures/menu/weapons.bmp",
-                        [this](Player* player) { this->OpenWeapon(); });
+  // Show the weapon menu only when the player is holding a GenshiCraft weapon
+  if (this->playerex_->GetWeapon()) {
+    form = form.addButton("Weapon", "textures/menu/weapons.bmp",
+                          [this](Player* player) { this->OpenWeapon(); });
+  }
 
   form = form.addButton("Wish", "textures/menu/wish.bmp");
 
@@ -68,6 +71,9 @@ void Menu::OpenMain() {
 }
 
 void Menu::OpenWeapon() {
+  static const std::string kRefinementSymbolList[6] = {" ", "①", "②",
+                                                       "③", "④", "§6⑤"};
+
   // Check if the player is holding a GenshiCraft weapon
   if (!this->playerex_->GetWeapon()) {
     this->OpenMain();
@@ -76,12 +82,54 @@ void Menu::OpenWeapon() {
 
   auto weapon = this->playerex_->GetWeapon();
 
-  // Title and content
+  std::string content;
+
+  content += "§7";
+  if (weapon->GetType() == Weapon::Type::kSword) {
+    content += "Sword";
+  } else if (weapon->GetType() == Weapon::Type::kClaymore) {
+    content += "Claymore";
+  } else if (weapon->GetType() == Weapon::Type::kPolearm) {
+    content += "Polearm";
+  } else if (weapon->GetType() == Weapon::Type::kCatalyst) {
+    content += "Catalyst";
+  } else if (weapon->GetType() == Weapon::Type::kBow) {
+    content += "Bow";
+  }
+  content += "\n";
+
+  for (const auto& line : weapon->GetBaseStatsDescription()) {
+    content += "§f" + line + "\n";
+  }
+
+  content += "§6";
+  for (int i = 0; i < weapon->GetRarity(); ++i) {
+    content += "★";
+  }
+  content += "\n";
+
+  content +=
+      "§fLv." + std::to_string(weapon->GetLevel()) + " §7/ " +
+      std::to_string(
+          Weapon::kAcensionPhaseMaxLevelList[weapon->GetAscensionPhase()]);
+  content += " §f";
+  for (int i = 0; i < ((weapon->GetRarity() <= 2) ? 4 : 6); ++i) {
+    if (i == weapon->GetAscensionPhase()) {
+      content += "§7";
+    }
+    content += "✦";
+  }
+  content += "\n";
+
+  if (weapon->GetRarity() >= 3) {
+    content +=
+        "§eRefinement Rank " + std::to_string(weapon->GetRefinement()) + "\n";
+  }
+
   Form::SimpleForm form(
       "Weapon / " + std::string(this->playerex_->GetWeapon()->GetName()),
-      "Test\nTest");
+      content);
 
-  // Options
   if (weapon->kAcensionPhaseMaxLevelList[weapon->GetAscensionPhase()] ==
       weapon->GetLevel()) {
     if ((weapon->GetRarity() >= 3 && weapon->GetLevel() != 90) ||
@@ -99,7 +147,12 @@ void Menu::OpenWeapon() {
                           [this](Player* player) { this->OpenWeaponRefine(); });
   }
 
-  form.sendTo(this->playerex_->GetPlayer());
+  form.sendTo(this->playerex_->GetPlayer(), [this](Player* player, int option) {
+    if (option == -1) {
+      this->OpenMain();
+      return;
+    }
+  });
 }
 
 void Menu::OpenWeaponAscend() {
@@ -113,9 +166,72 @@ void Menu::OpenWeaponAscend() {
 void Menu::OpenWeaponEnhance() {
   // Check if the player is holding a GenshiCraft weapon
   if (!this->playerex_->GetWeapon()) {
-    this->OpenMain();
+    this->OpenWeapon();
     return;
   }
+
+  auto weapon = this->playerex_->GetWeapon();
+
+  auto max_weapon_exp =
+      this->playerex_->GetItemCount("genshicraft:enhancement_ore") * 400 +
+      this->playerex_->GetItemCount("genshicraft:fine_enhancement_ore") * 2000 +
+      this->playerex_->GetItemCount("genshicraft:mystic_enhancement_ore") *
+          10000;
+
+  auto max_enhanced_level =
+      weapon->GetLevelByWeaponEXP(max_weapon_exp + weapon->GetWeaponEXP());
+
+  Form::CustomForm form("Weapon / " + std::string(weapon->GetName()) +
+                        " / Enhance");
+
+  form = form.addLabel("text_level", "Lv." + std::to_string(weapon->GetLevel()));
+
+  auto description = weapon->GetBaseStatsDescription();
+  for (int i = 0; i < description.size(); ++i) {
+    form = form.addLabel("text_weapon_stats_" + std::to_string(i), description.at(i));
+  }
+
+  form.addSlider("level", "Level(s) to enhance", 0,
+                 max_enhanced_level - weapon->GetLevel());
+
+  form.sendTo(
+      this->playerex_->GetPlayer(),
+      [this](Player* player,
+             std::map<string, std::shared_ptr<Form::CustomFormElement>> data) {
+        // Go back to main menu if the player cancels the form
+        if (data.empty()) {
+          this->OpenWeapon();
+          return;
+        }
+
+        auto weapon = this->playerex_->GetWeapon();
+
+        auto enhanced_level =
+            data.at("level")->getInt() + weapon->GetLevel();
+
+        while (weapon->GetLevel() < enhanced_level &&
+               this->playerex_->GetItemCount(
+                   "genshicraft:mystic_enhancement_ore") > 0) {
+          this->playerex_->ConsumeItem("genshicraft:mystic_enhancement_ore", 1);
+          weapon->IncreaseWeaponEXP(10000);
+        }
+
+        while (weapon->GetLevel() < enhanced_level &&
+               this->playerex_->GetItemCount(
+                   "genshicraft:fine_enhancement_ore") > 0) {
+          this->playerex_->ConsumeItem("genshicraft:fine_enhancement_ore", 1);
+          weapon->IncreaseWeaponEXP(2000);
+        }
+
+        while (weapon->GetLevel() < enhanced_level &&
+               this->playerex_->GetItemCount("genshicraft:enhancement_ore") >
+                   0) {
+          this->playerex_->ConsumeItem("genshicraft:enhancement_ore", 1);
+          weapon->IncreaseWeaponEXP(400);
+        }
+
+        Schedule::nextTick([this]() { this->OpenWeaponEnhance(); });
+      });
 }
 
 void Menu::OpenWeaponRefine() {

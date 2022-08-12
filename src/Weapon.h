@@ -60,12 +60,14 @@ class Weapon {
   Weapon() = delete;
 
   /**
-   * @brief Apply modifiers to character stats
+   * @brief Apply the lore to the weapon item
    *
-   * @param stats The character stats
+   * @param item The weapon item
+   * @param playerex A pointer to the PlayerEx object of the holder
+   *
+   * @exception ExceptionNotAWeapon The item is not a GenshiCraft weapon
    */
-  virtual struct Character::Stats ApplyModifiers(
-      const struct Character::Stats &stats) const = 0;
+  void ApplyLore(ItemStack *item, PlayerEx *playerex);
 
   /**
    * @brief Get the ascension phase
@@ -76,11 +78,18 @@ class Weapon {
   int GetAscensionPhase() const;
 
   /**
-   * @brief Get the ATK
+   * @brief Get the base stats
    *
-   * @return The ATK
+   * @param stats The stats
    */
-  virtual int GetATK() const = 0;
+  virtual Character::Stats GetBaseStats() const = 0;
+
+  /**
+   * @brief Describe the base stats
+   *
+   * @return The description
+   */
+  std::vector<std::string> GetBaseStatsDescription() const;
 
   /**
    * @brief Get the level of the weapon
@@ -89,6 +98,14 @@ class Weapon {
    * 90 for others)
    */
   int GetLevel() const;
+
+  /**
+   * @brief Predict the level with the weapon EXP provided
+   *
+   * @param weapon_exp The weapon EXP
+   * @return The level
+   */
+  int GetLevelByWeaponEXP(int weapon_exp) const;
 
   /**
    * @brief Get the name
@@ -147,16 +164,6 @@ class Weapon {
   void IncreaseWeaponEXP(int value);
 
   /**
-   * @brief Apply the lore to the weapon item
-   *
-   * @param item The weapon item
-   * @param playerex A pointer to the PlayerEx object of the holder
-   *
-   * @exception ExceptionNotAWeapon The item is not a GenshiCraft weapon
-   */
-  void ApplyLore(ItemStack *item, PlayerEx *playerex);
-
-  /**
    * @brief Check if the item is a GenshiCraft weapon
    *
    * @param item The item
@@ -192,6 +199,12 @@ class Weapon {
    */
   Weapon(ItemStack *item, PlayerEx *playerex);
 
+  /**
+   * @brief Destroy the Weapon object
+   *
+   */
+  virtual ~Weapon();
+
  private:
   const static std::vector<std::string>
       kIdentifierList;  // identifiers of all weapons
@@ -212,9 +225,11 @@ class Weapon {
       k5StarLevelMinWeaponEXPList[91];  // weapon EXP required by each
                                         // level of 5-Star weapons
 
-  int weapon_exp_;       // the Weapon EXP
   int ascension_phase_;  // the Ascension Phase
+  ItemStack *item_;      // the ItemStack object
+  PlayerEx *playerex_;   // the PlayerEx object of the owner
   int refinement_;       // the Refinement
+  int weapon_exp_;       // the Weapon EXP
 
   static bool is_initialized_;  // the flag indicating if the weapon system is
                                 // initialized

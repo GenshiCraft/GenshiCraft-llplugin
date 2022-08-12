@@ -35,22 +35,22 @@
 
 #include "character.h"
 #include "damage.h"
+#include "exceptions.h"
 #include "playerex.h"
 #include "plugin.h"
 #include "weapon.h"
-#include "exceptions.h"
 
 namespace genshicraft {
 
 KukiShinobu::KukiShinobu(PlayerEx* playerex, int ascension_phase,
-                         int character_EXP, int constellation, int HP,
-                         int talent_elemental_burst_level,
+                         int character_EXP, int constellation, int energy,
+                         int HP, int talent_elemental_burst_level,
                          int talent_elemental_skill_level,
                          int talent_normal_attack_level)
-    : Character(playerex, ascension_phase, character_EXP, constellation, HP,
-                talent_elemental_burst_level, talent_elemental_skill_level,
+    : Character(playerex, ascension_phase, character_EXP, constellation, energy,
+                HP, talent_elemental_burst_level, talent_elemental_skill_level,
                 talent_normal_attack_level) {
-  if (HP > this->GetStats().max_HP) {
+  if (HP > this->GetStats().GetMaxHP()) {
     throw ExceptionInvalidCharacterData();
   }
 }
@@ -104,7 +104,7 @@ Damage KukiShinobu::GetDamageNormalAttack() {
     damage.SetAmplifier(
         this->kTalentNormalAttackHitDMG[hit_count]
                                        [this->GetTalentNormalAttackLevel()]);
-                                       
+
     ++hit_count;
     if (hit_count > 4) {
       hit_count = 1;
@@ -122,29 +122,19 @@ std::string KukiShinobu::GetName() const { return "Kuki Shinobu"; }
 
 int KukiShinobu::GetRarity() const { return 4; }
 
-struct Character::Stats KukiShinobu::GetStats() const {
-  struct Character::Stats stats;
-  stats.max_HP_base = KukiShinobu::kStatsMaxHPBase[this->GetAscensionPhase()] +
+Character::Stats KukiShinobu::GetBaseStats() const {
+  Character::Stats stats;
+  stats.max_HP_base += KukiShinobu::kStatsMaxHPBase[this->GetAscensionPhase()] +
                       KukiShinobu::kStatsMaxHPDiff * this->GetLevel();
-  stats.ATK_base = KukiShinobu::kStatsATKBase[this->GetAscensionPhase()] +
+  stats.ATK_base += KukiShinobu::kStatsATKBase[this->GetAscensionPhase()] +
                    KukiShinobu::kStatsATKDiff * this->GetLevel();
-  stats.DEF_base = KukiShinobu::kStatsDEFBase[this->GetAscensionPhase()] +
+  stats.DEF_base += KukiShinobu::kStatsDEFBase[this->GetAscensionPhase()] +
                    KukiShinobu::kStatsDEFDiff * this->GetLevel();
 
-  if (this->HasWeapon()) {  // if the player is holding a GenshiCraft weapon
-    stats.ATK_base += this->GetPlayerEx()->GetWeapon()->GetATK();
-  }
-
-  stats.max_HP = static_cast<int>(
-      stats.max_HP_base *
-      (1 + KukiShinobu::kStatsMaxHPPercent[this->GetAscensionPhase()]));
-  stats.ATK = stats.ATK_base;
-  stats.DEF = stats.DEF_base;
-
-  stats.max_stamina = this->GetPlayerEx()->GetStaminaMax();
+  stats.max_HP_percent += KukiShinobu::kStatsMaxHPPercent[this->GetAscensionPhase()];
 
   if (this->HasWeapon()) {  // if the player is holding a GenshiCraft weapon
-    stats = this->GetPlayerEx()->GetWeapon()->ApplyModifiers(stats);
+    stats += this->GetPlayerEx()->GetWeapon()->GetBaseStats();
   }
 
   return stats;

@@ -31,15 +31,130 @@
 #include "character.h"
 
 #include <algorithm>
+#include <cmath>
 #include <memory>
 #include <string>
+#include <vector>
 
-#include "playerex.h"
-#include "plugin.h"
 #include "characters/kuki_shinobu.h"
 #include "exceptions.h"
+#include "playerex.h"
+#include "plugin.h"
 
 namespace genshicraft {
+
+int Character::Stats::GetATK() const {
+  return static_cast<int>(this->ATK_base * (1 + this->ATK_percent) +
+                          this->ATK_ext);
+}
+
+int Character::Stats::GetDEF() const {
+  return static_cast<int>(this->DEF_base * (1 + this->DEF_percent) +
+                          this->DEF_ext);
+}
+
+int Character::Stats::GetMaxHP() const {
+  return static_cast<int>(this->max_HP_base * (1 + this->ATK_percent) +
+                          this->max_HP_ext);
+}
+
+Character::Stats Character::Stats::operator+(const Character::Stats& other) {
+  Character::Stats stats;
+
+  stats.max_HP_base = this->max_HP_base + other.max_HP_base;
+  stats.max_HP_percent = this->max_HP_percent + other.max_HP_percent;
+  stats.max_HP_ext = this->max_HP_ext + other.max_HP_ext;
+  stats.ATK_base = this->ATK_base + other.ATK_base;
+  stats.ATK_percent = this->ATK_percent + other.ATK_percent;
+  stats.ATK_ext = this->ATK_ext = other.ATK_ext;
+  stats.DEF_base = this->DEF_base + other.DEF_base;
+  stats.DEF_percent = this->DEF_percent + other.DEF_percent;
+  stats.DEF_ext = this->DEF_ext + other.DEF_ext;
+  stats.max_stamina = this->max_stamina + other.max_stamina;
+
+  stats.CRIT_rate = this->CRIT_rate + other.CRIT_rate;
+  stats.CRIT_DMG = this->CRIT_DMG + other.CRIT_DMG;
+  stats.healing_bonus = this->healing_bonus + other.healing_bonus;
+  stats.incoming_healing_bonus =
+      this->incoming_healing_bonus + other.incoming_healing_bonus;
+  stats.energy_recharge = this->energy_recharge + other.energy_recharge;
+  stats.CD_reduction = this->CD_reduction + other.CD_reduction;
+  stats.shield_strength = this->shield_strength + other.shield_strength;
+
+  stats.pyro_DMG_bonus = this->pyro_DMG_bonus + other.pyro_DMG_bonus;
+  stats.pyro_RES = this->pyro_RES + other.pyro_RES;
+  stats.hydro_DMG_bonus = this->hydro_DMG_bonus + other.hydro_DMG_bonus;
+  stats.hydro_RES = this->hydro_RES + other.hydro_RES;
+  stats.dendro_DMG_bonus = this->dendro_DMG_bonus + other.dendro_DMG_bonus;
+  stats.dendro_RES = this->dendro_RES + other.dendro_RES;
+  stats.electro_DMG_bonus = this->electro_DMG_bonus + other.electro_DMG_bonus;
+  stats.electro_RES = this->electro_RES + other.electro_RES;
+  stats.anemo_DMG_bonus = this->anemo_DMG_bonus + other.anemo_DMG_bonus;
+  stats.anemo_RES = this->anemo_RES + other.anemo_RES;
+  stats.cryo_DMG_bonus = this->cryo_DMG_bonus + other.cryo_DMG_bonus;
+  stats.cryo_RES = this->cryo_RES + other.cryo_RES;
+  stats.geo_DMG_bonus = this->geo_DMG_bonus + other.geo_DMG_bonus;
+  stats.geo_RES = this->geo_RES + other.geo_RES;
+  stats.physical_DMG_bonus =
+      this->physical_DMG_bonus + other.physical_DMG_bonus;
+  stats.physical_RES = this->physical_RES + other.physical_RES;
+
+  return stats;
+}
+
+Character::Stats Character::Stats::operator+=(const Character::Stats& other) {
+  *this = *this + other;
+  return *this;
+}
+
+Character::Stats Character::Stats::operator-(const Character::Stats& other) {
+  Character::Stats stats;
+
+  stats.max_HP_base = this->max_HP_base - other.max_HP_base;
+  stats.max_HP_percent = this->max_HP_percent - other.max_HP_percent;
+  stats.max_HP_ext = this->max_HP_ext - other.max_HP_ext;
+  stats.ATK_base = this->ATK_base - other.ATK_base;
+  stats.ATK_percent = this->ATK_percent - other.ATK_percent;
+  stats.ATK_ext = this->ATK_ext = other.ATK_ext;
+  stats.DEF_base = this->DEF_base - other.DEF_base;
+  stats.DEF_percent = this->DEF_percent - other.DEF_percent;
+  stats.DEF_ext = this->DEF_ext - other.DEF_ext;
+  stats.max_stamina = this->max_stamina - other.max_stamina;
+
+  stats.CRIT_rate = this->CRIT_rate - other.CRIT_rate;
+  stats.CRIT_DMG = this->CRIT_DMG - other.CRIT_DMG;
+  stats.healing_bonus = this->healing_bonus - other.healing_bonus;
+  stats.incoming_healing_bonus =
+      this->incoming_healing_bonus - other.incoming_healing_bonus;
+  stats.energy_recharge = this->energy_recharge - other.energy_recharge;
+  stats.CD_reduction = this->CD_reduction - other.CD_reduction;
+  stats.shield_strength = this->shield_strength - other.shield_strength;
+
+  stats.pyro_DMG_bonus = this->pyro_DMG_bonus - other.pyro_DMG_bonus;
+  stats.pyro_RES = this->pyro_RES - other.pyro_RES;
+  stats.hydro_DMG_bonus = this->hydro_DMG_bonus - other.hydro_DMG_bonus;
+  stats.hydro_RES = this->hydro_RES - other.hydro_RES;
+  stats.dendro_DMG_bonus = this->dendro_DMG_bonus - other.dendro_DMG_bonus;
+  stats.dendro_RES = this->dendro_RES - other.dendro_RES;
+  stats.electro_DMG_bonus = this->electro_DMG_bonus - other.electro_DMG_bonus;
+  stats.electro_RES = this->electro_RES - other.electro_RES;
+  stats.anemo_DMG_bonus = this->anemo_DMG_bonus - other.anemo_DMG_bonus;
+  stats.anemo_RES = this->anemo_RES - other.anemo_RES;
+  stats.cryo_DMG_bonus = this->cryo_DMG_bonus - other.cryo_DMG_bonus;
+  stats.cryo_RES = this->cryo_RES - other.cryo_RES;
+  stats.geo_DMG_bonus = this->geo_DMG_bonus - other.geo_DMG_bonus;
+  stats.geo_RES = this->geo_RES - other.geo_RES;
+  stats.physical_DMG_bonus =
+      this->physical_DMG_bonus - other.physical_DMG_bonus;
+  stats.physical_RES = this->physical_RES - other.physical_RES;
+
+  return stats;
+}
+
+Character::Stats Character::Stats::operator-=(const Character::Stats& other) {
+  *this = *this - other;
+  return *this;
+}
 
 int Character::GetAscensionPhase() const { return this->ascension_phase_; }
 
@@ -74,6 +189,123 @@ int Character::GetLevel() const {
 }
 
 PlayerEx* Character::GetPlayerEx() const { return this->playerex_; }
+
+Character::Stats Character::GetStats() const {
+  return Character::Stats() + this->GetBaseStats();
+}
+
+std::vector<std::string> Character::GetStatsDescription(bool verbose) const {
+  std::vector<std::string> description;
+
+  if (!verbose) {
+    description.push_back("Max HP: " +
+                          std::to_string(this->GetStats().GetMaxHP()));
+    description.push_back("ATK: " + std::to_string(this->GetStats().GetATK()));
+    description.push_back("DEF: " + std::to_string(this->GetStats().GetDEF()));
+    description.push_back("Elemental Mastery: " +
+                          std::to_string(this->GetStats().elemental_mastery));
+    description.push_back("Max Stamina: " +
+                          std::to_string(this->GetStats().max_stamina));
+  } else {
+    // Base stats
+    description.push_back(
+        "Max HP: " + std::to_string(this->GetStats().max_HP_base) + " §a+" +
+        std::to_string(this->GetStats().GetMaxHP() -
+                       this->GetStats().max_HP_base));
+    description.push_back(
+        "ATK: " + std::to_string(this->GetStats().ATK_base) + " §a+" +
+        std::to_string(this->GetStats().GetATK() - this->GetStats().ATK_base));
+    description.push_back(
+        "DEF: " + std::to_string(this->GetStats().DEF_base) + " §a+" +
+        std::to_string(this->GetStats().GetDEF() - this->GetStats().DEF_base));
+    description.push_back("Elemental Mastery: " +
+                          std::to_string(this->GetStats().elemental_mastery));
+    description.push_back("Max Stamina: " +
+                          std::to_string(this->GetStats().max_stamina));
+
+    // Advanced stats
+    description.push_back(
+        "CRIT Rate: " + std::to_string(this->GetStats().CRIT_rate * 100) + "%");
+    description.push_back(
+        "CRIT DMG: " + std::to_string(this->GetStats().CRIT_DMG * 100) + "%");
+    description.push_back("Healing Bonus: " +
+                          std::to_string(this->GetStats().healing_bonus * 100) +
+                          "%");
+    description.push_back(
+        "Incoming Healing Bonus: " +
+        std::to_string(this->GetStats().incoming_healing_bonus * 100) + "%");
+    description.push_back(
+        "Energy Recharge: " +
+        std::to_string(this->GetStats().energy_recharge * 100) + "%");
+    description.push_back(
+        "CD Reduction: " + std::to_string(this->GetStats().CD_reduction * 100) +
+        "%");
+    description.push_back(
+        "Shield Strength: " +
+        std::to_string(this->GetStats().shield_strength * 100) + "%");
+
+    // Elemental type
+    description.push_back(
+        "Pyro DMG Bonus: " +
+        std::to_string(this->GetStats().pyro_DMG_bonus * 100) + "%");
+    description.push_back(
+        "Pyro RES: " + std::to_string(this->GetStats().pyro_RES * 100) + "%");
+
+    description.push_back(
+        "Hydro DMG Bonus: " +
+        std::to_string(this->GetStats().hydro_DMG_bonus * 100) + "%");
+
+    description.push_back(
+        "Hydro RES: " + std::to_string(this->GetStats().hydro_RES * 100) + "%");
+
+    description.push_back(
+        "Dendro DMG Bonus: " +
+        std::to_string(this->GetStats().dendro_DMG_bonus * 100) + "%");
+
+    description.push_back(
+        "Dendro RES: " + std::to_string(this->GetStats().dendro_RES * 100) +
+        "%");
+
+    description.push_back(
+        "Electro DMG Bonus: " +
+        std::to_string(this->GetStats().electro_DMG_bonus * 100) + "%");
+
+    description.push_back(
+        "Electro RES: " + std::to_string(this->GetStats().electro_RES * 100) +
+        "%");
+
+    description.push_back(
+        "Anemo DMG Bonus: " +
+        std::to_string(this->GetStats().anemo_DMG_bonus * 100) + "%");
+
+    description.push_back(
+        "Anemo RES: " + std::to_string(this->GetStats().anemo_RES * 100) + "%");
+
+    description.push_back(
+        "Cryo DMG Bonus: " +
+        std::to_string(this->GetStats().cryo_DMG_bonus * 100) + "%");
+
+    description.push_back(
+        "Cryo RES: " + std::to_string(this->GetStats().cryo_RES * 100) + "%");
+
+    description.push_back("Geo DMG Bonus: " +
+                          std::to_string(this->GetStats().geo_DMG_bonus * 100) +
+                          "%");
+
+    description.push_back(
+        "Geo RES: " + std::to_string(this->GetStats().geo_RES * 100) + "%");
+
+    description.push_back(
+        "Physical DMG Bonus: " +
+        std::to_string(this->GetStats().physical_DMG_bonus * 100) + "%");
+
+    description.push_back(
+        "Physical RES: " + std::to_string(this->GetStats().physical_RES * 100) +
+        "%");
+  }
+
+  return description;
+}
 
 int Character::GetTalentElementalBurstLevel() const {
   return this->talent_elemental_burst_level_;
@@ -115,7 +347,7 @@ void Character::IncreaseHP(int value) {
   }
   this->HP_ += value;
   this->HP_ = std::max(0, this->HP_);
-  this->HP_ = std::min(this->GetStats().max_HP, this->HP_);
+  this->HP_ = std::min(this->GetStats().GetMaxHP(), this->HP_);
 }
 
 bool Character::IsDead() const { return (this->HP_ == 0); }
@@ -132,12 +364,12 @@ void Character::Revive() {
 
 std::shared_ptr<Character> Character::Make(
     PlayerEx* playerex, const std::string& name, int ascension_phase,
-    int character_EXP, int constellation, int HP,
+    int character_EXP, int constellation, int energy, int HP,
     int talent_elemental_burst_level, int talent_elemental_skill_level,
     int talent_normal_attack_level) {
   if (name == "Kuki Shinobu") {
     return std::make_shared<KukiShinobu>(
-        playerex, ascension_phase, character_EXP, constellation, HP,
+        playerex, ascension_phase, character_EXP, constellation, energy, HP,
         talent_elemental_burst_level, talent_elemental_skill_level,
         talent_normal_attack_level);
   }
@@ -163,7 +395,7 @@ const int Character::kLevelMinCharacterEXPList[91] = {
     7327825, 7815450, 8362650};
 
 Character::Character(PlayerEx* playerex, int ascension_phase, int character_EXP,
-                     int constellation, int HP,
+                     int constellation, int energy, int HP,
                      int talent_elemental_burst_level,
                      int talent_elemental_skill_level,
                      int talent_normal_attack_level)
@@ -172,7 +404,7 @@ Character::Character(PlayerEx* playerex, int ascension_phase, int character_EXP,
       ascension_phase_(ascension_phase),
       character_EXP_(character_EXP),
       constellation_(constellation),
-      energy_(0),
+      energy_(energy),
       HP_(HP),
       playerex_(playerex),
       talent_elemental_burst_level_(talent_elemental_burst_level),

@@ -64,11 +64,30 @@ class PlayerEx {
   ~PlayerEx();
 
   /**
+   * @brief Consume items
+   *
+   * @param identifier The identifier of the items
+   * @param value The number to consume
+   *
+   * @exception ExceptionItemsNotEnough The number of the items are less than
+   * the number to consume.
+   */
+  void ConsumeItem(std::string identifier, int value);
+
+  /**
    * @brief Get the current character
    *
    * @return The character
    */
-  std::shared_ptr<Character> GetCharacter();
+  std::shared_ptr<Character> GetCharacter() const;
+
+  /**
+   * @brief Get the number of a type of items of the player
+   *
+   * @param identifier The identifier of the items
+   * @return The number
+   */
+  int GetItemCount(std::string identifier);
 
   /**
    * @brief Get the Menu handler
@@ -89,14 +108,14 @@ class PlayerEx {
    *
    * @return The stamina
    */
-  int GetStamina();
+  int GetStamina() const;
 
   /**
    * @brief Get the max stamina
    *
    * @return The max stamina
    */
-  int GetStaminaMax();
+  int GetStaminaMax() const;
 
   /**
    * @brief Get the Weapon object
@@ -130,7 +149,7 @@ class PlayerEx {
    * @brief Refresh items in the inventory
    *
    */
-  void RefreshItems();
+  void RefreshItems() const;
 
   /**
    * @brief Set whether the player is opening a container or not

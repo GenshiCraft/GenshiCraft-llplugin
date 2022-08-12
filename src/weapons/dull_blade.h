@@ -59,23 +59,15 @@ class DullBlade : public Weapon {
   DullBlade() = delete;
 
   /**
-   * @brief Apply modifiers to character stats
+   * @brief Get the base stats
    *
-   * @param stats The character stats
+   * @param stats The stats
    */
-  struct Character::Stats ApplyModifiers(
-      const struct Character::Stats& stats) const override;
-
-  /**
-   * @brief Get the ATK
-   *
-   * @return The ATK
-   */
-  int GetATK() const override;
+  Character::Stats GetBaseStats() const override;
 
   /**
    * @brief Get the name
-   * 
+   *
    * @return "Dull Blade"
    */
   std::string GetName() const override;

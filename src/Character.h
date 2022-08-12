@@ -33,6 +33,7 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 
 namespace genshicraft {
 
@@ -47,26 +48,59 @@ class PlayerEx;
 class Character {
  public:
   /**
-   * @brief The Stats struct is a collection of character stats.
+   * @brief The Stats class is a collection of character stats.
    *
    */
-  struct Stats {
+  class Stats {
+   public:
+    /**
+     * @brief Get the ATK
+     *
+     * @return The ATK
+     */
+    int GetATK() const;
+
+    /**
+     * @brief Get the DEF
+     *
+     * @return The DEF
+     */
+    int GetDEF() const;
+
+    /**
+     * @brief Get the max HP
+     *
+     * @return The max HP
+     */
+    int GetMaxHP() const;
+
+    Stats operator+(const Stats& other);
+
+    Stats operator+=(const Stats& other);
+
+    Stats operator-(const Stats& other);
+
+    Stats operator-=(const Stats& other);
+
     // Base stats
-    int max_HP;
-    int max_HP_base;
-    int ATK;
-    int ATK_base;
-    int DEF;
-    int DEF_base;
+    int max_HP_base = 0;
+    double max_HP_percent = 0.;
+    int max_HP_ext = 0;
+    int ATK_base = 0;
+    double ATK_percent = 0.;
+    int ATK_ext = 0;
+    int DEF_base = 0;
+    double DEF_percent = 0.;
+    int DEF_ext = 0;
     int elemental_mastery = 0;
-    int max_stamina;
+    int max_stamina = 0;
 
     // Advanced stats
-    double CRIT_rate = 0.05;
-    double CRIT_DMG = 0.5;
+    double CRIT_rate = 0.;
+    double CRIT_DMG = 0.;
     double healing_bonus = 0.;
     double incoming_healing_bonus = 0.;
-    double energy_recharge = 1.;
+    double energy_recharge = 0.;
     double CD_reduction = 0.;
     double shield_strength = 0.;
 
@@ -97,6 +131,13 @@ class Character {
    * @return The ascension phase (0 <= x <= 6)
    */
   int GetAscensionPhase() const;
+
+  /**
+   * @brief Get the base stats
+   *
+   * @return The stats
+   */
+  virtual Stats GetBaseStats() const = 0;
 
   /**
    * @brief Get the CD remaining of elemental burst
@@ -215,7 +256,15 @@ class Character {
    *
    * @return The stats
    */
-  virtual struct Stats GetStats() const = 0;
+  Stats GetStats() const;
+
+  /**
+   * @brief Describe the stats
+   *
+   * @param verbose True if get verbose description
+   * @return The description
+   */
+  std::vector<std::string> GetStatsDescription(bool verbose = false) const;
 
   /**
    * @brief Get the talent elemental burst level
@@ -288,7 +337,7 @@ class Character {
 
   /**
    * @brief Check if the energy is full
-   * 
+   *
    * @return True if full
    */
   bool IsEnergyFull() const;
@@ -307,6 +356,7 @@ class Character {
    * @param ascension_phase The ascention phase (0 <= x <= 6)
    * @param character_EXP The character EXP (x >= 0)
    * @param constellation The constellation (0 <= x <= 6)
+   * @param energy The energy (x >= 0)
    * @param HP The HP (x >= 0)
    * @param talent_elemental_burst_level The level of elemental burst (1 <= x <=
    * 10)
@@ -320,7 +370,7 @@ class Character {
    */
   static std::shared_ptr<Character> Make(
       PlayerEx* playerex, const std::string& name, int ascension_phase = 0,
-      int character_EXP = 0, int constellation = 0, int HP = 0,
+      int character_EXP = 0, int constellation = 0, int energy = 0, int HP = 0,
       int talent_elemental_burst_level = 1,
       int talent_elemental_skill_level = 1, int talent_normal_attack_level = 1);
 
@@ -332,6 +382,7 @@ class Character {
    * @param ascension_phase The ascention phase (0 <= x <= 6)
    * @param character_EXP The character EXP (x >= 0)
    * @param constellation The constellation (0 <= x <= 6)
+   * @param energy The energy (x >= 0)
    * @param HP The HP (x >= 0)
    * @param talent_elemental_burst_level The level of elemental burst (1 <= x <=
    * 10)
@@ -343,8 +394,9 @@ class Character {
    * @exception ExceptionInvalidCharacterData The character data is invalid.
    */
   Character(PlayerEx* playerex, int ascension_phase, int character_EXP,
-            int constellation, int HP, int talent_elemental_burst_level,
-            int talent_elemental_skill_level, int talent_normal_attack_level);
+            int constellation, int energy, int HP,
+            int talent_elemental_burst_level, int talent_elemental_skill_level,
+            int talent_normal_attack_level);
 
   double last_elemental_burst_clock_;  // the clock of last elemental burst
   double last_elemental_skill_clock_;  // the clock of last elemental skill

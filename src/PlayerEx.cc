@@ -35,6 +35,8 @@
 #include <KVDBAPI.h>
 #include <ScheduleAPI.h>
 
+#include <MC/Container.hpp>
+#include <MC/ItemStack.hpp>
 #include <MC/Level.hpp>
 #include <MC/Player.hpp>
 #include <algorithm>
@@ -65,7 +67,7 @@ PlayerEx::PlayerEx(Player* player)
 
   auto players_db = KVDB::open("plugins/GenshiCraft/db/players");
 
-  string player_data_str;
+  std::string player_data_str;
   nlohmann::json player_data;
 
   if (!players_db->get(this->xuid_,
@@ -77,30 +79,45 @@ PlayerEx::PlayerEx(Player* player)
     player_data = nlohmann::json::parse(player_data_str);
   }
 
-  // Load character data
-  for (const auto& character_data : player_data["character_owned"]) {
-    auto name = character_data["name"].get<std::string>();
-    auto ascension_phase = character_data["ascension_phase"].get<int>();
-    auto character_EXP = character_data["character_EXP"].get<int>();
-    auto constellation = character_data["constellation"].get<int>();
-    auto HP = character_data["HP"].get<int>();
-    auto talent_elemental_burst_level =
-        character_data["talent_elemental_burst_level"].get<int>();
-    auto talent_elemental_skill_level =
-        character_data["talent_elemental_skill_level"].get<int>();
-    auto talent_normal_attack_level =
-        character_data["talent_normal_attack_level"].get<int>();
+  auto LoadCharacterData = [player_data, this]() {
+    this->character_owned_.clear();
 
-    auto character = Character::Make(
-        this, name, ascension_phase, character_EXP, constellation, HP,
-        talent_elemental_burst_level, talent_elemental_skill_level,
-        talent_normal_attack_level);
+    for (const auto& character_data : player_data["character_owned"]) {
+      auto name = character_data["name"].get<std::string>();
+      auto ascension_phase = character_data["ascension_phase"].get<int>();
+      auto character_EXP = character_data["character_EXP"].get<int>();
+      auto constellation = character_data["constellation"].get<int>();
+      auto energy = character_data["energy"].get<int>();
+      auto HP = character_data["HP"].get<int>();
+      auto talent_elemental_burst_level =
+          character_data["talent_elemental_burst_level"].get<int>();
+      auto talent_elemental_skill_level =
+          character_data["talent_elemental_skill_level"].get<int>();
+      auto talent_normal_attack_level =
+          character_data["talent_normal_attack_level"].get<int>();
 
-    this->character_owned_.push_back(character);
+      auto character = Character::Make(
+          this, name, ascension_phase, character_EXP, constellation, energy, HP,
+          talent_elemental_burst_level, talent_elemental_skill_level,
+          talent_normal_attack_level);
 
-    if (name == player_data["character"].get<std::string>()) {
-      this->character_ = character;
+      this->character_owned_.push_back(character);
+
+      if (name == player_data["character"].get<std::string>()) {
+        this->character_ = character;
+      }
     }
+  };
+
+  try {
+    LoadCharacterData();
+  } catch (const nlohmann::json::type_error&) {
+    // Load default
+    player_data = PlayerEx::kPlayerDataTemplate;
+    player_data_str = player_data.dump();
+    players_db->set(this->xuid_, player_data_str);
+
+    LoadCharacterData();
   }
 
   // Load stamina
@@ -120,6 +137,7 @@ PlayerEx::~PlayerEx() {
     character_data["ascension_phase"] = character->GetAscensionPhase();
     character_data["character_EXP"] = character->GetCharacterEXP();
     character_data["constellation"] = character->GetConstellation();
+    character_data["energy"] = character->GetEnergy();
     character_data["HP"] = character->GetHP();
     character_data["talent_elemental_burst_level"] =
         character->GetTalentElementalBurstLevel();
@@ -136,15 +154,51 @@ PlayerEx::~PlayerEx() {
   players_db->set(this->xuid_, player_data.dump());
 }
 
-std::shared_ptr<Character> PlayerEx::GetCharacter() { return this->character_; }
+void PlayerEx::ConsumeItem(std::string identifier, int value) {
+  // Check if the items are enough for consumption
+  if (this->GetItemCount(identifier) < value) {
+    throw ExceptionItemsNotEnough();
+  }
+
+  auto& inventory = this->GetPlayer()->getInventory();
+  for (int i = 0; i < inventory.getSize(); ++i) {
+    if (inventory.getSlot(i)->getTypeName() == identifier) {
+      int consumed_value = std::min(value, inventory.getSlot(i)->getCount());
+      inventory.removeItem_s(i, consumed_value);
+      value -= consumed_value;
+      if (value <= 0) {
+        break;
+      }
+    }
+  }
+
+  this->RefreshItems();
+}
+
+std::shared_ptr<Character> PlayerEx::GetCharacter() const {
+  return this->character_;
+}
+
+int PlayerEx::GetItemCount(std::string identifier) {
+  auto& inventory = this->GetPlayer()->getInventory();
+
+  int item_count = 0;
+  for (auto&& item : inventory.getAllSlots()) {
+    if (identifier == item->getTypeName()) {
+      item_count += item->getCount();
+    }
+  }
+
+  return item_count;
+}
 
 Menu& PlayerEx::GetMenu() { return this->menu_; }
 
 Player* PlayerEx::GetPlayer() { return Global<Level>->getPlayer(this->xuid_); }
 
-int PlayerEx::GetStamina() { return this->stamina_; }
+int PlayerEx::GetStamina() const { return this->stamina_; }
 
-int PlayerEx::GetStaminaMax() { return this->stamina_max_; }
+int PlayerEx::GetStaminaMax() const { return this->stamina_max_; }
 
 std::shared_ptr<Weapon> PlayerEx::GetWeapon() {
   auto mainhand_item = this->GetPlayer()->getHandSlot();
@@ -167,7 +221,7 @@ bool PlayerEx::IsOpeningContainer() const {
   return this->is_opening_container_;
 }
 
-void PlayerEx::RefreshItems() {
+void PlayerEx::RefreshItems() const {
   auto xuid = this->xuid_;
   // Refresh next tick to ensure that the data of the items are updated
   Schedule::nextTick([xuid]() {
@@ -292,6 +346,7 @@ const nlohmann::json PlayerEx::kPlayerDataTemplate = R"(
         "ascension_phase": 0,
         "character_EXP": 0,
         "constellation": 0,
+        "energy": 0,
         "HP": 1030,
         "talent_elemental_burst_level": 1,
         "talent_elemental_skill_level": 1,

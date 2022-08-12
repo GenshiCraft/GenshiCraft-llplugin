@@ -41,6 +41,7 @@
 #include <string>
 #include <vector>
 
+#include "character.h"
 #include "exceptions.h"
 #include "playerex.h"
 #include "plugin.h"
@@ -51,16 +52,128 @@ namespace genshicraft {
 
 const int Weapon::kAcensionPhaseMaxLevelList[7] = {20, 40, 50, 60, 70, 80, 90};
 
+void Weapon::ApplyLore(ItemStack* item, PlayerEx* playerex) {
+  static const std::string kRefinementSymbolList[6] = {" ", "①", "②",
+                                                       "③", "④", "§e⑤"};
+
+  // Set the lore
+  std::vector<std::string> lore;
+
+  if (this->GetType() == Weapon::Type::kSword) {
+    lore.push_back("§7Sword");
+  } else if (this->GetType() == Weapon::Type::kClaymore) {
+    lore.push_back("§7Claymore");
+  } else if (this->GetType() == Weapon::Type::kPolearm) {
+    lore.push_back("§7Polearm");
+  } else if (this->GetType() == Weapon::Type::kCatalyst) {
+    lore.push_back("§7Catalyst");
+  } else if (this->GetType() == Weapon::Type::kBow) {
+    lore.push_back("§7Bow");
+  }
+
+  for (const auto& line : this->GetBaseStatsDescription()) {
+    lore.push_back("§f" + line);
+  }
+
+  std::string rarity_line = "§6";
+  for (int i = 0; i < this->GetRarity(); ++i) {
+    rarity_line += "★";
+  }
+  lore.push_back(rarity_line);
+
+  std::string level_line;
+  level_line +=
+      "§fLv." + std::to_string(this->GetLevel()) + " §7/ " +
+      std::to_string(
+          Weapon::kAcensionPhaseMaxLevelList[this->GetAscensionPhase()]);
+  level_line += " §f";
+  for (int i = 0; i < ((this->GetRarity() <= 2) ? 4 : 6); ++i) {
+    if (i == this->GetAscensionPhase()) {
+      level_line += "§7";
+    }
+    level_line += "✦";
+  }
+  lore.push_back(level_line);
+
+  if (this->GetRarity() >= 3) {
+    lore.push_back("§eRefinement Rank " +
+                   std::to_string(this->GetRefinement()));
+  }
+
+  // Prevent duplicated refresh
+  auto old_lore = item->getCustomLore();
+  bool is_updated = false;
+  if (old_lore.size() != lore.size()) {
+    is_updated = true;
+  } else {
+    for (int i = 0; i < lore.size(); ++i) {
+      if (old_lore.at(i) != lore.at(i)) {
+        is_updated = true;
+      }
+    }
+  }
+
+  if (is_updated) {
+    item->setCustomLore(lore);
+    playerex->RefreshItems();
+  }
+}
+
 int Weapon::GetAscensionPhase() const { return this->ascension_phase_; }
 
+std::vector<std::string> Weapon::GetBaseStatsDescription() const {
+  std::vector<std::string> description;
+
+  description.push_back("Base ATK: " +
+                        std::to_string(this->GetBaseStats().ATK_base));
+
+  if (this->GetBaseStats().max_HP_percent > 0.0001) {
+    description.push_back(
+        "Max HP: " + std::to_string(this->GetBaseStats().max_HP_percent * 100) +
+        "%");
+  } else if (this->GetBaseStats().ATK_percent > 0.0001) {
+    description.push_back(
+        "ATK: " + std::to_string(this->GetBaseStats().ATK_percent * 100) + "%");
+  } else if (this->GetBaseStats().DEF_percent > 0.0001) {
+    description.push_back(
+        "DEF: " + std::to_string(this->GetBaseStats().DEF_percent * 100) + "%");
+  } else if (this->GetBaseStats().elemental_mastery != 0) {
+    description.push_back(
+        "Elemental Mastery: " +
+        std::to_string(this->GetBaseStats().elemental_mastery));
+  } else if (std::abs(this->GetBaseStats().CRIT_rate) > 0.000001) {
+    description.push_back(
+        "CRIT Rate: " + std::to_string(this->GetBaseStats().CRIT_rate * 100) +
+        "%");
+  } else if (std::abs(this->GetBaseStats().CRIT_DMG) > 0.000001) {
+    description.push_back(
+        "CRIT DMG: " + std::to_string(this->GetBaseStats().CRIT_DMG * 100) +
+        "%");
+  } else if (std::abs(this->GetBaseStats().energy_recharge) > 0.000001) {
+    description.push_back(
+        "Energy Recharge: " +
+        std::to_string(this->GetBaseStats().energy_recharge * 100) + "%");
+  } else if (std::abs(this->GetBaseStats().physical_DMG_bonus) > 0.000001) {
+    description.push_back(
+        "Physical DMG Bonus: " +
+        std::to_string(this->GetBaseStats().physical_DMG_bonus * 100) + "%");
+  }
+
+  return description;
+}
+
 int Weapon::GetLevel() const {
-  int rarity = this->GetRarity();
+  return this->GetLevelByWeaponEXP(this->weapon_exp_);
+}
+
+int Weapon::GetLevelByWeaponEXP(int weapon_exp) const {
+  auto rarity = this->GetRarity();
 
   // Get the level by the Weapon EXP
   int level = 1;
   if (rarity == 1) {
     for (int i = 1; i <= 70; ++i) {
-      if (Weapon::k1StarLevelMinWeaponEXPList[i] <= this->weapon_exp_) {
+      if (Weapon::k1StarLevelMinWeaponEXPList[i] <= weapon_exp) {
         level = i;
       } else {
         break;
@@ -69,7 +182,7 @@ int Weapon::GetLevel() const {
   }
   if (rarity == 2) {
     for (int i = 1; i <= 70; ++i) {
-      if (Weapon::k2StarLevelMinWeaponEXPList[i] <= this->weapon_exp_) {
+      if (Weapon::k2StarLevelMinWeaponEXPList[i] <= weapon_exp) {
         level = i;
       } else {
         break;
@@ -78,7 +191,7 @@ int Weapon::GetLevel() const {
   }
   if (rarity == 3) {
     for (int i = 1; i <= 90; ++i) {
-      if (Weapon::k3StarLevelMinWeaponEXPList[i] <= this->weapon_exp_) {
+      if (Weapon::k3StarLevelMinWeaponEXPList[i] <= weapon_exp) {
         level = i;
       } else {
         break;
@@ -87,7 +200,7 @@ int Weapon::GetLevel() const {
   }
   if (rarity == 4) {
     for (int i = 1; i <= 90; ++i) {
-      if (Weapon::k4StarLevelMinWeaponEXPList[i] <= this->weapon_exp_) {
+      if (Weapon::k4StarLevelMinWeaponEXPList[i] <= weapon_exp) {
         level = i;
       } else {
         break;
@@ -96,7 +209,7 @@ int Weapon::GetLevel() const {
   }
   if (rarity == 5) {
     for (int i = 1; i <= 90; ++i) {
-      if (Weapon::k5StarLevelMinWeaponEXPList[i] <= this->weapon_exp_) {
+      if (Weapon::k5StarLevelMinWeaponEXPList[i] <= weapon_exp) {
         level = i;
       } else {
         break;
@@ -151,37 +264,6 @@ void Weapon::IncreaseWeaponEXP(int value) {
   this->weapon_exp_ += std::max(value, 0);
 }
 
-void Weapon::ApplyLore(ItemStack* item, PlayerEx* playerex) {
-  // Set the lore
-  const std::string refinement_symbols[6] = {" ", "①", "②", "③", "④", "⑤"};
-  std::vector<std::string> lore;
-  std::string rarity_symbols;
-  for (int i = 0; i < this->GetRarity(); ++i) {
-    rarity_symbols += "★";
-  }
-  lore.push_back("§e" + rarity_symbols);
-  lore.push_back("§fLv. " + std::to_string(this->GetLevel()) + " " +
-                 refinement_symbols[this->GetRefinement()]);
-
-  // Prevent duplicated refresh
-  auto old_lore = item->getCustomLore();
-  bool is_updated = false;
-  if (old_lore.size() != lore.size()) {
-    is_updated = true;
-  } else {
-    for (int i = 0; i < lore.size(); ++i) {
-      if (old_lore.at(i) != lore.at(i)) {
-        is_updated = true;
-      }
-    }
-  }
-
-  if (is_updated) {
-    item->setCustomLore(lore);
-    playerex->RefreshItems();
-  }
-}
-
 bool Weapon::CheckIsWeapon(ItemStack* item) {
   auto current_identifier = item->getTypeName();
 
@@ -219,7 +301,8 @@ std::shared_ptr<Weapon> Weapon::Make(ItemStack* item, PlayerEx* playerex) {
   throw ExceptionNotAWeapon();
 }
 
-Weapon::Weapon(ItemStack* item, PlayerEx* playerex) {
+Weapon::Weapon(ItemStack* item, PlayerEx* playerex)
+    : item_(item), playerex_(playerex) {
   // Check if the item is a GenshiCraft item
   if (!Weapon::CheckIsWeapon(item)) {
     throw ExceptionNotAWeapon();
@@ -241,10 +324,10 @@ Weapon::Weapon(ItemStack* item, PlayerEx* playerex) {
     tag->put("genshicraft", CompoundTag());
 
     auto data = tag->getCompound("genshicraft");
-    data->putInt("weapon_exp", this->weapon_exp_);  // the Weapon EXP
     data->putInt("ascension_phase",
                  this->ascension_phase_);           // the Ascension Phase
     data->putInt("refinement", this->refinement_);  // the Refinement
+    data->putInt("weapon_exp", this->weapon_exp_);  // the Weapon EXP
 
     item->setNbt(nbt.get());
 
@@ -253,9 +336,32 @@ Weapon::Weapon(ItemStack* item, PlayerEx* playerex) {
 
   auto data = nbt->getCompound("tag")->getCompound("genshicraft");
 
-  this->weapon_exp_ = data->getInt("weapon_exp");
   this->ascension_phase_ = data->getInt("ascension_phase");
   this->refinement_ = data->getInt("refinement");
+  this->weapon_exp_ = data->getInt("weapon_exp");
+}
+
+Weapon::~Weapon() {
+  auto nbt = this->item_->getNbt();
+  auto data = nbt->getCompound("tag")->getCompound("genshicraft");
+
+  bool is_modified = false;
+  if (this->ascension_phase_ != data->getInt("ascension_phase") ||
+      this->refinement_ != data->getInt("refinement") ||
+      this->weapon_exp_ != data->getInt("weapon_exp")) {
+    is_modified = true;
+  }
+
+  data->putInt("ascension_phase",
+               this->ascension_phase_);           // the Ascension Phase
+  data->putInt("refinement", this->refinement_);  // the Refinement
+  data->putInt("weapon_exp", this->weapon_exp_);  // the Weapon EXP
+
+  this->item_->setNbt(nbt.get());
+
+  if (is_modified) {
+    this->playerex_->RefreshItems();
+  }
 }
 
 const std::vector<std::string> Weapon::kIdentifierList = {

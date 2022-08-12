@@ -68,7 +68,9 @@ class ExceptionCharacter : public Exception {
 class ExceptionInvalidCharacterData : public ExceptionCharacter {
  public:
   ExceptionInvalidCharacterData()
-      : ExceptionCharacter("The character data is invalid.") {}
+      : ExceptionCharacter(
+            "[genshicraft::ExceptionInvalidCharacterData] The character data "
+            "is invalid.") {}
 
   using ExceptionCharacter::ExceptionCharacter;
 };
@@ -81,9 +83,36 @@ class ExceptionInvalidCharacterData : public ExceptionCharacter {
 class ExceptionNotACharacter : public ExceptionCharacter {
  public:
   ExceptionNotACharacter()
-      : ExceptionCharacter("The name does not match any character.") {}
+      : ExceptionCharacter(
+            "[genshicraft::ExceptionNotACharacter] The name does not match any "
+            "character.") {}
 
   using ExceptionCharacter::ExceptionCharacter;
+};
+
+/**
+ * @brief The ExceptionPlayerEx class is the base class for exceptions related
+ * to the PlayerEx class.
+ *
+ */
+class ExceptionPlayerEx : public Exception {
+ public:
+  using Exception::Exception;
+};
+
+/**
+ * @brief The ExceptionItemsNotEnough class represents that the item is not a
+ * GenshiCraft item.
+ *
+ */
+class ExceptionItemsNotEnough : public ExceptionPlayerEx {
+ public:
+  ExceptionItemsNotEnough()
+      : ExceptionPlayerEx(
+            "[genshicraft::ExceptionItemsNotEnough] The items are not "
+            "enough.") {}
+
+  using ExceptionPlayerEx::ExceptionPlayerEx;
 };
 
 /**
@@ -104,7 +133,9 @@ class ExceptionWeapon : public Exception {
 class ExceptionNotAWeapon : public ExceptionWeapon {
  public:
   ExceptionNotAWeapon()
-      : ExceptionWeapon("The item is not a GenshiCraft weapon.") {}
+      : ExceptionWeapon(
+            "[genshicraft::ExceptionNotAWeapon] The item is not a GenshiCraft "
+            "weapon.") {}
 
   using ExceptionWeapon::ExceptionWeapon;
 };

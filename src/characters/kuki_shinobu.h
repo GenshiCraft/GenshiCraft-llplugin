@@ -51,6 +51,7 @@ class KukiShinobu : public Character {
    * @param ascension_phase The ascention phase (0 <= x <= 6)
    * @param character_EXP The character EXP (x >= 0)
    * @param constellation The constellation (0 <= x <= 6)
+   * @param energy The energy (x >= 0)
    * @param HP The HP (x >= 0)
    * @param talent_elemental_burst_level The level of elemental burst (1 <= x <=
    * 10)
@@ -62,10 +63,18 @@ class KukiShinobu : public Character {
    * @exception ExceptionInvalidCharacterData The character data is invalid.
    */
   KukiShinobu(PlayerEx* playerex, int ascension_phase, int character_EXP,
-              int constellation, int HP, int talent_elemental_burst_level,
+              int constellation, int energy, int HP,
+              int talent_elemental_burst_level,
               int talent_elemental_skill_level, int talent_normal_attack_level);
 
   KukiShinobu() = delete;
+
+  /**
+   * @brief Get the base stats
+   *
+   * @return The stats
+   */
+  Character::Stats GetBaseStats() const override;
 
   /**
    * @brief Get the CD of elemental burst
@@ -122,13 +131,6 @@ class KukiShinobu : public Character {
    * @return 4
    */
   int GetRarity() const override;
-
-  /**
-   * @brief Get the stats
-   *
-   * @return The stats
-   */
-  struct Character::Stats GetStats() const override;
 
   /**
    * @brief Check if the character is holding a weapon

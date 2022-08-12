@@ -42,11 +42,11 @@
 #include <MC/Player.hpp>
 #include <chrono>
 
-#include "version.h"
 #include "command.h"
 #include "damage.h"
 #include "exceptions.h"
 #include "playerex.h"
+#include "version.h"
 #include "weapon.h"
 
 namespace genshicraft {
@@ -97,34 +97,39 @@ void Init() {
 }
 
 bool OnMobHurt(Event::MobHurtEvent& event) {
+  double damage = event.mDamage * 10;
+
+  // Damage source
   if (event.mDamageSource->isEntitySource() &&
-      event.mDamageSource->getEntity()->getTypeName() == "minecraft:player") {
+      event.mDamageSource->getEntity()->getTypeName() ==
+          "minecraft:player") {  // if the performer is a player
     auto player = static_cast<Player*>(event.mDamageSource->getEntity());
     auto playerex = PlayerEx::Get(player->getXuid());
-
-    double damage = event.mDamage * 10;
 
     if (playerex->GetCharacter()->HasWeapon()) {
       damage = playerex->GetCharacter()->GetDamageNormalAttack().Get();
     }
 
-    if (damage > 0.0001) {
-      event.mDamage = static_cast<float>(damage / 10);
+    event.mDamage = static_cast<float>(damage / 10);
 
+    if (event.mDamage > 0.0001) {
       player->sendTitlePacket(std::to_string(static_cast<int>(damage)),
                               TitleType::SetActionBar, 0, 1, 0);
-    } else {
-      return false;
     }
   }
 
+  // Damage victim
   if (event.mMob->getTypeName() == "minecraft:player") {
-    auto victim = static_cast<Player*>(event.mMob);
-    auto victim_playerex = PlayerEx::Get(victim->getXuid());
-    // The character takes damage
-    victim_playerex->GetCharacter()->IncreaseHP(
-        static_cast<int>(-event.mDamage * 10));
+    auto playerex = PlayerEx::Get(static_cast<Player*>(event.mMob)->getXuid());
+
+    // Use GenshiCraft damage instead of Minecraft damage
+    playerex->GetCharacter()->IncreaseHP(static_cast<int>(-damage));
     event.mDamage = 0;
+  }
+
+  // Prevent zero-damage hurt
+  if (damage < 0.0001) {
+    return false;
   }
 
   return true;
@@ -146,7 +151,7 @@ bool OnPlayerDropItem(Event::PlayerDropItemEvent& event) {
     }
   } else {  // if the player is pressing Shift + Q
     playerex->GetMenu().OpenMain();
-    
+
     return false;
   }
 

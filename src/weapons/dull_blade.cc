@@ -34,9 +34,9 @@
 #include <string>
 
 #include "character.h"
+#include "exceptions.h"
 #include "playerex.h"
 #include "weapon.h"
-#include "exceptions.h"
 
 namespace genshicraft {
 
@@ -50,14 +50,11 @@ DullBlade::DullBlade(ItemStack* item, PlayerEx* playerex)
   this->ApplyLore(item, playerex);
 }
 
-struct Character::Stats DullBlade::ApplyModifiers(
-    const struct Character::Stats& stats) const {
+Character::Stats DullBlade::GetBaseStats() const {
+  Character::Stats stats;
+  stats.ATK_base = DullBlade::kATKBase[this->GetAscensionPhase()] +
+                   DullBlade::kATKDiff * this->GetLevel();
   return stats;
-}
-
-int DullBlade::GetATK() const {
-  return (DullBlade::kATKBase[this->GetAscensionPhase()] +
-          DullBlade::kATKDiff * this->GetLevel());
 }
 
 std::string DullBlade::GetName() const { return "Dull Blade"; }

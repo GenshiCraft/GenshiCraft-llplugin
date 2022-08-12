@@ -45,7 +45,7 @@ double Damage::Get() const {
   static std::default_random_engine random_engine;
   static std::uniform_real_distribution<> dist(0, 1);
 
-  double damage = this->stats_.ATK;
+  double damage = this->stats_.GetATK();
 
   damage *= this->amplifier_;
 
