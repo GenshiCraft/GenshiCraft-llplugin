@@ -75,6 +75,17 @@ void Sidebar::Refresh() {
                                             (HP_progress < 0.3) ? "§c" : "§a"),
        1});
 
+  // Fullness
+  auto fullness_progress =
+      std::min(this->playerex_->GetCharacter()->GetFullness(), 100.) / 100.;
+  content.push_back(
+      {"Fullness " + Sidebar::GenerateProgressBar(
+                         fullness_progress, 21,
+                         (fullness_progress < 0.75)
+                             ? "§a"
+                             : ((fullness_progress > 0.999) ? "§c" : "§e")),
+       2});
+
   // Elemental Skill CD
   auto elemental_skill_CD_progress =
       1 - static_cast<double>(
@@ -84,7 +95,7 @@ void Sidebar::Refresh() {
       {"Skill CD " + Sidebar::GenerateProgressBar(
                          elemental_skill_CD_progress, 24,
                          (elemental_skill_CD_progress > 0.999) ? "§a" : "§e"),
-       2});
+       3});
 
   // Elemental Burst CD
   auto elemental_burst_CD_progress =
@@ -95,7 +106,7 @@ void Sidebar::Refresh() {
       {"Burst CD " + Sidebar::GenerateProgressBar(
                          elemental_burst_CD_progress, 20,
                          (elemental_burst_CD_progress > 0.999) ? "§a" : "§e"),
-       3});
+       4});
 
   // Elemental Burst Energy
   auto elemental_burst_energy_progress =
@@ -105,7 +116,7 @@ void Sidebar::Refresh() {
       {"Energy " + Sidebar::GenerateProgressBar(
                        elemental_burst_energy_progress, 24,
                        (elemental_burst_energy_progress > 0.999) ? "§a" : "§e"),
-       4});
+       5});
 
   auto player = this->playerex_->GetPlayer();
   player->removeSidebar();

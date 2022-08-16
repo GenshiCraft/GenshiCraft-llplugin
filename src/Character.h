@@ -35,9 +35,14 @@
 #include <string>
 #include <vector>
 
+#include "modifier.h"
+#include "stats.h"
+
 namespace genshicraft {
 
 class Damage;
+
+class Modifier;
 
 class PlayerEx;
 
@@ -47,83 +52,17 @@ class PlayerEx;
  */
 class Character {
  public:
-  /**
-   * @brief The Stats class is a collection of character stats.
-   *
-   */
-  class Stats {
-   public:
-    /**
-     * @brief Get the ATK
-     *
-     * @return The ATK
-     */
-    int GetATK() const;
-
-    /**
-     * @brief Get the DEF
-     *
-     * @return The DEF
-     */
-    int GetDEF() const;
-
-    /**
-     * @brief Get the max HP
-     *
-     * @return The max HP
-     */
-    int GetMaxHP() const;
-
-    Stats operator+(const Stats& other);
-
-    Stats operator+=(const Stats& other);
-
-    Stats operator-(const Stats& other);
-
-    Stats operator-=(const Stats& other);
-
-    // Base stats
-    int max_HP_base = 0;
-    double max_HP_percent = 0.;
-    int max_HP_ext = 0;
-    int ATK_base = 0;
-    double ATK_percent = 0.;
-    int ATK_ext = 0;
-    int DEF_base = 0;
-    double DEF_percent = 0.;
-    int DEF_ext = 0;
-    int elemental_mastery = 0;
-    int max_stamina = 0;
-
-    // Advanced stats
-    double CRIT_rate = 0.;
-    double CRIT_DMG = 0.;
-    double healing_bonus = 0.;
-    double incoming_healing_bonus = 0.;
-    double energy_recharge = 0.;
-    double CD_reduction = 0.;
-    double shield_strength = 0.;
-
-    // Elemental type
-    double pyro_DMG_bonus = 0.;
-    double pyro_RES = 0.;
-    double hydro_DMG_bonus = 0.;
-    double hydro_RES = 0.;
-    double dendro_DMG_bonus = 0.;
-    double dendro_RES = 0.;
-    double electro_DMG_bonus = 0.;
-    double electro_RES = 0.;
-    double anemo_DMG_bonus = 0.;
-    double anemo_RES = 0.;
-    double cryo_DMG_bonus = 0.;
-    double cryo_RES = 0.;
-    double geo_DMG_bonus = 0.;
-    double geo_RES = 0.;
-    double physical_DMG_bonus = 0.;
-    double physical_RES = 0.;
-  };
+  static const int kAcensionPhaseMaxLevelList[7];  // the maximum level of each
+                                                   // acension phase
 
   Character() = delete;
+
+  /**
+   * @brief Add a modifier
+   *
+   * @param modifier The modifier
+   */
+  void AddModifier(Modifier modifier);
 
   /**
    * @brief Get the ascension phase
@@ -217,6 +156,13 @@ class Character {
   virtual int GetEnergyMax() const = 0;
 
   /**
+   * @brief Get the fullness
+   * 
+   * @return The fullness
+   */
+  double GetFullness() const;
+
+  /**
    * @brief Get the HP
    *
    * @return The HP (x >= 0)
@@ -226,9 +172,17 @@ class Character {
   /**
    * @brief Get the level (1 <= x <= 90)
    *
-   * @return
+   * @return The level
    */
   int GetLevel() const;
+
+  /**
+   * @brief Get the level with the character EXP
+   *
+   * @param character_exp The character EXP
+   * @return The level
+   */
+  int GetLevelByCharacterEXP(int character_exp) const;
 
   /**
    * @brief Get the name
@@ -322,6 +276,13 @@ class Character {
   void IncreaseEnergy(int value);
 
   /**
+   * @brief Increase fullness
+   * 
+   * @param value The value to increase. Negative value for decreasing
+   */
+  void IncreaseFullness(double value);
+
+  /**
    * @brief Increase the HP. If dead, the HP would not increase
    *
    * @param value The value to increase. Negative value for decreasing
@@ -341,6 +302,19 @@ class Character {
    * @return True if full
    */
   bool IsEnergyFull() const;
+
+  /**
+   * @brief Refresh the character
+   *
+   */
+  void Refresh();
+
+  /**
+   * @brief Remove a modifier
+   *
+   * @param id The ID of the modifier
+   */
+  void RemoveModifier(int id);
 
   /**
    * @brief Revive
@@ -402,8 +376,6 @@ class Character {
   double last_elemental_skill_clock_;  // the clock of last elemental skill
 
  private:
-  static const int kAcensionPhaseMaxLevelList[7];  // the maximum level of each
-                                                   // acension phase
   static const int
       kLevelMinCharacterEXPList[91];  // the minimum character EXP of each level
 
@@ -411,7 +383,9 @@ class Character {
   int character_EXP_;
   int constellation_;
   int energy_;
+  double fullness_;
   int HP_;
+  std::vector<Modifier> modifier_list_;  // the modifiers
   PlayerEx* playerex_;
   int talent_elemental_burst_level_;
   int talent_elemental_skill_level_;

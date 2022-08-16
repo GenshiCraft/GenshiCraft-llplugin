@@ -37,6 +37,7 @@
 #include <vector>
 
 #include "character.h"
+#include "stats.h"
 
 namespace genshicraft {
 
@@ -82,7 +83,7 @@ class Weapon {
    *
    * @param stats The stats
    */
-  virtual Character::Stats GetBaseStats() const = 0;
+  virtual Stats GetBaseStats() const = 0;
 
   /**
    * @brief Describe the base stats
@@ -127,6 +128,13 @@ class Weapon {
    * @return The refinement (1 ~ 5)
    */
   int GetRefinement() const;
+
+  /**
+   * @brief Get the max refinement
+   *
+   * @return The max refinement (1 or 5)
+   */
+  virtual int GetRefinementMax() const = 0;
 
   /**
    * @brief Get the weapon type

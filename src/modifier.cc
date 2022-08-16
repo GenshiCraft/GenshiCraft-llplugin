@@ -18,56 +18,50 @@
  */
 
 /**
- * @file dull_blade.h
+ * @file modifier.cc
  * @author Futrime (futrime@outlook.com)
- * @brief Definition of the DullBlade class
+ * @brief Definition of the Modifier class
  * @version 1.0.0
- * @date 2022-08-10
+ * @date 2022-08-16
  *
  * @copyright Copyright (c) 2022 Futrime
  *
  */
 
-#include "dull_blade.h"
-
-#include <MC/ItemStack.hpp>
-#include <string>
+#include "modifier.h"
 
 #include "character.h"
 #include "exceptions.h"
-#include "playerex.h"
 #include "stats.h"
-#include "weapon.h"
 
 namespace genshicraft {
 
-DullBlade::DullBlade(ItemStack* item, PlayerEx* playerex)
-    : Weapon(item, playerex) {
-  // Check if the item is a GenshiCraft item
-  if (!Weapon::CheckIsWeapon(item)) {
-    throw ExceptionNotAWeapon();
+Modifier::Modifier(Stats stats, double expired_clock)
+    : id_(Modifier::GenerateID()),
+      expired_clock_(expired_clock),
+      stats_(stats),
+      type_(Modifier::Type::kStats) {
+  // Empty
+}
+
+double Modifier::GetExpiredClock() const { return this->expired_clock_; }
+
+int Modifier::GetID() const { return this->id_; }
+
+Stats Modifier::GetBaseStats() const {
+  if (this->type_ != Modifier::Type::kStats) {
+    throw ExceptionIncorrectModifierType();
   }
-
-  this->ApplyLore(item, playerex);
+  return this->stats_;
 }
 
-Stats DullBlade::GetBaseStats() const {
-  Stats stats;
-  stats.ATK_base = DullBlade::kATKBase[this->GetAscensionPhase()] +
-                   DullBlade::kATKDiff * this->GetLevel();
-  return stats;
+Modifier::Type Modifier::GetType() const { return this->type_; }
+
+int Modifier::GenerateID() {
+  ++Modifier::latest_id_;
+  return Modifier::latest_id_;
 }
 
-std::string DullBlade::GetName() const { return "Dull Blade"; }
-
-int DullBlade::GetRarity() const { return 1; }
-
-int DullBlade::GetRefinementMax() const { return 1; }
-
-Weapon::Type DullBlade::GetType() const { return Weapon::Type::kSword; }
-
-const int DullBlade::kATKBase[5] = {22, 48, 73, 91, 109};
-
-const int DullBlade::kATKDiff = 1;
+int Modifier::latest_id_ = 0;
 
 }  // namespace genshicraft

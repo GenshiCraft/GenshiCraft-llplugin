@@ -32,6 +32,7 @@
 #define GENSHICRAFT_DAMAGE_H_
 
 #include "character.h"
+#include "stats.h"
 
 namespace genshicraft {
 
@@ -41,6 +42,21 @@ namespace genshicraft {
  */
 class Damage {
  public:
+  /**
+   * @brief The element type
+   *
+   */
+  enum class ElementType {
+    kPyro = 0,
+    kHydro,
+    kDendro,
+    kElectro,
+    kAnemo,
+    kCryo,
+    kGeo,
+    kPhysical
+  };
+
   /**
    * @brief Construct a new Damage object
    *
@@ -55,22 +71,69 @@ class Damage {
   double Get() const;
 
   /**
-   * @brief Set the amplifier
+   * @brief Get the element type of the damage
+   *
+   * @return The element type
+   */
+  ElementType GetElementType() const;
+
+  /**
+   * @brief Set the skill amplifier of the attacker
    *
    * @param amplifier The amplifier
    */
   void SetAmplifier(double amplifier);
 
   /**
-   * @brief Set the stats
+   * @brief Set the element type of the attack
+   *
+   * @param element The element type
+   */
+  void SetElementType(const ElementType& element);
+
+  /**
+   * @brief Set the level of the attacker
+   *
+   * @param level The level
+   */
+  void SetLevel(int level);
+
+  /**
+   * @brief Set the stats of the attacker
    *
    * @param stats The stats
    */
-  void SetStats(const Character::Stats& stats);
+  void SetStats(const Stats& stats);
+
+  /**
+   * @brief Set the element attached to the victim
+   *
+   * @param element The element type
+   */
+  void SetVictimElementType(const ElementType& element);
+
+  /**
+   * @brief Set the level of the victim
+   *
+   * @param level The level
+   */
+  void SetVictimLevel(int level);
+
+  /**
+   * @brief Set the stats of the victim
+   *
+   * @param stats The stats
+   */
+  void SetVictimStats(const Stats& stats);
 
  private:
   double amplifier_;
-  Character::Stats stats_;
+  ElementType element_;
+  int level_;  // the level of the attacker
+  Stats stats_;
+  ElementType victim_element_;
+  int victim_level_;  // the level of the victim
+  Stats victim_stats_;
 };
 
 }  // namespace genshicraft

@@ -66,7 +66,7 @@ bool OnMobHurt(Event::MobHurtEvent& event);
 
 /**
  * @brief The handler for PlayerDropItemEvent
- * 
+ *
  * @param event The event
  * @return True if the action can be performed
  */
@@ -74,7 +74,7 @@ bool OnPlayerDropItem(Event::PlayerDropItemEvent& event);
 
 /**
  * @brief THe handler for PlayerExperienceAddEvent
- * 
+ *
  * @param event The event
  * @return True if the action can be performed
  */
@@ -127,6 +127,14 @@ bool OnPlayerOpenContainerScreen(Event::PlayerOpenContainerScreenEvent& event);
  * @return Always true
  */
 bool OnPlayerRespawn(Event::PlayerRespawnEvent& event);
+
+/**
+ * @brief The handler for PlayerUseItemEvent
+ *
+ * @param event The event
+ * @return True if the action can be performed
+ */
+bool OnPlayerUseItem(Event::PlayerUseItemEvent& event);
 
 /**
  * @brief This function executes per tick.

@@ -51,34 +51,58 @@ class Menu {
   Menu() = delete;
 
   /**
+   * @brief Open the character menu
+   *
+   */
+  void OpenCharacter();
+
+  /**
+   * @brief Open the character details menu
+   *
+   */
+  void OpenCharacterDetails();
+
+  /**
+   * @brief Open the character level up menu
+   *
+   */
+  void OpenCharacterLevelUp();
+
+  /**
+   * @brief Open the character weapon menu
+   *
+   */
+  void OpenCharacterWeapon();
+
+  /**
+   * @brief Open the character weapon ascend menu
+   *
+   */
+  void OpenCharacterWeaponAscend();
+
+  /**
+   * @brief Open the character weapon enhance menu
+   *
+   */
+  void OpenCharacterWeaponEnhance();
+
+  /**
+   * @brief Open the character weapon refine menu
+   *
+   */
+  void OpenCharacterWeaponRefine();
+
+  /**
    * @brief Open the main menu
    *
    */
   void OpenMain();
 
   /**
-   * @brief Open the weapon menu
+   * @brief Open the party setup menu
    *
    */
-  void OpenWeapon();
-
-  /**
-   * @brief Open the weapon ascend menu
-   * 
-   */
-  void OpenWeaponAscend();
-
-  /**
-   * @brief Open the weapon enhance menu
-   * 
-   */
-  void OpenWeaponEnhance();
-
-  /**
-   * @brief Open the weapon refine menu
-   * 
-   */
-  void OpenWeaponRefine();
+  void OpenPartySetup();
 
  private:
   PlayerEx* playerex_;

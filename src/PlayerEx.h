@@ -69,10 +69,27 @@ class PlayerEx {
    * @param identifier The identifier of the items
    * @param value The number to consume
    *
-   * @exception ExceptionItemsNotEnough The number of the items are less than
+   * @exception ExceptionItemsNotEnough The number of the items are fewer than
    * the number to consume.
    */
   void ConsumeItem(std::string identifier, int value);
+
+  /**
+   * @brief Consume mora
+   *
+   * @param value The number to consume
+   *
+   * @exception ExceptionMoraNotEnough The number of mora is less than the
+   * number to consume.
+   */
+  void ConsumeMora(int value);
+
+  /**
+   * @brief Get all characters owned
+   *
+   * @return The characters
+   */
+  std::vector<std::shared_ptr<Character>> GetAllCharacters() const;
 
   /**
    * @brief Get the current character
@@ -95,6 +112,13 @@ class PlayerEx {
    * @return The menu handler
    */
   Menu& GetMenu();
+
+  /**
+   * @brief Get the number of mora of the player
+   *
+   * @return The number
+   */
+  int GetMoraCount();
 
   /**
    * @brief Get the Player object
@@ -132,6 +156,14 @@ class PlayerEx {
   const std::string& GetXUID() const;
 
   /**
+   * @brief Give the player items
+   *
+   * @param identifier The identifier of the items
+   * @param value The number of the items
+   */
+  void GiveItem(const std::string& identifier, int value);
+
+  /**
    * @brief Increase the stamina
    *
    * @param value The stamina to increase
@@ -150,6 +182,14 @@ class PlayerEx {
    *
    */
   void RefreshItems() const;
+
+  /**
+   * @brief Set the current character
+   *
+   * @param no The number of the character in the vector returned by
+   * this->GetAllCharacters()
+   */
+  void SetCharacter(int no);
 
   /**
    * @brief Set whether the player is opening a container or not
@@ -215,6 +255,7 @@ class PlayerEx {
   std::vector<std::shared_ptr<Character>>
       character_owned_;        // all characters owned
   bool is_opening_container_;  // true if the player is opening a container
+  int last_world_level_;       // the world level last tick
   Menu menu_;                  // the menu handler for the player
   Sidebar sidebar_;            // the sidebar handler for the player
   int stamina_;                // the stamina

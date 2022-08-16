@@ -38,7 +38,30 @@ namespace genshicraft {
 
 namespace world {
 
+/**
+ * @brief Get the world level of the position
+ * 
+ * @param position The position
+ * @param dimension The dimension
+ * @return The world level (1 <= x <= 9)
+ */
 int GetWorldLevel(const Vec3& position, const Dimension& dimension);
+
+/**
+ * @brief Get the multiple of enemy max HP relative to level 1
+ * 
+ * @param level The level
+ * @return The enemy max HP multiple
+ */
+double GetEnemyMaxHPMultiplier(int level);
+
+/**
+ * @brief Get the multiple of enemy ATK relative to level 1
+ * 
+ * @param level The level
+ * @return The enemy ATK multiple
+ */
+double GetEnemyATKMultiplier(int level);
 
 }  // namespace world
 

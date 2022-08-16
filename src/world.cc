@@ -32,6 +32,7 @@
 
 #include <MC/Dimension.hpp>
 #include <MC/Vec3.hpp>
+#include <cmath>
 
 namespace genshicraft {
 
@@ -42,10 +43,10 @@ int GetWorldLevel(const Vec3& position, const Dimension& dimension) {
       0, 0, 1024, 2048, 4096, 8192, 16384, 32768, 65536};
 
   if (dimension.getDimensionId() == 2) {  // the End
-    return 8;
+    return 9;
   }
 
-  auto distance = position.x * position.x + position.z * position.z;
+  auto distance = std::sqrt(position.x * position.x + position.z * position.z);
 
   if (dimension.getDimensionId() == 1) {  // the Nether
     distance *=
@@ -60,6 +61,20 @@ int GetWorldLevel(const Vec3& position, const Dimension& dimension) {
   }
 
   return world_level;
+}
+
+double GetEnemyMaxHPMultiplier(int level) {
+  return (72.4317502144258 + 0.272784395235931 * level +
+          0.261414242992725 * level * level +
+          0.0340511473803347 * level * level * level) /
+         73;
+}
+
+double GetEnemyATKMultiplier(int level) {
+  return (25.9169123951706 - 1.19203469178426 * level +
+          0.275319202076914 * level * level -
+          0.00019690546398588 * level * level * level) /
+         25;
 }
 
 }  // namespace world

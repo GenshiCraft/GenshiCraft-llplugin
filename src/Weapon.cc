@@ -169,7 +169,7 @@ int Weapon::GetLevel() const {
 int Weapon::GetLevelByWeaponEXP(int weapon_exp) const {
   auto rarity = this->GetRarity();
 
-  // Get the level by the Weapon EXP
+  // Get the level by the weapon EXP
   int level = 1;
   if (rarity == 1) {
     for (int i = 1; i <= 70; ++i) {
@@ -218,27 +218,8 @@ int Weapon::GetLevelByWeaponEXP(int weapon_exp) const {
   }
 
   // Limit the level by the Ascension Phase
-  if (this->ascension_phase_ == 0) {
-    level = std::min(level, 20);
-  }
-  if (this->ascension_phase_ == 1) {
-    level = std::min(level, 40);
-  }
-  if (this->ascension_phase_ == 2) {
-    level = std::min(level, 50);
-  }
-  if (this->ascension_phase_ == 3) {
-    level = std::min(level, 60);
-  }
-  if (this->ascension_phase_ == 4) {
-    level = std::min(level, 70);
-  }
-  if (this->ascension_phase_ == 5) {
-    level = std::min(level, 80);
-  }
-  if (this->ascension_phase_ == 6) {
-    level = std::min(level, 90);
-  }
+  level = std::min(level,
+                   Weapon::kAcensionPhaseMaxLevelList[this->ascension_phase_]);
 
   return level;
 }
@@ -330,7 +311,6 @@ Weapon::Weapon(ItemStack* item, PlayerEx* playerex)
     data->putInt("weapon_exp", this->weapon_exp_);  // the Weapon EXP
 
     item->setNbt(nbt.get());
-
     playerex->RefreshItems();
   }
 
@@ -357,9 +337,8 @@ Weapon::~Weapon() {
   data->putInt("refinement", this->refinement_);  // the Refinement
   data->putInt("weapon_exp", this->weapon_exp_);  // the Weapon EXP
 
-  this->item_->setNbt(nbt.get());
-
   if (is_modified) {
+    this->item_->setNbt(nbt.get());
     this->playerex_->RefreshItems();
   }
 }

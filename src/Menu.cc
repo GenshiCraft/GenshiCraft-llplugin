@@ -38,6 +38,7 @@
 #include <memory>
 #include <string>
 
+#include "character.h"
 #include "playerex.h"
 #include "plugin.h"
 #include "weapon.h"
@@ -45,38 +46,168 @@
 namespace genshicraft {
 
 Menu::Menu(PlayerEx* playerex) : playerex_(playerex) {
-  // empty
+  // Empty
 }
 
-void Menu::OpenMain() {
-  Form::SimpleForm form("GenshiCraft Menu", "");
+void Menu::OpenCharacter() {
+  auto character = this->playerex_->GetCharacter();
 
-  form = form.addButton("Artifacts", "textures/menu/artifacts.bmp");
+  std::string content;
 
-  form = form.addButton("Character", "textures/menu/character.bmp");
+  content += " §f";
+  for (int i = 0; i < 6; ++i) {
+    if (i == character->GetAscensionPhase()) {
+      content += "§7";
+    }
+    content += "✦";
+  }
+  content += "\n";
 
-  form = form.addButton("Party Setup", "textures/menu/party_setup.bmp");
+  content +=
+      "§fLevel " + std::to_string(character->GetLevel()) + " §7/ " +
+      std::to_string(
+          Character::kAcensionPhaseMaxLevelList[character
+                                                    ->GetAscensionPhase()]) +
+      "\n";
 
-  form = form.addButton("Shop", "textures/menu/shop.bmp");
-
-  // Show the weapon menu only when the player is holding a GenshiCraft weapon
-  if (this->playerex_->GetWeapon()) {
-    form = form.addButton("Weapon", "textures/menu/weapons.bmp",
-                          [this](Player* player) { this->OpenWeapon(); });
+  content += "§f";
+  for (const auto& line : character->GetStatsDescription(false)) {
+    content += "§f" + line + "\n";
   }
 
-  form = form.addButton("Wish", "textures/menu/wish.bmp");
+  Form::SimpleForm form("Character / " + std::string(character->GetName()),
+                        content);
 
-  form.sendTo(this->playerex_->GetPlayer());
+  form = form.addButton(
+      "Details", "", [this](Player* player) { this->OpenCharacterDetails(); });
+
+  if (Character::kAcensionPhaseMaxLevelList[character->GetAscensionPhase()] ==
+      character->GetLevel()) {
+    if (character->GetLevel() != 90) {
+      form = form.addButton("Ascend");
+    }
+  } else {
+    form = form.addButton("Level Up", "", [this](Player* player) {
+      this->OpenCharacterLevelUp();
+    });
+  }
+
+  // Show the weapon menu only when the player is holding a GenshiCraft weapon
+  if (character->HasWeapon()) {
+    form = form.addButton(
+        "Weapon", "", [this](Player* player) { this->OpenCharacterWeapon(); });
+  }
+
+  form = form.addButton("Artifacts");
+
+  form = form.addButton("Constellation");
+
+  form = form.addButton("Talents");
+
+  form.sendTo(this->playerex_->GetPlayer(), [this](Player* player, int option) {
+    if (option == -1) {
+      this->OpenMain();
+      return;
+    }
+  });
 }
 
-void Menu::OpenWeapon() {
+void Menu::OpenCharacterDetails() {
+  auto character = this->playerex_->GetCharacter();
+
+  std::string content;
+
+  content += "§f";
+  auto stats_description = character->GetStatsDescription(true);
+  for (int i = 0; i < stats_description.size(); ++i) {
+    if (i == 0) {
+      content += "§7Base Stats\n";
+    } else if (i == 5) {
+      content += "\n§7Advanced Stats\n";
+    } else if (i == 12) {
+      content += "\n§7Elemental Type\n";
+    }
+    content += "§f" + stats_description[i] + "\n";
+  }
+
+  Form::SimpleForm form("Details / " + std::string(character->GetName()),
+                        content);
+
+  form.sendTo(this->playerex_->GetPlayer(), [this](Player* player, int option) {
+    if (option == -1) {
+      this->OpenCharacter();
+      return;
+    }
+  });
+}
+
+void Menu::OpenCharacterLevelUp() {
+  auto character = this->playerex_->GetCharacter();
+
+  auto max_character_exp =
+      this->playerex_->GetItemCount("genshicraft:wanderer_s_advice") * 1000 +
+      this->playerex_->GetItemCount("genshicraft:adventurer_s_experience") *
+          5000 +
+      this->playerex_->GetItemCount("genshicraft:hero_s_wit") * 20000;
+
+  auto max_up_level = character->GetLevelByCharacterEXP(
+      max_character_exp + character->GetCharacterEXP());
+
+  Form::CustomForm form("Level Up / " + std::string(character->GetName()));
+
+  form = form.addLabel("text_level",
+                       "Lv." + std::to_string(character->GetLevel()));
+
+  form.addSlider("level", "Level(s) to up", 0,
+                 max_up_level - character->GetLevel());
+
+  form.sendTo(
+      this->playerex_->GetPlayer(),
+      [this](Player* player,
+             std::map<string, std::shared_ptr<Form::CustomFormElement>> data) {
+        // Go back to main menu if the player cancels the form
+        if (data.empty()) {
+          this->OpenCharacter();
+          return;
+        }
+
+        auto character = this->playerex_->GetCharacter();
+
+        auto enhanced_level =
+            data.at("level")->getInt() + character->GetLevel();
+
+        while (character->GetLevel() < enhanced_level &&
+               this->playerex_->GetItemCount("genshicraft:hero_s_wit") > 0) {
+          this->playerex_->ConsumeItem("genshicraft:hero_s_wit", 1);
+          character->IncreaseCharacterEXP(20000);
+        }
+
+        while (character->GetLevel() < enhanced_level &&
+               this->playerex_->GetItemCount(
+                   "genshicraft:adventurer_s_experience") > 0) {
+          this->playerex_->ConsumeItem("genshicraft:adventurer_s_experience",
+                                       1);
+          character->IncreaseCharacterEXP(5000);
+        }
+
+        while (character->GetLevel() < enhanced_level &&
+               this->playerex_->GetItemCount("genshicraft:wanderer_s_advice") >
+                   0) {
+          this->playerex_->ConsumeItem("genshicraft:wanderer_s_advice", 1);
+          character->IncreaseCharacterEXP(1000);
+        }
+
+        Schedule::nextTick([this]() { this->OpenCharacterLevelUp(); });
+      });
+}
+
+void Menu::OpenCharacterWeapon() {
   static const std::string kRefinementSymbolList[6] = {" ", "①", "②",
                                                        "③", "④", "§6⑤"};
 
   // Check if the player is holding a GenshiCraft weapon
   if (!this->playerex_->GetWeapon()) {
-    this->OpenMain();
+    this->OpenCharacter();
     return;
   }
 
@@ -130,21 +261,24 @@ void Menu::OpenWeapon() {
       "Weapon / " + std::string(this->playerex_->GetWeapon()->GetName()),
       content);
 
-  if (weapon->kAcensionPhaseMaxLevelList[weapon->GetAscensionPhase()] ==
+  if (Weapon::kAcensionPhaseMaxLevelList[weapon->GetAscensionPhase()] ==
       weapon->GetLevel()) {
     if ((weapon->GetRarity() >= 3 && weapon->GetLevel() != 90) ||
         (weapon->GetRarity() <= 2 && weapon->GetLevel() != 70)) {
-      form = form.addButton(
-          "Ascend", "", [this](Player* player) { this->OpenWeaponAscend(); });
+      form = form.addButton("Ascend", "", [this](Player* player) {
+        this->OpenCharacterWeaponAscend();
+      });
     }
   } else {
-    form = form.addButton(
-        "Enhance", "", [this](Player* player) { this->OpenWeaponEnhance(); });
+    form = form.addButton("Enhance", "", [this](Player* player) {
+      this->OpenCharacterWeaponEnhance();
+    });
   }
 
   if (weapon->GetRarity() >= 3 && weapon->GetRefinement() < 5) {
-    form = form.addButton("Refine", "",
-                          [this](Player* player) { this->OpenWeaponRefine(); });
+    form = form.addButton("Refine", "", [this](Player* player) {
+      this->OpenCharacterWeaponRefine();
+    });
   }
 
   form.sendTo(this->playerex_->GetPlayer(), [this](Player* player, int option) {
@@ -155,7 +289,7 @@ void Menu::OpenWeapon() {
   });
 }
 
-void Menu::OpenWeaponAscend() {
+void Menu::OpenCharacterWeaponAscend() {
   // Check if the player is holding a GenshiCraft weapon
   if (!this->playerex_->GetWeapon()) {
     this->OpenMain();
@@ -163,10 +297,10 @@ void Menu::OpenWeaponAscend() {
   }
 }
 
-void Menu::OpenWeaponEnhance() {
+void Menu::OpenCharacterWeaponEnhance() {
   // Check if the player is holding a GenshiCraft weapon
   if (!this->playerex_->GetWeapon()) {
-    this->OpenWeapon();
+    this->OpenCharacterWeapon();
     return;
   }
 
@@ -181,14 +315,15 @@ void Menu::OpenWeaponEnhance() {
   auto max_enhanced_level =
       weapon->GetLevelByWeaponEXP(max_weapon_exp + weapon->GetWeaponEXP());
 
-  Form::CustomForm form("Weapon / " + std::string(weapon->GetName()) +
-                        " / Enhance");
+  Form::CustomForm form("Enhance / " + std::string(weapon->GetName()));
 
-  form = form.addLabel("text_level", "Lv." + std::to_string(weapon->GetLevel()));
+  form =
+      form.addLabel("text_level", "Lv." + std::to_string(weapon->GetLevel()));
 
   auto description = weapon->GetBaseStatsDescription();
   for (int i = 0; i < description.size(); ++i) {
-    form = form.addLabel("text_weapon_stats_" + std::to_string(i), description.at(i));
+    form = form.addLabel("text_weapon_stats_" + std::to_string(i),
+                         description.at(i));
   }
 
   form.addSlider("level", "Level(s) to enhance", 0,
@@ -200,14 +335,13 @@ void Menu::OpenWeaponEnhance() {
              std::map<string, std::shared_ptr<Form::CustomFormElement>> data) {
         // Go back to main menu if the player cancels the form
         if (data.empty()) {
-          this->OpenWeapon();
+          this->OpenCharacterWeapon();
           return;
         }
 
         auto weapon = this->playerex_->GetWeapon();
 
-        auto enhanced_level =
-            data.at("level")->getInt() + weapon->GetLevel();
+        auto enhanced_level = data.at("level")->getInt() + weapon->GetLevel();
 
         while (weapon->GetLevel() < enhanced_level &&
                this->playerex_->GetItemCount(
@@ -230,15 +364,55 @@ void Menu::OpenWeaponEnhance() {
           weapon->IncreaseWeaponEXP(400);
         }
 
-        Schedule::nextTick([this]() { this->OpenWeaponEnhance(); });
+        Schedule::nextTick([this]() { this->OpenCharacterWeaponEnhance(); });
       });
 }
 
-void Menu::OpenWeaponRefine() {
+void Menu::OpenCharacterWeaponRefine() {
   // Check if the player is holding a GenshiCraft weapon
   if (!this->playerex_->GetWeapon()) {
     this->OpenMain();
     return;
   }
 }
+
+void Menu::OpenMain() {
+  Form::SimpleForm form("GenshiCraft Menu", "");
+
+  // form = form.addButton("Shop", "textures/menu/shop.bmp");
+
+  form = form.addButton("Party Setup", "textures/menu/party_setup.bmp",
+                        [this](Player* player) { this->OpenPartySetup(); });
+
+  form = form.addButton("Character", "textures/menu/character.bmp",
+                        [this](Player* player) { this->OpenCharacter(); });
+
+  // form = form.addButton("Wish", "textures/menu/wish.bmp");
+
+  form.sendTo(this->playerex_->GetPlayer());
+}
+
+void Menu::OpenPartySetup() {
+  Form::SimpleForm form(
+      "Party Setup",
+      "Current character: " + this->playerex_->GetCharacter()->GetName());
+
+  for (auto&& character : this->playerex_->GetAllCharacters()) {
+    form =
+        form.addButton(character->GetName(), "textures/menu/characters/" +
+                                                 character->GetName() + ".png");
+  }
+
+  form.sendTo(this->playerex_->GetPlayer(), [this](Player* player, int option) {
+    if (option == -1) {
+      this->OpenMain();
+      return;
+    }
+
+    this->playerex_->SetCharacter(option);
+
+    this->OpenPartySetup();
+  });
+}
+
 }  // namespace genshicraft

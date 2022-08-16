@@ -91,6 +91,54 @@ class ExceptionNotACharacter : public ExceptionCharacter {
 };
 
 /**
+ * @brief The ExceptionFood class is the base class for exceptions related
+ * to food.
+ *
+ */
+class ExceptionFood : public Exception {
+ public:
+  using Exception::Exception;
+};
+
+/**
+ * @brief The ExceptionNotFood class represents that the items are not food.
+ *
+ */
+class ExceptionNotFood : public ExceptionFood {
+ public:
+  ExceptionNotFood()
+      : ExceptionFood(
+            "[genshicraft::ExceptionNotFood] The items are not food."){};
+
+  using ExceptionFood::ExceptionFood;
+};
+
+/**
+ * @brief The ExceptionModifier class is the base class for exceptions related
+ * to the Modifier class.
+ *
+ */
+class ExceptionModifier : public Exception {
+ public:
+  using Exception::Exception;
+};
+
+/**
+ * @brief The ExceptionIncorrectModifierType represents a failed attempt to get
+ * the modifier as the target type.
+ *
+ */
+class ExceptionIncorrectModifierType : public ExceptionModifier {
+ public:
+  ExceptionIncorrectModifierType()
+      : ExceptionModifier(
+            "[genshicraft::ExceptionIncorrectModifierType] The modifier cannot "
+            "be converted to the target type.") {}
+
+  using ExceptionModifier::ExceptionModifier;
+};
+
+/**
  * @brief The ExceptionPlayerEx class is the base class for exceptions related
  * to the PlayerEx class.
  *
@@ -98,6 +146,21 @@ class ExceptionNotACharacter : public ExceptionCharacter {
 class ExceptionPlayerEx : public Exception {
  public:
   using Exception::Exception;
+};
+
+/**
+ * @brief The ExceptionCharacterNumberOutOfRange class represents that the
+ * character number is out of range.
+ *
+ */
+class ExceptionCharacterNumberOutOfRange : public ExceptionPlayerEx {
+ public:
+  ExceptionCharacterNumberOutOfRange()
+      : ExceptionPlayerEx(
+            "[genshicraft::ExceptionCharacterNumberOutOfRange] The character "
+            "number is out of range.") {}
+
+  using ExceptionPlayerEx::ExceptionPlayerEx;
 };
 
 /**
@@ -111,6 +174,20 @@ class ExceptionItemsNotEnough : public ExceptionPlayerEx {
       : ExceptionPlayerEx(
             "[genshicraft::ExceptionItemsNotEnough] The items are not "
             "enough.") {}
+
+  using ExceptionPlayerEx::ExceptionPlayerEx;
+};
+
+/**
+ * @brief The ExceptionMorasNotEnough class represents that the Mora is not a
+ * GenshiCraft Mora.
+ *
+ */
+class ExceptionMoraNotEnough : public ExceptionPlayerEx {
+ public:
+  ExceptionMoraNotEnough()
+      : ExceptionPlayerEx(
+            "[genshicraft::ExceptionMoraNotEnough] The Mora is not enough.") {}
 
   using ExceptionPlayerEx::ExceptionPlayerEx;
 };

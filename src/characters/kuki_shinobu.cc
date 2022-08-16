@@ -38,6 +38,7 @@
 #include "exceptions.h"
 #include "playerex.h"
 #include "plugin.h"
+#include "stats.h"
 #include "weapon.h"
 
 namespace genshicraft {
@@ -122,16 +123,17 @@ std::string KukiShinobu::GetName() const { return "Kuki Shinobu"; }
 
 int KukiShinobu::GetRarity() const { return 4; }
 
-Character::Stats KukiShinobu::GetBaseStats() const {
-  Character::Stats stats;
-  stats.max_HP_base += KukiShinobu::kStatsMaxHPBase[this->GetAscensionPhase()] +
+Stats KukiShinobu::GetBaseStats() const {
+  Stats stats;
+  stats.max_HP_base = KukiShinobu::kStatsMaxHPBase[this->GetAscensionPhase()] +
                       KukiShinobu::kStatsMaxHPDiff * this->GetLevel();
-  stats.ATK_base += KukiShinobu::kStatsATKBase[this->GetAscensionPhase()] +
+  stats.ATK_base = KukiShinobu::kStatsATKBase[this->GetAscensionPhase()] +
                    KukiShinobu::kStatsATKDiff * this->GetLevel();
-  stats.DEF_base += KukiShinobu::kStatsDEFBase[this->GetAscensionPhase()] +
+  stats.DEF_base = KukiShinobu::kStatsDEFBase[this->GetAscensionPhase()] +
                    KukiShinobu::kStatsDEFDiff * this->GetLevel();
 
-  stats.max_HP_percent += KukiShinobu::kStatsMaxHPPercent[this->GetAscensionPhase()];
+  stats.max_HP_percent =
+      KukiShinobu::kStatsMaxHPPercent[this->GetAscensionPhase()];
 
   if (this->HasWeapon()) {  // if the player is holding a GenshiCraft weapon
     stats += this->GetPlayerEx()->GetWeapon()->GetBaseStats();

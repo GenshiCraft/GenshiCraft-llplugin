@@ -36,6 +36,7 @@
 #include "character.h"
 #include "exceptions.h"
 #include "playerex.h"
+#include "stats.h"
 #include "weapon.h"
 
 namespace genshicraft {
@@ -50,8 +51,8 @@ SilverSword::SilverSword(ItemStack* item, PlayerEx* playerex)
   this->ApplyLore(item, playerex);
 }
 
-Character::Stats SilverSword::GetBaseStats() const {
-  Character::Stats stats;
+Stats SilverSword::GetBaseStats() const {
+  Stats stats;
   stats.ATK_base = SilverSword::kATKBase[this->GetAscensionPhase()] +
                    SilverSword::kATKDiff * this->GetLevel();
   return stats;
@@ -60,6 +61,8 @@ Character::Stats SilverSword::GetBaseStats() const {
 std::string SilverSword::GetName() const { return "Silver Sword"; }
 
 int SilverSword::GetRarity() const { return 2; }
+
+int SilverSword::GetRefinementMax() const { return 1; }
 
 Weapon::Type SilverSword::GetType() const { return Weapon::Type::kSword; }
 

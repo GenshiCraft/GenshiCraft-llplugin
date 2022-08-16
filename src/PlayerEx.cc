@@ -52,11 +52,13 @@
 #include "plugin.h"
 #include "sidebar.h"
 #include "weapon.h"
+#include "world.h"
 
 namespace genshicraft {
 
 PlayerEx::PlayerEx(Player* player)
     : is_opening_container_(false),
+      last_world_level_(0),
       menu_(Menu(this)),
       sidebar_(Sidebar(this)),
       xuid_(player->getXuid()) {
@@ -160,6 +162,11 @@ void PlayerEx::ConsumeItem(std::string identifier, int value) {
     throw ExceptionItemsNotEnough();
   }
 
+  // This function is only for item consumption
+  if (value <= 0) {
+    return;
+  }
+
   auto& inventory = this->GetPlayer()->getInventory();
   for (int i = 0; i < inventory.getSize(); ++i) {
     if (inventory.getSlot(i)->getTypeName() == identifier) {
@@ -173,6 +180,43 @@ void PlayerEx::ConsumeItem(std::string identifier, int value) {
   }
 
   this->RefreshItems();
+}
+
+void PlayerEx::ConsumeMora(int value) {
+  int mora_count = this->GetMoraCount();
+
+  // Check if the mora is enough
+  if (mora_count < value) {
+    throw ExceptionMoraNotEnough();
+  }
+
+  mora_count -= value;
+
+  // Clear all mora
+  this->GetPlayer()->clearItem("genshicraft:mora_10000");
+  this->GetPlayer()->clearItem("genshicraft:mora_5000");
+  this->GetPlayer()->clearItem("genshicraft:mora_1000");
+  this->GetPlayer()->clearItem("genshicraft:mora_500");
+  this->GetPlayer()->clearItem("genshicraft:mora_100");
+  this->GetPlayer()->clearItem("genshicraft:mora_50");
+  this->GetPlayer()->clearItem("genshicraft:mora_10");
+  this->GetPlayer()->clearItem("genshicraft:mora_5");
+  this->GetPlayer()->clearItem("genshicraft:mora_1");
+
+  // Give the mora left back
+  this->GiveItem("genshicraft:mora_1", mora_count % 10);
+  mora_count /= 10;
+  this->GiveItem("genshicraft:mora_10", mora_count % 10);
+  mora_count /= 10;
+  this->GiveItem("genshicraft:mora_100", mora_count % 10);
+  mora_count /= 10;
+  this->GiveItem("genshicraft:mora_1000", mora_count % 10);
+  mora_count /= 10;
+  this->GiveItem("genshicraft:mora_10000", mora_count % 10);
+}
+
+std::vector<std::shared_ptr<Character>> PlayerEx::GetAllCharacters() const {
+  return this->character_owned_;
 }
 
 std::shared_ptr<Character> PlayerEx::GetCharacter() const {
@@ -194,6 +238,21 @@ int PlayerEx::GetItemCount(std::string identifier) {
 
 Menu& PlayerEx::GetMenu() { return this->menu_; }
 
+int PlayerEx::GetMoraCount() {
+  int mora_count = 0;
+  mora_count += this->GetItemCount("genshicraft:mora_10000") * 10000;
+  mora_count += this->GetItemCount("genshicraft:mora_5000") * 5000;
+  mora_count += this->GetItemCount("genshicraft:mora_1000") * 1000;
+  mora_count += this->GetItemCount("genshicraft:mora_500") * 500;
+  mora_count += this->GetItemCount("genshicraft:mora_100") * 100;
+  mora_count += this->GetItemCount("genshicraft:mora_50") * 50;
+  mora_count += this->GetItemCount("genshicraft:mora_10") * 10;
+  mora_count += this->GetItemCount("genshicraft:mora_5") * 5;
+  mora_count += this->GetItemCount("genshicraft:mora_1") * 1;
+
+  return mora_count;
+}
+
 Player* PlayerEx::GetPlayer() { return Global<Level>->getPlayer(this->xuid_); }
 
 int PlayerEx::GetStamina() const { return this->stamina_; }
@@ -210,6 +269,16 @@ std::shared_ptr<Weapon> PlayerEx::GetWeapon() {
 }
 
 const std::string& PlayerEx::GetXUID() const { return this->xuid_; }
+
+void PlayerEx::GiveItem(const std::string& identifier, int value) {
+  // This function is only for giving items
+  if (value <= 0) {
+    return;
+  }
+
+  auto item = ItemStack::create(identifier, value);
+  this->GetPlayer()->giveItem(item);
+}
 
 void PlayerEx::IncreaseStamina(int value) {
   this->stamina_ += value;
@@ -229,6 +298,14 @@ void PlayerEx::RefreshItems() const {
       PlayerEx::Get(xuid)->GetPlayer()->refreshInventory();
     }
   });
+}
+
+void PlayerEx::SetCharacter(int no) {
+  if (no >= this->character_owned_.size()) {
+    throw ExceptionCharacterNumberOutOfRange();
+  }
+
+  this->character_ = this->character_owned_.at(no);
 }
 
 void PlayerEx::SetIsOpeningContainer(bool is_opening_container) {
@@ -280,8 +357,29 @@ void PlayerEx::OnTick() {
   static std::uniform_real_distribution<> dist(0, 1);
 
   for (auto&& playerex : PlayerEx::all_playerex_) {
+    // Maintain the world level notice
+    int world_level =
+        world::GetWorldLevel(playerex->GetPlayer()->getPosition(),
+                             playerex->GetPlayer()->getDimension());
+    if (world_level != playerex->last_world_level_) {
+      if (world_level * 10 >= playerex->character_->GetLevel() + 20) {
+        playerex->GetPlayer()->sendTitlePacket("§cHighly Dangerous",
+                                               TitleType::SetSubtitle, 0, 1, 0);
+      } else if (world_level * 10 >= playerex->character_->GetLevel() + 10) {
+        playerex->GetPlayer()->sendTitlePacket("§6Dangerous",
+                                               TitleType::SetSubtitle, 0, 1, 0);
+      }
+
+      playerex->GetPlayer()->sendTitlePacket(
+          "World Level " + std::to_string(world_level), TitleType::SetTitle, 0,
+          1, 0);
+
+      playerex->last_world_level_ = world_level;
+    }
+
     // Maintain the stamina
-    if (playerex->GetPlayer()->isSprinting()) {
+    if (playerex->GetPlayer()->isSprinting() &&
+        !playerex->GetPlayer()->isInWater()) {
       if (playerex->stamina_ != 0) {
         // Consume stamina when sprinting
         // Reduce 18 stamina per second
@@ -290,6 +388,16 @@ void PlayerEx::OnTick() {
         }
       } else {  // if the stamina is used up
         playerex->GetPlayer()->setSprinting(false);  // prevent sprinting
+      }
+    } else if (playerex->GetPlayer()->isSwimming()) {  // dash swimming
+      if (playerex->stamina_ != 0) {
+        // Consume stamina when dash swimming
+        // Reduce 10.2 stamina per second
+        if (dist(random_engine) < 0.51) {
+          playerex->stamina_ = std::max(playerex->stamina_ - 1, 0);
+        }
+      } else {                          // if the stamina is used up
+        playerex->GetPlayer()->kill();  // drowned
       }
     } else {
       // Regenerate stamina when idle
@@ -303,7 +411,7 @@ void PlayerEx::OnTick() {
       }
     }
 
-    // Maintain the characters
+    // Maintain the character survival
     if (playerex->character_->GetHP() ==
         0) {  // if the current character is dead
       playerex->character_->IncreaseEnergy(-999999);  // Clear the energy
@@ -318,6 +426,11 @@ void PlayerEx::OnTick() {
       if (!is_switched) {  // if every character is dead
         playerex->GetPlayer()->kill();
       }
+    }
+
+    // Maintain the character fullness
+    for (auto character : playerex->character_owned_) {
+      character->IncreaseFullness(-0.015);
     }
 
     // Refresh the sidebar

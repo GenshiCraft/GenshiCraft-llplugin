@@ -36,6 +36,7 @@
 
 #include "character.h"
 #include "playerex.h"
+#include "stats.h"
 #include "weapon.h"
 
 namespace genshicraft {
@@ -63,7 +64,7 @@ class DullBlade : public Weapon {
    *
    * @param stats The stats
    */
-  Character::Stats GetBaseStats() const override;
+  Stats GetBaseStats() const override;
 
   /**
    * @brief Get the name
@@ -78,6 +79,13 @@ class DullBlade : public Weapon {
    * @return 1
    */
   int GetRarity() const override;
+
+  /**
+   * @brief Get the max refinement
+   *
+   * @return 1
+   */
+  int GetRefinementMax() const override;
 
   /**
    * @brief Get the weapon type

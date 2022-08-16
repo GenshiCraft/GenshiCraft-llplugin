@@ -35,6 +35,7 @@
 
 #include "character.h"
 #include "playerex.h"
+#include "stats.h"
 
 namespace genshicraft {
 
@@ -74,7 +75,7 @@ class KukiShinobu : public Character {
    *
    * @return The stats
    */
-  Character::Stats GetBaseStats() const override;
+  Stats GetBaseStats() const override;
 
   /**
    * @brief Get the CD of elemental burst
