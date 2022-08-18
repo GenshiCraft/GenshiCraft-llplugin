@@ -51,6 +51,10 @@ DullBlade::DullBlade(ItemStack* item, PlayerEx* playerex)
   this->ApplyLore(item, playerex);
 }
 
+std::map<std::string, int> DullBlade::GetAscensionMaterials() const {
+  return DullBlade::kAscensionMaterialsList[this->GetAscensionPhase()];
+}
+
 Stats DullBlade::GetBaseStats() const {
   Stats stats;
   stats.ATK_base = DullBlade::kATKBase[this->GetAscensionPhase()] +
@@ -65,6 +69,15 @@ int DullBlade::GetRarity() const { return 1; }
 int DullBlade::GetRefinementMax() const { return 1; }
 
 Weapon::Type DullBlade::GetType() const { return Weapon::Type::kSword; }
+
+const std::map<std::string, int> DullBlade::kAscensionMaterialsList[7] = {
+    {},
+    {{"genshicraft:mora_1", 5000}},
+    {{"genshicraft:mora_1", 5000}},
+    {{"genshicraft:mora_1", 10000}},
+    {},
+    {},
+    {}};
 
 const int DullBlade::kATKBase[5] = {22, 48, 73, 91, 109};
 

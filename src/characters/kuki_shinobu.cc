@@ -157,12 +157,12 @@ bool KukiShinobu::HasWeapon() const {
 }
 
 const std::map<std::string, int> KukiShinobu::kAscensionMaterialsList[7] = {
-    {{"genshicraft:mora_10000", 2}},
-    {{"genshicraft:mora_10000", 4}},
-    {{"genshicraft:mora_10000", 6}},
-    {{"genshicraft:mora_10000", 8}},
-    {{"genshicraft:mora_10000", 10}},
-    {{"genshicraft:mora_10000", 12}},
+    {{"genshicraft:mora_1", 20000}},
+    {{"genshicraft:mora_1", 40000}},
+    {{"genshicraft:mora_1", 60000}},
+    {{"genshicraft:mora_1", 80000}},
+    {{"genshicraft:mora_1", 100000}},
+    {{"genshicraft:mora_1", 120000}},
     {}};
 
 const int KukiShinobu::kStatsATKBase[7] = {17, 39, 58, 75, 90, 104, 118};

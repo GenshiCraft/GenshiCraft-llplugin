@@ -58,6 +58,10 @@ Stats SilverSword::GetBaseStats() const {
   return stats;
 }
 
+std::map<std::string, int> SilverSword::GetAscensionMaterials() const {
+  return SilverSword::kAscensionMaterialsList[this->GetAscensionPhase()];
+}
+
 std::string SilverSword::GetName() const { return "Silver Sword"; }
 
 int SilverSword::GetRarity() const { return 2; }
@@ -65,6 +69,15 @@ int SilverSword::GetRarity() const { return 2; }
 int SilverSword::GetRefinementMax() const { return 1; }
 
 Weapon::Type SilverSword::GetType() const { return Weapon::Type::kSword; }
+
+const std::map<std::string, int> SilverSword::kAscensionMaterialsList[7] = {
+    {{"genshicraft:mora_1", 5000}},
+    {{"genshicraft:mora_1", 5000}},
+    {{"genshicraft:mora_1", 10000}},
+    {{"genshicraft:mora_1", 5000}},
+    {},
+    {},
+    {}};
 
 const int SilverSword::kATKBase[5] = {31, 51, 71, 86, 100};
 

@@ -60,6 +60,13 @@ class SilverSword : public Weapon {
   SilverSword() = delete;
 
   /**
+   * @brief Get the ascension materials
+   *
+   * @return The ascension materials
+   */
+  std::map<std::string, int> GetAscensionMaterials() const override;
+
+  /**
    * @brief Get the base stats
    *
    * @param stats The stats
@@ -95,6 +102,8 @@ class SilverSword : public Weapon {
   Weapon::Type GetType() const override;
 
  private:
+  static const std::map<std::string, int> kAscensionMaterialsList[7];
+
   static const int
       kATKBase[5];  // the inferred 0-level ATK of each ascension phase
 
