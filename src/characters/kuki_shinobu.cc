@@ -30,6 +30,7 @@
 
 #include "kuki_shinobu.h"
 
+#include <map>
 #include <memory>
 #include <string>
 
@@ -54,6 +55,25 @@ KukiShinobu::KukiShinobu(PlayerEx* playerex, int ascension_phase,
   if (HP > this->GetStats().GetMaxHP()) {
     throw ExceptionInvalidCharacterData();
   }
+}
+
+std::map<std::string, int> KukiShinobu::GetAscensionMaterials() const {
+  return KukiShinobu::kAscensionMaterialsList[this->GetAscensionPhase()];
+}
+
+Stats KukiShinobu::GetBaseStats() const {
+  Stats stats;
+  stats.max_HP_base = KukiShinobu::kStatsMaxHPBase[this->GetAscensionPhase()] +
+                      KukiShinobu::kStatsMaxHPDiff * this->GetLevel();
+  stats.ATK_base = KukiShinobu::kStatsATKBase[this->GetAscensionPhase()] +
+                   KukiShinobu::kStatsATKDiff * this->GetLevel();
+  stats.DEF_base = KukiShinobu::kStatsDEFBase[this->GetAscensionPhase()] +
+                   KukiShinobu::kStatsDEFDiff * this->GetLevel();
+
+  stats.max_HP_percent =
+      KukiShinobu::kStatsMaxHPPercent[this->GetAscensionPhase()];
+
+  return stats;
 }
 
 double KukiShinobu::GetCDElementalBurstMax() const { return 15.; };
@@ -114,6 +134,10 @@ Damage KukiShinobu::GetDamageNormalAttack() {
     last_hit_clock = GetNowClock();
   }
 
+  damage.SetElementType(Damage::ElementType::kPhysical);
+  damage.SetLevel(this->GetLevel());
+  damage.SetSourceType(Damage::SourceType::kMob);
+
   return damage;
 }
 
@@ -123,25 +147,6 @@ std::string KukiShinobu::GetName() const { return "Kuki Shinobu"; }
 
 int KukiShinobu::GetRarity() const { return 4; }
 
-Stats KukiShinobu::GetBaseStats() const {
-  Stats stats;
-  stats.max_HP_base = KukiShinobu::kStatsMaxHPBase[this->GetAscensionPhase()] +
-                      KukiShinobu::kStatsMaxHPDiff * this->GetLevel();
-  stats.ATK_base = KukiShinobu::kStatsATKBase[this->GetAscensionPhase()] +
-                   KukiShinobu::kStatsATKDiff * this->GetLevel();
-  stats.DEF_base = KukiShinobu::kStatsDEFBase[this->GetAscensionPhase()] +
-                   KukiShinobu::kStatsDEFDiff * this->GetLevel();
-
-  stats.max_HP_percent =
-      KukiShinobu::kStatsMaxHPPercent[this->GetAscensionPhase()];
-
-  if (this->HasWeapon()) {  // if the player is holding a GenshiCraft weapon
-    stats += this->GetPlayerEx()->GetWeapon()->GetBaseStats();
-  }
-
-  return stats;
-}
-
 bool KukiShinobu::HasWeapon() const {
   if (this->GetPlayerEx()->GetWeapon() &&
       this->GetPlayerEx()->GetWeapon()->GetType() == Weapon::Type::kSword) {
@@ -150,6 +155,15 @@ bool KukiShinobu::HasWeapon() const {
     return false;
   }
 }
+
+const std::map<std::string, int> KukiShinobu::kAscensionMaterialsList[7] = {
+    {{"genshicraft:mora_10000", 2}},
+    {{"genshicraft:mora_10000", 4}},
+    {{"genshicraft:mora_10000", 6}},
+    {{"genshicraft:mora_10000", 8}},
+    {{"genshicraft:mora_10000", 10}},
+    {{"genshicraft:mora_10000", 12}},
+    {}};
 
 const int KukiShinobu::kStatsATKBase[7] = {17, 39, 58, 75, 90, 104, 118};
 

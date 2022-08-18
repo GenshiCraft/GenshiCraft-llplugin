@@ -34,6 +34,9 @@
 #include <EventAPI.h>
 #include <LoggerAPI.h>
 
+#include <string>
+
+#include "damage.h"
 #include "version.h"
 
 namespace genshicraft {
@@ -43,18 +46,19 @@ namespace genshicraft {
  *
  */
 void CheckProtocolVersion();
-/**
- * @brief Get the clocks in seconds
- *
- * @return The clocks
- */
-double GetNowClock();
 
 /**
  * @brief Initialize the plugin
  *
  */
 void Init();
+
+/**
+ * @brief Get the clocks in seconds
+ *
+ * @return The clocks
+ */
+double GetNowClock();
 
 /**
  * @brief The handler for MobHurtEvent

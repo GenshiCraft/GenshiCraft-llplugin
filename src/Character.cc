@@ -103,6 +103,15 @@ PlayerEx* Character::GetPlayerEx() const { return this->playerex_; }
 
 Stats Character::GetStats() const {
   auto stats = this->GetBaseStats();
+
+  if (this->HasWeapon()) {  // if the player is holding a GenshiCraft weapon
+    stats += this->playerex_->GetWeapon()->GetBaseStats();
+  }
+
+  for (auto&& artifact: this->playerex_->GetArtifactList()) {
+    stats += artifact->GetBaseStats();
+  }
+
   stats.max_stamina = this->playerex_->GetStaminaMax();
   stats.CRIT_rate += 0.05;
   stats.CRIT_DMG += 0.5;

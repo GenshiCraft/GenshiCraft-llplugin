@@ -39,6 +39,7 @@
 #include <MC/ItemStack.hpp>
 #include <MC/Level.hpp>
 #include <MC/Player.hpp>
+#include <MC/SimpleContainer.hpp>
 #include <algorithm>
 #include <memory>
 #include <random>
@@ -46,6 +47,7 @@
 #include <third-party/Nlohmann/json.hpp>
 #include <vector>
 
+#include "artifact.h"
 #include "character.h"
 #include "exceptions.h"
 #include "menu.h"
@@ -219,6 +221,25 @@ std::vector<std::shared_ptr<Character>> PlayerEx::GetAllCharacters() const {
   return this->character_owned_;
 }
 
+std::vector<std::shared_ptr<Artifact>> PlayerEx::GetArtifactList() {
+  std::vector<ItemStack*> item_list;
+  item_list.push_back(this->GetPlayer()->getArmorContainer().getSlot(0));
+  item_list.push_back(this->GetPlayer()->getArmorContainer().getSlot(1));
+  item_list.push_back(this->GetPlayer()->getArmorContainer().getSlot(2));
+  item_list.push_back(this->GetPlayer()->getArmorContainer().getSlot(3));
+  item_list.push_back(const_cast<ItemStack*>(&(this->GetPlayer()->getOffhandSlot())));
+
+  std::vector<std::shared_ptr<Artifact>> artifact_list;
+
+  for (auto&& item : item_list) {
+    if (Artifact::CheckIsArtifact(item)) {
+      artifact_list.push_back(Artifact::Make(item, this));
+    }
+  }
+
+  return artifact_list;
+}
+
 std::shared_ptr<Character> PlayerEx::GetCharacter() const {
   return this->character_;
 }
@@ -362,10 +383,10 @@ void PlayerEx::OnTick() {
         world::GetWorldLevel(playerex->GetPlayer()->getPosition(),
                              playerex->GetPlayer()->getDimension());
     if (world_level != playerex->last_world_level_) {
-      if (world_level * 10 >= playerex->character_->GetLevel() + 20) {
+      if (world_level * 11 - 10 > playerex->character_->GetLevel() + 10) {
         playerex->GetPlayer()->sendTitlePacket("§cHighly Dangerous",
                                                TitleType::SetSubtitle, 0, 1, 0);
-      } else if (world_level * 10 >= playerex->character_->GetLevel() + 10) {
+      } else if (world_level * 11 - 10 > playerex->character_->GetLevel()) {
         playerex->GetPlayer()->sendTitlePacket("§6Dangerous",
                                                TitleType::SetSubtitle, 0, 1, 0);
       }

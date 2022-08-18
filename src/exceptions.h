@@ -217,6 +217,31 @@ class ExceptionNotAWeapon : public ExceptionWeapon {
   using ExceptionWeapon::ExceptionWeapon;
 };
 
+/**
+ * @brief The ExceptionArtifact class is the base class for exceptions related to
+ * the Artifact class.
+ *
+ */
+class ExceptionArtifact : public Exception {
+ public:
+  using Exception::Exception;
+};
+
+/**
+ * @brief The ExceptionNotAnArtifact class represents that the item is not a
+ * GenshiCraft item.
+ *
+ */
+class ExceptionNotAnArtifact : public ExceptionArtifact {
+ public:
+  ExceptionNotAnArtifact()
+      : ExceptionArtifact(
+            "[genshicraft::ExceptionNotAnArtifact] The item is not a GenshiCraft "
+            "Artifact.") {}
+
+  using ExceptionArtifact::ExceptionArtifact;
+};
+
 }  // namespace genshicraft
 
 #endif  // GENSHICRAFT_EXCEPTIONS_H_

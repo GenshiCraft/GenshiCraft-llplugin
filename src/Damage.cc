@@ -43,6 +43,8 @@ Damage::Damage()
     : amplifier_(1.),
       element_(Damage::ElementType::kPhysical),
       level_(1),
+      source_type_(Damage::SourceType::kMob),
+      stats_(Stats()),
       victim_element_(Damage::ElementType::kPhysical),
       victim_level_(1) {
   // Empty
@@ -184,6 +186,86 @@ double Damage::Get() const {
 
 Damage::ElementType Damage::GetElementType() const { return this->element_; }
 
+Damage::ElementalReactionType Damage::GetElementalReactionType() const {
+  if ((this->element_ == ElementType::kDendro &&
+       this->victim_element_ == ElementType::kHydro) ||
+      (this->victim_element_ == ElementType::kDendro &&
+       this->element_ == ElementType::kHydro)) {
+    return Damage::ElementalReactionType::kBloom;
+
+  } else if ((this->element_ == ElementType::kDendro &&
+              this->victim_element_ == ElementType::kPyro) ||
+             (this->victim_element_ == ElementType::kDendro &&
+              this->element_ == ElementType::kPyro)) {
+    return Damage::ElementalReactionType::kBurning;
+
+  } else if ((this->element_ == ElementType::kDendro &&
+              this->victim_element_ == ElementType::kElectro) ||
+             (this->victim_element_ == ElementType::kDendro &&
+              this->element_ == ElementType::kElectro)) {
+    return Damage::ElementalReactionType::kCatalyze;
+
+  } else if ((this->element_ == ElementType::kGeo &&
+              (this->victim_element_ == ElementType::kCryo ||
+               this->victim_element_ == ElementType::kElectro ||
+               this->victim_element_ == ElementType::kHydro ||
+               this->victim_element_ == ElementType::kPyro)) ||
+             ((this->victim_element_ == ElementType::kCryo ||
+               this->victim_element_ == ElementType::kElectro ||
+               this->victim_element_ == ElementType::kHydro ||
+               this->victim_element_ == ElementType::kPyro) &&
+              this->victim_element_ == ElementType::kGeo)) {
+    return Damage::ElementalReactionType::kCrystallize;
+
+  } else if ((this->element_ == ElementType::kElectro &&
+              this->victim_element_ == ElementType::kHydro) ||
+             (this->victim_element_ == ElementType::kElectro &&
+              this->element_ == ElementType::kHydro)) {
+    return Damage::ElementalReactionType::kElectroCharged;
+
+  } else if ((this->element_ == ElementType::kCryo &&
+              this->victim_element_ == ElementType::kHydro) ||
+             (this->victim_element_ == ElementType::kCryo &&
+              this->element_ == ElementType::kHydro)) {
+    return Damage::ElementalReactionType::kFrozen;
+
+  } else if ((this->element_ == ElementType::kCryo &&
+              this->victim_element_ == ElementType::kPyro) ||
+             (this->victim_element_ == ElementType::kCryo &&
+              this->element_ == ElementType::kPyro)) {
+    return Damage::ElementalReactionType::kMelt;
+
+  } else if ((this->element_ == ElementType::kElectro &&
+              this->victim_element_ == ElementType::kPyro) ||
+             (this->victim_element_ == ElementType::kElectro &&
+              this->element_ == ElementType::kPyro)) {
+    return Damage::ElementalReactionType::kOverloaded;
+
+  } else if ((this->element_ == ElementType::kCryo &&
+              this->victim_element_ == ElementType::kElectro) ||
+             (this->victim_element_ == ElementType::kCryo &&
+              this->element_ == ElementType::kElectro)) {
+    return Damage::ElementalReactionType::kSuperconduct;
+
+  } else if ((this->element_ == ElementType::kAnemo &&
+              (this->victim_element_ == ElementType::kCryo ||
+               this->victim_element_ == ElementType::kElectro ||
+               this->victim_element_ == ElementType::kHydro ||
+               this->victim_element_ == ElementType::kPyro)) ||
+             ((this->victim_element_ == ElementType::kCryo ||
+               this->victim_element_ == ElementType::kElectro ||
+               this->victim_element_ == ElementType::kHydro ||
+               this->victim_element_ == ElementType::kPyro) &&
+              this->victim_element_ == ElementType::kAnemo)) {
+    return Damage::ElementalReactionType::kSwirl;
+
+  } else {
+    return Damage::ElementalReactionType::kNone;
+  }
+}
+
+Damage::SourceType Damage::GetSourceType() const { return this->source_type_; }
+
 void Damage::SetAmplifier(double amplifier) { this->amplifier_ = amplifier; }
 
 void Damage::SetElementType(const Damage::ElementType& element) {
@@ -191,6 +273,10 @@ void Damage::SetElementType(const Damage::ElementType& element) {
 }
 
 void Damage::SetLevel(int level) { this->level_ = level; }
+
+void Damage::SetSourceType(const Damage::SourceType& source_type) {
+  this->source_type_ = source_type;
+};
 
 void Damage::SetStats(const Stats& stats) { this->stats_ = stats; }
 

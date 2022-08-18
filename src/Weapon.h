@@ -180,12 +180,6 @@ class Weapon {
   static bool CheckIsWeapon(ItemStack *item);
 
   /**
-   * @brief Initialize the weapon system
-   *
-   */
-  static void Init();
-
-  /**
    * @brief Make a Weapon object
    *
    * @param item The weapon item
@@ -238,9 +232,6 @@ class Weapon {
   PlayerEx *playerex_;   // the PlayerEx object of the owner
   int refinement_;       // the Refinement
   int weapon_exp_;       // the Weapon EXP
-
-  static bool is_initialized_;  // the flag indicating if the weapon system is
-                                // initialized
 };
 
 }  // namespace genshicraft

@@ -33,10 +33,12 @@
 #include <FormUI.h>
 #include <ScheduleAPI.h>
 
+#include <MC/ItemStack.hpp>
 #include <MC/Player.hpp>
 #include <map>
 #include <memory>
 #include <string>
+#include <utility>
 
 #include "character.h"
 #include "playerex.h"
@@ -75,8 +77,7 @@ void Menu::OpenCharacter() {
     content += "§f" + line + "\n";
   }
 
-  Form::SimpleForm form("Character / " + std::string(character->GetName()),
-                        content);
+  Form::SimpleForm form("Character / " + character->GetName(), content);
 
   form = form.addButton(
       "Details", "", [this](Player* player) { this->OpenCharacterDetails(); });
@@ -84,7 +85,9 @@ void Menu::OpenCharacter() {
   if (Character::kAcensionPhaseMaxLevelList[character->GetAscensionPhase()] ==
       character->GetLevel()) {
     if (character->GetLevel() != 90) {
-      form = form.addButton("Ascend");
+      form = form.addButton("Ascend", "", [this](Player* player) {
+        this->OpenCharacterAscend();
+      });
     }
   } else {
     form = form.addButton("Level Up", "", [this](Player* player) {
@@ -98,11 +101,11 @@ void Menu::OpenCharacter() {
         "Weapon", "", [this](Player* player) { this->OpenCharacterWeapon(); });
   }
 
-  form = form.addButton("Artifacts");
+  // form = form.addButton("Artifacts");
 
-  form = form.addButton("Constellation");
+  // form = form.addButton("Constellation");
 
-  form = form.addButton("Talents");
+  // form = form.addButton("Talents");
 
   form.sendTo(this->playerex_->GetPlayer(), [this](Player* player, int option) {
     if (option == -1) {
@@ -110,6 +113,71 @@ void Menu::OpenCharacter() {
       return;
     }
   });
+}
+
+void Menu::OpenCharacterAscend() {
+  auto character = this->playerex_->GetCharacter();
+
+  // Check if it is time to ascend
+  if ((Character::kAcensionPhaseMaxLevelList[character->GetAscensionPhase()] !=
+       character->GetLevel()) ||
+      character->GetLevel() == 90) {
+    this->OpenCharacter();
+    return;
+  }
+
+  bool can_ascend = true;
+  for (const auto& item : character->GetAscensionMaterials()) {
+    if (this->playerex_->GetItemCount(item.first) < item.second) {
+      can_ascend = false;
+    }
+  }
+
+  if (!can_ascend) {
+    std::string content;
+
+    content += "§cNot enough ascension materials!\n";
+    content += "§fAscension materials:\n";
+
+    for (const auto& item : character->GetAscensionMaterials()) {
+      auto item_name = ItemStack::create(item.first)->getName();
+      content += "§f" + item_name + " §fx" + std::to_string(item.second);
+    }
+
+    Form::SimpleForm form("Ascend / " + character->GetName(), content);
+
+    form.sendTo(this->playerex_->GetPlayer(),
+                [this](Player* player, int option) {
+                  if (option == -1) {
+                    this->OpenCharacter();
+                    return;
+                  }
+                });
+  } else {
+    Form::SimpleForm form("Ascend / " + character->GetName(),
+                          "Are you sure to ascend?");
+
+    form.addButton("Continue");
+
+    form.sendTo(this->playerex_->GetPlayer(),
+                [this](Player* player, int option) {
+                  if (option == -1) {
+                    this->OpenCharacter();
+                    return;
+                  }
+
+                  auto character = this->playerex_->GetCharacter();
+
+                  for (const auto& item : character->GetAscensionMaterials()) {
+                    this->playerex_->ConsumeItem(item.first, item.second);
+                  }
+
+                  character->IncreaseAscensionPhase();
+
+                  this->OpenCharacter();
+                  return;
+                });
+  }
 }
 
 void Menu::OpenCharacterDetails() {
@@ -130,8 +198,7 @@ void Menu::OpenCharacterDetails() {
     content += "§f" + stats_description[i] + "\n";
   }
 
-  Form::SimpleForm form("Details / " + std::string(character->GetName()),
-                        content);
+  Form::SimpleForm form("Details / " + character->GetName(), content);
 
   form.sendTo(this->playerex_->GetPlayer(), [this](Player* player, int option) {
     if (option == -1) {
@@ -144,6 +211,13 @@ void Menu::OpenCharacterDetails() {
 void Menu::OpenCharacterLevelUp() {
   auto character = this->playerex_->GetCharacter();
 
+  // Check if it is time to level up
+  if (Character::kAcensionPhaseMaxLevelList[character->GetAscensionPhase()] ==
+      character->GetLevel()) {
+    this->OpenCharacter();
+    return;
+  }
+
   auto max_character_exp =
       this->playerex_->GetItemCount("genshicraft:wanderer_s_advice") * 1000 +
       this->playerex_->GetItemCount("genshicraft:adventurer_s_experience") *
@@ -153,7 +227,7 @@ void Menu::OpenCharacterLevelUp() {
   auto max_up_level = character->GetLevelByCharacterEXP(
       max_character_exp + character->GetCharacterEXP());
 
-  Form::CustomForm form("Level Up / " + std::string(character->GetName()));
+  Form::CustomForm form("Level Up / " + character->GetName());
 
   form = form.addLabel("text_level",
                        "Lv." + std::to_string(character->GetLevel()));
@@ -257,17 +331,16 @@ void Menu::OpenCharacterWeapon() {
         "§eRefinement Rank " + std::to_string(weapon->GetRefinement()) + "\n";
   }
 
-  Form::SimpleForm form(
-      "Weapon / " + std::string(this->playerex_->GetWeapon()->GetName()),
-      content);
+  Form::SimpleForm form("Weapon / " + this->playerex_->GetWeapon()->GetName(),
+                        content);
 
   if (Weapon::kAcensionPhaseMaxLevelList[weapon->GetAscensionPhase()] ==
       weapon->GetLevel()) {
     if ((weapon->GetRarity() >= 3 && weapon->GetLevel() != 90) ||
         (weapon->GetRarity() <= 2 && weapon->GetLevel() != 70)) {
-      form = form.addButton("Ascend", "", [this](Player* player) {
-        this->OpenCharacterWeaponAscend();
-      });
+      // form = form.addButton("Ascend", "", [this](Player* player) {
+      //   this->OpenCharacterWeaponAscend();
+      // });
     }
   } else {
     form = form.addButton("Enhance", "", [this](Player* player) {
@@ -276,14 +349,14 @@ void Menu::OpenCharacterWeapon() {
   }
 
   if (weapon->GetRarity() >= 3 && weapon->GetRefinement() < 5) {
-    form = form.addButton("Refine", "", [this](Player* player) {
-      this->OpenCharacterWeaponRefine();
-    });
+    // form = form.addButton("Refine", "", [this](Player* player) {
+    //   this->OpenCharacterWeaponRefine();
+    // });
   }
 
   form.sendTo(this->playerex_->GetPlayer(), [this](Player* player, int option) {
     if (option == -1) {
-      this->OpenMain();
+      this->OpenCharacter();
       return;
     }
   });
@@ -292,7 +365,7 @@ void Menu::OpenCharacterWeapon() {
 void Menu::OpenCharacterWeaponAscend() {
   // Check if the player is holding a GenshiCraft weapon
   if (!this->playerex_->GetWeapon()) {
-    this->OpenMain();
+    this->OpenCharacter();
     return;
   }
 }
@@ -300,11 +373,18 @@ void Menu::OpenCharacterWeaponAscend() {
 void Menu::OpenCharacterWeaponEnhance() {
   // Check if the player is holding a GenshiCraft weapon
   if (!this->playerex_->GetWeapon()) {
-    this->OpenCharacterWeapon();
+    this->OpenCharacter();
     return;
   }
 
   auto weapon = this->playerex_->GetWeapon();
+
+  // Check if it is time to enhance
+  if (Weapon::kAcensionPhaseMaxLevelList[weapon->GetAscensionPhase()] ==
+      weapon->GetLevel()) {
+    this->OpenCharacterWeapon();
+    return;
+  }
 
   auto max_weapon_exp =
       this->playerex_->GetItemCount("genshicraft:enhancement_ore") * 400 +
@@ -315,7 +395,7 @@ void Menu::OpenCharacterWeaponEnhance() {
   auto max_enhanced_level =
       weapon->GetLevelByWeaponEXP(max_weapon_exp + weapon->GetWeaponEXP());
 
-  Form::CustomForm form("Enhance / " + std::string(weapon->GetName()));
+  Form::CustomForm form("Enhance / " + weapon->GetName());
 
   form =
       form.addLabel("text_level", "Lv." + std::to_string(weapon->GetLevel()));
@@ -371,7 +451,7 @@ void Menu::OpenCharacterWeaponEnhance() {
 void Menu::OpenCharacterWeaponRefine() {
   // Check if the player is holding a GenshiCraft weapon
   if (!this->playerex_->GetWeapon()) {
-    this->OpenMain();
+    this->OpenCharacter();
     return;
   }
 }

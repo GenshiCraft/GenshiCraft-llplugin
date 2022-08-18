@@ -57,6 +57,12 @@ class Menu {
   void OpenCharacter();
 
   /**
+   * @brief Open the character ascend menu
+   *
+   */
+  void OpenCharacterAscend();
+
+  /**
    * @brief Open the character details menu
    *
    */

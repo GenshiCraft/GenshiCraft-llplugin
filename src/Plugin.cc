@@ -41,12 +41,15 @@
 #include <MC/Container.hpp>
 #include <MC/ItemStack.hpp>
 #include <MC/Player.hpp>
+#include <MC/Types.hpp>
 #include <chrono>
 #include <cmath>
+#include <map>
 #include <random>
 #include <third-party/Base64/Base64.hpp>
 #include <third-party/Nlohmann/json.hpp>
 
+#include "artifact.h"
 #include "character.h"
 #include "command.h"
 #include "damage.h"
@@ -89,7 +92,6 @@ void Init() {
 
   Command::Init();
   PlayerEx::Init();
-  Weapon::Init();
 
   Event::MobHurtEvent::subscribe_ref(OnMobHurt);
   Event::PlayerDropItemEvent::subscribe_ref(OnPlayerDropItem);
@@ -112,17 +114,26 @@ bool OnMobHurt(Event::MobHurtEvent& event) {
 
   int world_level = world::GetWorldLevel(event.mMob->getPosition(),
                                          event.mMob->getDimension());
-  int mob_level = world_level * 11 + dist(random_engine);
 
   Damage damage;
 
-  // Process the damage source
-  if (event.mDamageSource
-          ->isEntitySource()) {  // if the damage source is an entity
+  // The damage source
+  Player* player_attacker = nullptr;
 
-    if (event.mDamageSource->getEntity()->getTypeName() == "minecraft:player") {
-      // Process player attack
-      auto player = static_cast<Player*>(event.mDamageSource->getEntity());
+  if ((event.mDamageSource->isEntitySource() &&
+       event.mDamageSource->getEntity()->getTypeName() == "minecraft:player") ||
+      (event.mDamageSource->isEntitySource() &&
+       (event.mDamageSource->getEntity()->getTypeName() == "minecraft:arrow" ||
+        event.mDamageSource->getEntity()->getTypeName() ==
+            "minecraft:thrown_trident") &&
+       static_cast<AbstractArrow*>(event.mDamageSource->getEntity())
+           ->isPlayerOwned())) {  // if the damage is caused by a player
+
+    Player* player;
+    if (event.mDamageSource->getEntity()->getTypeName() ==
+        "minecraft:player") {  // if the damage is from melee attack
+
+      player = static_cast<Player*>(event.mDamageSource->getEntity());
       auto playerex = PlayerEx::Get(player->getXuid());
 
       if (player->getHandSlot()->getTypeName() == "minecraft:wooden_sword" ||
@@ -157,101 +168,137 @@ bool OnMobHurt(Event::MobHurtEvent& event) {
           player->getHandSlot()->getTypeName() == "minecraft:iron_hoe" ||
           player->getHandSlot()->getTypeName() == "minecraft:diamond_hoe" ||
           player->getHandSlot()->getTypeName() == "minecraft:netherite_hoe" ||
-          player->getHandSlot()->getTypeName() == "minecraft:trident") {
-        // For Minecraft weapons
+          player->getHandSlot()->getTypeName() ==
+              "minecraft:trident") {  // if the damage is from Minecraft weapons
+
         Stats stats;
-        stats.ATK_base =
-            static_cast<int>(event.mDamage * world::GetEnemyATKMultiplier(
-                                                 world_level * 11 - 10));
+        stats.ATK_base = static_cast<int>(
+            event.mDamage * playerex->GetCharacter()->GetStats().GetATK() *
+            0.1974);
+
         damage.SetStats(stats);
-        damage.SetLevel(world_level * 11 - 10);
-      } else {
-        // Normal attack
+        damage.SetLevel(playerex->GetCharacter()->GetLevel());
+
+      } else {  // if the damage is not from Minecraft weapons
+
         damage = playerex->GetCharacter()->GetDamageNormalAttack();
       }
 
-      damage.SetElementType(Damage::ElementType::kPhysical);
-      damage.SetLevel(playerex->GetCharacter()->GetLevel());
+    } else {  // if the damage is from thrown trident or arrow
 
-    } else if (event.mDamageSource->getEntity()->getTypeName().substr(0, 10) ==
-               "minecraft:") {
-      // Process mob attack
-      nlohmann::json data;
-
-      // Get the data from the mob
-      for (const auto& tag : event.mDamageSource->getEntity()->getAllTags()) {
-        if (tag.substr(0, 12) == "genshicraft_") {
-          auto data_str = Base64::Decode(tag.substr(12));
-          data = nlohmann::json::parse(data_str);
-
-          break;
-        }
-      }
-
-      // Use template data if the mob has not been initialized
-      if (data.empty()) {
-        data["ATK"] = 0;
-        data["max_HP"] =
-            static_cast<int>(event.mDamageSource->getEntity()->getMaxHealth() *
-                             3.65 * world::GetEnemyMaxHPMultiplier(mob_level));
-        data["HP"] =
-            static_cast<int>(data["max_HP"].get<double>() *
-                             event.mDamageSource->getEntity()->getHealth() /
-                             event.mDamageSource->getEntity()->getMaxHealth());
-        data["level"] = mob_level;
-      }
-
-      if (data["ATK"].get<int>() ==
-          0) {  // if the mob has not been registered as an attacker
-        data["ATK"] = static_cast<int>(
-            event.mDamage * 18 *
-            world::GetEnemyATKMultiplier(
-                mob_level));  // the ATK of the zombie should be the same as
-                              // that of the hilichurl
-
-        // Arrows and tridents of players
-        if ((event.mDamageSource->getEntity()->getTypeName() ==
-                 "minecraft:arrow" ||
-             event.mDamageSource->getEntity()->getTypeName() ==
-                 "minecraft:thrown_trident") &&
-            (static_cast<AbstractArrow*>(event.mDamageSource->getEntity())
-                 ->isPlayerOwned())) {
-          data["ATK"] = static_cast<int>(
-              event.mDamage * world::GetEnemyATKMultiplier(mob_level));
-        }
-      }
+      player = static_cast<AbstractArrow*>(event.mDamageSource->getEntity())
+                   ->getPlayerOwner();
+      auto playerex = PlayerEx::Get(player->getXuid());
 
       Stats stats;
-      stats.ATK_base = data["ATK"].get<int>();
-      stats.DEF_base = data["level"].get<int>() * 5 + 500;
-      stats.max_HP_base = data["max_HP"].get<int>();
+      stats.ATK_base = static_cast<int>(
+          event.mDamage * playerex->GetCharacter()->GetStats().GetATK() *
+          0.1974);
 
       damage.SetStats(stats);
-      damage.SetLevel(data["level"].get<int>());
+      damage.SetLevel(playerex->GetCharacter()->GetLevel());
     }
-  } else {
-    // Process environment damage
+
+    player_attacker = player;  // for damage value displaying
+
+  } else if (event.mDamageSource->isEntitySource() &&
+             event.mDamageSource->getEntity()->getTypeName().substr(0, 10) ==
+                 "minecraft:") {  // if the damage is caused by a Minecraft mob
+
+    nlohmann::json data;  // the mob data
+
+    // Get the data from the mob
+    for (const auto& tag : event.mDamageSource->getEntity()->getAllTags()) {
+      if (tag.substr(0, 12) ==
+          "genshicraft_") {  // the tag with "genshicraft_" prefix is used for
+                             // GenshiCraft entity data storage
+        data = nlohmann::json::parse(Base64::Decode(tag.substr(12)));
+        event.mDamageSource->getEntity()->removeTag(
+            tag);  // remove the tag for further processing
+        break;
+      }
+    }
+
+    // Initialize the mob
+    if (data.empty()) {
+      data["level"] = world_level * 11 + dist(random_engine);  // the mob level
+
+      data["ATK"] = 0;  // awaiting for further initialization
+      data["max_HP"] = static_cast<int>(
+          event.mDamageSource->getEntity()->getMaxHealth() *
+          world::GetEnemyMaxHPMultiplier(data["level"].get<int>()) * 3.65);
+      data["HP"] =
+          static_cast<int>(data["max_HP"].get<double>() *
+                           event.mDamageSource->getEntity()->getHealth() /
+                           event.mDamageSource->getEntity()->getMaxHealth());
+    }
+    if (data["ATK"].get<int>() ==
+        0) {  // if the ATK of the mob has not been initialized
+      data["ATK"] = static_cast<int>(
+          event.mDamage *
+          world::GetEnemyATKMultiplier(data["level"].get<int>()) *
+          18);  // the ATK of the zombie should be
+                // the same as that of the hilichurl
+    }
+
     Stats stats;
-    stats.ATK_base = static_cast<int>(
-        event.mDamage * world::GetEnemyATKMultiplier(world_level * 10));
+    stats.ATK_base = data["ATK"].get<int>();
+    stats.DEF_base = data["level"].get<int>() * 5 + 500;
+    stats.max_HP_base = data["max_HP"].get<int>();
+
     damage.SetStats(stats);
-    damage.SetLevel(world_level * 10);
+    // damage.SetElementType();
+    damage.SetLevel(data["level"].get<int>());
+
+    // Write the data to the mob
+    auto tag = Base64::Encode(nlohmann::to_string(data));
+    tag = tag.substr(0, tag.find('='));
+    event.mDamageSource->getEntity()->addTag("genshicraft_" + tag);
+
+  } else {  // if the damage is caused by the environment
+
+    Stats stats;
+    stats.ATK_base = static_cast<int>(event.mDamage);
+
+    damage.SetStats(stats);
+    // damage.SetElementType();
+    damage.SetLevel(world_level * 11 - 10);
+    damage.SetSourceType(Damage::SourceType::kEnvironment);
   }
 
-  // Process the victim
+  // The victim
   int victim_HP = 0;
   int victim_max_HP = 0;
+
   if (event.mMob->getTypeName() ==
       "minecraft:player") {  // if the victim is a player
-    auto playerex = PlayerEx::Get(static_cast<Player*>(event.mMob)->getXuid());
+    auto player = static_cast<Player*>(event.mMob);
+    auto playerex = PlayerEx::Get(player->getXuid());
 
     damage.SetVictimStats(playerex->GetCharacter()->GetStats());
+    // damage.SetVictimElementType();
     damage.SetVictimLevel(playerex->GetCharacter()->GetLevel());
 
-    // Use GenshiCraft damage instead of Minecraft damage
+    double damage_value = damage.Get();
+
+    // Environment damage
+    if (damage.GetSourceType() == Damage::SourceType::kEnvironment) {
+      damage_value *=
+          static_cast<double>(playerex->GetCharacter()->GetStats().GetMaxHP()) /
+          player->getMaxHealth();
+
+      // Prevent the too frequent damage
+      if (event.mDamageSource->getCause() == ActorDamageCause::Contact ||
+          event.mDamageSource->getCause() == ActorDamageCause::Fire ||
+          event.mDamageSource->getCause() == ActorDamageCause::FireTick ||
+          event.mDamageSource->getCause() == ActorDamageCause::Lava) {
+        damage_value /= 20;
+      }
+    }
+
     playerex->GetCharacter()->IncreaseHP(
-        static_cast<int>(-std::ceil(damage.Get())));
-    event.mDamage = 0;
+        static_cast<int>(-std::ceil(damage_value)));  // damage the character
+    event.mDamage = 0;  // not to damage the Minecraft player
 
     victim_HP = playerex->GetCharacter()->GetHP();
     victim_max_HP = playerex->GetCharacter()->GetStats().GetMaxHP();
@@ -263,9 +310,7 @@ bool OnMobHurt(Event::MobHurtEvent& event) {
     // Get the data from the mob
     for (const auto& tag : event.mMob->getAllTags()) {
       if (tag.substr(0, 12) == "genshicraft_") {
-        auto data_str = Base64::Decode(tag.substr(12));
-        data = nlohmann::json::parse(data_str);
-
+        data = nlohmann::json::parse(Base64::Decode(tag.substr(12)));
         event.mMob->removeTag(tag);  // remove the tag for further processing
         break;
       }
@@ -273,41 +318,72 @@ bool OnMobHurt(Event::MobHurtEvent& event) {
 
     // Use template data if the mob has not been initialized
     if (data.empty()) {
-      data["ATK"] = 0;
-      data["max_HP"] =
-          static_cast<int>(event.mMob->getMaxHealth() * 3.65 *
-                           world::GetEnemyMaxHPMultiplier(mob_level));
+      data["level"] = world_level * 11 + dist(random_engine);  // the mob level
+
+      data["ATK"] = 0;  // awaiting for further initialization
+      data["max_HP"] = static_cast<int>(
+          event.mMob->getMaxHealth() *
+          world::GetEnemyMaxHPMultiplier(data["level"].get<int>()) * 3.65);
       data["HP"] = static_cast<int>(data["max_HP"].get<double>() *
                                     event.mMob->getHealth() /
                                     event.mMob->getMaxHealth());
-      data["level"] = mob_level;
     }
 
     Stats stats;
     stats.ATK_base = data["ATK"].get<int>();
     stats.DEF_base = data["level"].get<int>() * 5 + 500;
     stats.max_HP_base = data["max_HP"].get<int>();
+
     damage.SetVictimStats(stats);
+    // damage.SetVictimElementType();
     damage.SetVictimLevel(data["level"].get<int>());
+
+    // Ensure that the mob can be healed
+    if (data["HP"].get<int>() * event.mMob->getMaxHealth() /
+            data["max_HP"].get<int>() <
+        event.mMob->getHealth()) {
+      data["HP"] = static_cast<int>(
+          data["HP"].get<int>() +
+          (event.mMob->getHealth() - data["HP"].get<int>() *
+                                         event.mMob->getMaxHealth() /
+                                         data["max_HP"].get<int>()) *
+              (data["max_HP"].get<double>() / event.mMob->getMaxHealth()));
+    }
+
+    double damage_value = damage.Get();
+
+    // Environment damage
+    if (damage.GetSourceType() == Damage::SourceType::kEnvironment) {
+      damage_value *= data["max_HP"].get<double>() / event.mMob->getMaxHealth();
+
+      // Prevent the too frequent damage
+      if (event.mDamageSource->getCause() == ActorDamageCause::Contact ||
+          event.mDamageSource->getCause() == ActorDamageCause::Fire ||
+          event.mDamageSource->getCause() == ActorDamageCause::FireTick ||
+          event.mDamageSource->getCause() == ActorDamageCause::Lava) {
+        damage_value /= 20;
+      }
+    }
 
     // Damage the mob
     data["HP"] =
-        static_cast<int>(data["HP"].get<int>() - std::ceil(damage.Get()));
+        static_cast<int>(data["HP"].get<int>() - std::ceil(damage_value));
     event.mDamage = static_cast<float>(
         event.mMob->getHealth() -
         (data["HP"].get<double>() / data["max_HP"].get<double>() *
          event.mMob->getMaxHealth()));
     if (data["HP"].get<int>() <= 0) {
-      event.mDamage = 999999;
+      event.mDamage = 999999;  // kill the mob instantly
     }
 
+    victim_HP = data["HP"].get<int>();
+    victim_max_HP = data["max_HP"].get<int>();
+
+    // Write the data to the mob
     auto data_str = nlohmann::to_string(data);
     auto tag = Base64::Encode(data_str);
     tag = tag.substr(0, tag.find('='));
     event.mMob->addTag("genshicraft_" + tag);
-
-    victim_HP = data["HP"].get<int>();
-    victim_max_HP = data["max_HP"].get<int>();
   }
 
   // Zero-damage hurt indicates failed hurt
@@ -316,28 +392,25 @@ bool OnMobHurt(Event::MobHurtEvent& event) {
   }
 
   // Show the damage value at the action bar
-  if (event.mDamageSource->isEntitySource() &&
-      event.mDamageSource->getEntity()->getTypeName() == "minecraft:player") {
-    auto player = static_cast<Player*>(event.mDamageSource->getEntity());
-    player->sendTitlePacket(std::to_string(static_cast<int>(damage.Get())) +
-                                " §f(" +
-                                std::to_string(std::max(victim_HP, 0)) + "§7/" +
-                                std::to_string(victim_max_HP) + "§f)",
-                            TitleType::SetActionBar, 0, 1, 0);
-  }
-  if (event.mDamageSource->isEntitySource() &&
-      (event.mDamageSource->getEntity()->getTypeName() == "minecraft:arrow" ||
-       event.mDamageSource->getEntity()->getTypeName() ==
-           "minecraft:thrown_trident") &&
-      (static_cast<AbstractArrow*>(event.mDamageSource->getEntity())
-           ->isPlayerOwned())) {
-    auto player = static_cast<AbstractArrow*>(event.mDamageSource->getEntity())
-                      ->getPlayerOwner();
-    player->sendTitlePacket(std::to_string(static_cast<int>(damage.Get())) +
-                                " §f(" +
-                                std::to_string(std::max(victim_HP, 0)) + "§7/" +
-                                std::to_string(victim_max_HP) + "§f)",
-                            TitleType::SetActionBar, 0, 1, 0);
+  if (player_attacker != nullptr) {
+    static const std::map<Damage::ElementType, std::string> kElementTypeColor =
+        {
+            {Damage::ElementType::kAnemo, "§3"},
+            {Damage::ElementType::kCryo, "§b"},
+            {Damage::ElementType::kDendro, "§a"},
+            {Damage::ElementType::kElectro, "§d"},
+            {Damage::ElementType::kGeo, "§g"},
+            {Damage::ElementType::kHydro, "§9"},
+            {Damage::ElementType::kPhysical, "§f"},
+            {Damage::ElementType::kPyro, "§c"},
+        };
+
+    player_attacker->sendTitlePacket(
+        kElementTypeColor.at(damage.GetElementType()) +
+            std::to_string(static_cast<int>(damage.Get())) + " §f(" +
+            std::to_string(std::max(victim_HP, 0)) + "§7/" +
+            std::to_string(victim_max_HP) + "§f)",
+        TitleType::SetActionBar, 0, 1, 0);
   }
 
   return true;
@@ -387,6 +460,10 @@ bool OnPlayerInventoryChange(Event::PlayerInventoryChangeEvent& event) {
 
   if (Weapon::CheckIsWeapon(event.mNewItemStack)) {
     Weapon::Make(event.mNewItemStack, playerex.get());
+  }
+
+  if (Artifact::CheckIsArtifact(event.mNewItemStack)) {
+    Artifact::Make(event.mNewItemStack, playerex.get());
   }
 
   if (food::CheckIsFood(event.mNewItemStack)) {

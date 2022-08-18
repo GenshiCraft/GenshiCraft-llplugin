@@ -257,20 +257,7 @@ bool Weapon::CheckIsWeapon(ItemStack* item) {
   return false;
 }
 
-void Weapon::Init() {
-  if (Weapon::is_initialized_) {
-    return;  // prevent duplicated initialization
-  }
-
-  Weapon::is_initialized_ = true;
-}
-
 std::shared_ptr<Weapon> Weapon::Make(ItemStack* item, PlayerEx* playerex) {
-  // Ensure that the weapon system is initialized
-  if (!Weapon::is_initialized_) {
-    Weapon::Init();
-  }
-
   if (item->getTypeName() == "genshicraft:dull_blade") {
     return std::make_shared<DullBlade>(item, playerex);
   }
@@ -407,7 +394,5 @@ const int Weapon::k5StarLevelMinWeaponEXPList[91] = {
     3910900, 4076400, 4245900, 4419450, 4597100, 4778900, 4964900, 5155150,
     5349675, 5548550, 5783275, 6047100, 6343500, 6676475, 7050425, 7470350,
     7941725, 8470775, 9064450};
-
-bool Weapon::is_initialized_ = false;
 
 }  // namespace genshicraft

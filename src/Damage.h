@@ -47,15 +47,39 @@ class Damage {
    *
    */
   enum class ElementType {
-    kPyro = 0,
-    kHydro,
+    kAnemo = 0,
+    kCryo,
     kDendro,
     kElectro,
-    kAnemo,
-    kCryo,
     kGeo,
-    kPhysical
+    kHydro,
+    kPhysical,
+    kPyro
   };
+
+  /**
+   * @brief The elemental reaction type
+   *
+   */
+  enum class ElementalReactionType {
+    kNone = 0,
+    kBloom,
+    kBurning,
+    kCatalyze,
+    kCrystallize,
+    kElectroCharged,
+    kFrozen,
+    kMelt,
+    kOverloaded,
+    kSuperconduct,
+    kSwirl
+  };
+
+  /**
+   * @brief The source type
+   *
+   */
+  enum class SourceType { kEnvironment = 0, kMob };
 
   /**
    * @brief Construct a new Damage object
@@ -78,6 +102,20 @@ class Damage {
   ElementType GetElementType() const;
 
   /**
+   * @brief Get the elemental reaction type
+   *
+   * @return The elemental reaction type
+   */
+  ElementalReactionType GetElementalReactionType() const;
+
+  /**
+   * @brief Get the source type
+   *
+   * @return The source type
+   */
+  SourceType GetSourceType() const;
+
+  /**
    * @brief Set the skill amplifier of the attacker
    *
    * @param amplifier The amplifier
@@ -97,6 +135,13 @@ class Damage {
    * @param level The level
    */
   void SetLevel(int level);
+
+  /**
+   * @brief Set the source type
+   *
+   * @param source_type The source type
+   */
+  void SetSourceType(const SourceType& source_type);
 
   /**
    * @brief Set the stats of the attacker
@@ -130,6 +175,7 @@ class Damage {
   double amplifier_;
   ElementType element_;
   int level_;  // the level of the attacker
+  SourceType source_type_;
   Stats stats_;
   ElementType victim_element_;
   int victim_level_;  // the level of the victim

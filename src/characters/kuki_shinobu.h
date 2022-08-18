@@ -31,6 +31,7 @@
 #ifndef GENSHICRAFT_CHARACTERS_KUKI_SHINOBU_H_
 #define GENSHICRAFT_CHARACTERS_KUKI_SHINOBU_H_
 
+#include <map>
 #include <memory>
 
 #include "character.h"
@@ -69,6 +70,13 @@ class KukiShinobu : public Character {
               int talent_elemental_skill_level, int talent_normal_attack_level);
 
   KukiShinobu() = delete;
+
+  /**
+   * @brief Get the ascension materials
+   *
+   * @return The names and the numbers of the ascension materials
+   */
+  std::map<std::string, int> GetAscensionMaterials() const override;
 
   /**
    * @brief Get the base stats
@@ -141,6 +149,9 @@ class KukiShinobu : public Character {
   bool HasWeapon() const override;
 
  private:
+  static const std::map<std::string, int>
+      kAscensionMaterialsList[7];  // the ascension materials
+
   static const int
       kStatsATKBase[7];  // the inferred 0-level ATK of each ascension phase
   static const int kStatsATKDiff;  // the difference of ATK between levels

@@ -31,6 +31,7 @@
 #ifndef GENSHICRAFT_CHARACTER_H_
 #define GENSHICRAFT_CHARACTER_H_
 
+#include <map>
 #include <memory>
 #include <string>
 #include <vector>
@@ -63,6 +64,13 @@ class Character {
    * @param modifier The modifier
    */
   void AddModifier(Modifier modifier);
+
+  /**
+   * @brief Get the ascension materials
+   * 
+   * @return The names and the numbers of the ascension materials
+   */
+  virtual std::map<std::string, int> GetAscensionMaterials() const = 0;
 
   /**
    * @brief Get the ascension phase
@@ -157,7 +165,7 @@ class Character {
 
   /**
    * @brief Get the fullness
-   * 
+   *
    * @return The fullness
    */
   double GetFullness() const;
@@ -277,7 +285,7 @@ class Character {
 
   /**
    * @brief Increase fullness
-   * 
+   *
    * @param value The value to increase. Negative value for decreasing
    */
   void IncreaseFullness(double value);

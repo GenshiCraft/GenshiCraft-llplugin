@@ -66,14 +66,14 @@ class Stats {
 
   // Base stats
   int max_HP_base = 0;
-  double max_HP_percent = 0.;
   int max_HP_ext = 0;
+  double max_HP_percent = 0.;
   int ATK_base = 0;
-  double ATK_percent = 0.;
   int ATK_ext = 0;
+  double ATK_percent = 0.;
   int DEF_base = 0;
-  double DEF_percent = 0.;
   int DEF_ext = 0;
+  double DEF_percent = 0.;
   int elemental_mastery = 0;
   int max_stamina = 0;
 

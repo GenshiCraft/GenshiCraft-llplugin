@@ -41,6 +41,7 @@
 #include "menu.h"
 #include "sidebar.h"
 #include "weapon.h"
+#include "artifact.h"
 
 namespace genshicraft {
 
@@ -90,6 +91,13 @@ class PlayerEx {
    * @return The characters
    */
   std::vector<std::shared_ptr<Character>> GetAllCharacters() const;
+
+  /**
+   * @brief Get the artifacts
+   * 
+   * @return The artifacts
+   */
+  std::vector<std::shared_ptr<Artifact>> GetArtifactList();
 
   /**
    * @brief Get the current character

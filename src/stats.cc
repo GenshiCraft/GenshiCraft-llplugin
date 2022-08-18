@@ -43,7 +43,7 @@ int Stats::GetDEF() const {
 }
 
 int Stats::GetMaxHP() const {
-  return static_cast<int>(this->max_HP_base * (1 + this->ATK_percent) +
+  return static_cast<int>(this->max_HP_base * (1 + this->max_HP_percent) +
                           this->max_HP_ext);
 }
 
