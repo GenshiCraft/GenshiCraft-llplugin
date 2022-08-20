@@ -138,6 +138,13 @@ class Artifact {
   int GetArtifactEXP() const;
 
   /**
+   * @brief Get the base artifact EXP as artifact EXP material
+   *
+   * @return The base artifact EXP
+   */
+  int GetBaseConsumableEXP() const;
+
+  /**
    * @brief Get the base stats
    *
    * @param stats The stats
@@ -161,20 +168,20 @@ class Artifact {
   int GetLevel() const;
 
   /**
+   * @brief Predict the level of the artifact under the artifact EXP
+   *
+   * @param artifact_exp The artifact EXP
+   * @return The level
+   */
+  int GetLevelByArtifactEXP(int artifact_exp) const;
+
+  /**
    * @brief Get the max level
    *
    * @return The max level (4 for 1-Star and 2-Star artifacts, 12 for 3-Star
    * artifacts, 16 for 4-Star artifacts, 20 for 5-Star artifacts)
    */
   int GetLevelMax() const;
-
-  /**
-   * @brief Predict the level with the artifact EXP provided
-   *
-   * @param artifact_exp The artifact EXP
-   * @return The level
-   */
-  int GetLevelByArtifactEXP(int artifact_exp) const;
 
   /**
    * @brief Get the name
@@ -220,6 +227,24 @@ class Artifact {
   static bool CheckIsArtifact(ItemStack *item);
 
   /**
+   * @brief Get the number of artifacts of the set equipped by the player
+   *
+   * @param set_name The set name
+   * @param playerex The PlayerEx object of the player
+   * @return The number
+   */
+  static int GetSetCount(const std::string &set_name, PlayerEx *playerex);
+
+  /**
+   * @brief Get the set effect descriptions
+   *
+   * @return A list whose first element is the description of the 2-piece set
+   * and the second is the description of the 4-piece set
+   */
+  static std::vector<std::string> GetSetEffectDescription(
+      const std::string &set_name);
+
+  /**
    * @brief Make an Artifact object
    *
    * @param item The artifact item
@@ -236,6 +261,10 @@ class Artifact {
    *
    */
   void InitStats();
+
+  const static int
+      kRarityBaseConsumableEXPList[6];  // the base artifact EXP of artifacts
+                                        // with different rarities
 
   const static std::map<std::string, ArtifactInfo>
       kArtifactInfoDict;  // information of all artifacts
@@ -259,6 +288,9 @@ class Artifact {
 
   const static int
       kRarityMaxLevelList[6];  // the maximum level of different rarities
+
+  const static std::map<std::string, std::vector<std::string>>
+      kSetEffectDescriptionDict;  // the set effect descriptions
 
   int artifact_exp_;
   std::string identifier_;

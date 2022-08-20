@@ -210,6 +210,10 @@ void Artifact::ApplyLore() {
 
 int Artifact::GetArtifactEXP() const { return this->artifact_exp_; }
 
+int Artifact::GetBaseConsumableEXP() const {
+  return Artifact::kRarityBaseConsumableEXPList[this->rarity_];
+};
+
 Stats Artifact::GetBaseStats() const {
   Stats stats;
 
@@ -522,6 +526,13 @@ void Artifact::IncreaseArtifactEXP(int value) {
 
   this->artifact_exp_ += std::max(value, 0);
 
+  if (this->GetLevel() > previous_level) {
+    this->main_stat_.value =
+        Artifact::kMainStatBase[this->rarity_].at(this->main_stat_.type) +
+        this->GetLevel() *
+            Artifact::kMainStatDiff[this->rarity_].at(this->main_stat_.type);
+  }
+
   if (this->GetLevel() % 4 == 0 && previous_level % 4 != 0) {
     // Enhance the zero-value stats first
     for (int i = 0; i < 4; ++i) {
@@ -560,6 +571,23 @@ bool Artifact::CheckIsArtifact(ItemStack* item) {
   }
 
   return false;
+}
+
+int Artifact::GetSetCount(const std::string& set_name, PlayerEx* playerex) {
+  int set_count = 0;
+  for (auto artifact_pair : playerex->GetArtifactDict()) {
+    auto artifact = artifact_pair.second;
+    if (artifact->GetSetName() == set_name) {
+      ++set_count;
+    }
+  }
+
+  return set_count;
+}
+
+std::vector<std::string> Artifact::GetSetEffectDescription(
+    const std::string& set_name) {
+  return Artifact::kSetEffectDescriptionDict.at(set_name);
 }
 
 std::shared_ptr<Artifact> Artifact::Make(ItemStack* item, PlayerEx* playerex) {
@@ -662,6 +690,9 @@ void Artifact::InitStats() {
     this->sub_stat_list_.push_back(stat_item);
   }
 }
+
+const int Artifact::kRarityBaseConsumableEXPList[6] = {0,    420,  840,
+                                                       1260, 2520, 3780};
 
 const std::map<std::string, Artifact::ArtifactInfo>
     Artifact::kArtifactInfoDict = {
@@ -975,5 +1006,11 @@ const std::map<Artifact::StatType, std::vector<double>>
 };
 
 const int Artifact::kRarityMaxLevelList[6] = {0, 4, 4, 12, 16, 20};
+
+const std::map<std::string, std::vector<std::string>>
+    Artifact::kSetEffectDescriptionDict = {
+        {"Adventurer",
+         {"Max HP increased by 1,000.",
+          "Opening a chest regenerates 30% Max HP over 5s."}}};
 
 }  // namespace genshicraft

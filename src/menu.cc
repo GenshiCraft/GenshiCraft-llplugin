@@ -199,6 +199,7 @@ void Menu::OpenCharacterArtifacts() {
 }
 
 void Menu::OpenCharacterArtifacts(Artifact::Type type) {
+  // Go back if the player is not equipped with this type of artifact
   if ((type == Artifact::Type::kFlowerOfLife &&
        !Artifact::CheckIsArtifact(
            this->playerex_->GetPlayer()->getArmorContainer().getSlot(0))) ||
@@ -217,6 +218,195 @@ void Menu::OpenCharacterArtifacts(Artifact::Type type) {
     this->OpenCharacterArtifacts();
     return;
   }
+
+  // Construct the artifact object and display the type name
+  std::shared_ptr<Artifact> artifact;
+  std::string type_str;
+  switch (type) {
+    case Artifact::Type::kFlowerOfLife:
+      artifact = Artifact::Make(
+          this->playerex_->GetPlayer()->getArmorContainer().getSlot(0),
+          this->playerex_);
+      type_str = "§7Flower of Life\n";
+      break;
+
+    case Artifact::Type::kPlumeOfDeath:
+      artifact = Artifact::Make(
+          this->playerex_->GetPlayer()->getArmorContainer().getSlot(1),
+          this->playerex_);
+      type_str = "§7Plume of Death\n";
+      break;
+
+    case Artifact::Type::kSandsOfEon:
+      artifact = Artifact::Make(
+          this->playerex_->GetPlayer()->getArmorContainer().getSlot(2),
+          this->playerex_);
+      type_str = "§7Sands of Eon\n";
+      break;
+
+    case Artifact::Type::kGobletOfEonothem:
+      artifact = Artifact::Make(
+          this->playerex_->GetPlayer()->getArmorContainer().getSlot(3),
+          this->playerex_);
+      type_str = "§7Goblet of Eonothem\n";
+      break;
+
+    case Artifact::Type::kCircletOfLogos:
+      artifact =
+          Artifact::Make(const_cast<ItemStack*>(
+                             &(this->playerex_->GetPlayer()->getOffhandSlot())),
+                         this->playerex_);
+      type_str = "§7Circlet of Logos\n";
+      break;
+
+    default:
+      break;
+  }
+
+  Form::CustomForm form("Artifact / " + artifact->GetName());
+
+  form = form.addLabel("type", type_str);
+
+  // Display the main stat description
+  form = form.addLabel("main_stat",
+                       "§f" + artifact->GetBaseStatsDescription().at(0));
+
+  // Display the rarity
+  std::string rarity_str = "§6";
+  for (int i = 0; i < artifact->GetRarity(); ++i) {
+    rarity_str += "★";
+  }
+  form = form.addLabel("rarity", rarity_str);
+
+  // Display the level
+  form = form.addLabel("level", "§f+" + std::to_string(artifact->GetLevel()));
+
+  // Display the sub stats descriptions
+  for (int i = 1; i < artifact->GetBaseStatsDescription().size(); ++i) {
+    form = form.addLabel("sub_stat_" + std::to_string(i - 1),
+                         "§f" + artifact->GetBaseStatsDescription().at(i));
+  }
+
+  // Display the set name
+  form = form.addLabel("set_name",
+                       "§a" + artifact->GetSetName() + ": (" +
+                           std::to_string(Artifact::GetSetCount(
+                               artifact->GetSetName(), this->playerex_)) +
+                           ")");
+
+  // Display the set effect descriptions
+  form = form.addLabel(
+      "set_effect_description_2",
+      ((Artifact::GetSetCount(artifact->GetSetName(), this->playerex_) >= 2)
+           ? "§a☑"
+           : "§7⊘") +
+          std::string("2-Piece Set: ") +
+          Artifact::GetSetEffectDescription(artifact->GetSetName()).at(0));
+
+  form = form.addLabel(
+      "set_effect_description_4",
+      ((Artifact::GetSetCount(artifact->GetSetName(), this->playerex_) >= 4)
+           ? "§a☑"
+           : "§7⊘") +
+          std::string("4-Piece Set: ") +
+          Artifact::GetSetEffectDescription(artifact->GetSetName()).at(1));
+
+  if (artifact->GetLevel() < artifact->GetLevelMax()) {
+    // Calculate the maximum levels to increase
+    int artifact_EXP = 0;
+    int mora_to_consume = 0;
+
+    for (int i = 0; i < this->playerex_->GetPlayer()->getInventory().getSize();
+         ++i) {
+      auto item = this->playerex_->GetPlayer()->getInventory().getSlot(i);
+
+      if (!Artifact::CheckIsArtifact(item)) {
+        continue;
+      };
+
+      auto artifact_to_consume = Artifact::Make(item, this->playerex_);
+      if (artifact_to_consume->GetBaseConsumableEXP() + mora_to_consume <=
+          this->playerex_->GetMoraCount()) {
+        mora_to_consume += artifact_to_consume->GetBaseConsumableEXP();
+        artifact_EXP +=
+            artifact_to_consume->GetBaseConsumableEXP() +
+            static_cast<int>(artifact_to_consume->GetArtifactEXP() * 0.8);
+      }
+    }
+
+    auto max_level_increment = artifact->GetLevelByArtifactEXP(
+                                   artifact->GetArtifactEXP() + artifact_EXP) -
+                               artifact->GetLevel();
+
+    if (max_level_increment ==
+        0) {  // if the artifact EXP is not enough to inrease at least one level
+      form = form.addToggle("is_all_in", "Consume the most artifacts", false);
+    } else {
+      form = form.addSlider("level", "The levels to increase", 0,
+                            max_level_increment);
+    }
+  }
+
+  form.sendTo(
+      this->playerex_->GetPlayer(),
+      [this, type](
+          Player* player,
+          std::map<string, std::shared_ptr<Form::CustomFormElement>> data) {
+        if (data.empty()) {  // if the player closed the menu
+          this->OpenCharacterArtifacts();
+          return;
+        }
+
+        auto artifact = this->playerex_->GetArtifactDict().at(type);
+
+        int target_level = artifact->GetLevel();
+
+        if (data.find("level") != data.end()) {
+          target_level += data.at("level")->getInt();
+        }
+
+        if (data.find("is_all_in") !=
+            data.end()) {  // if consuming the most artifacts
+          target_level =
+              artifact
+                  ->GetLevelMax();  // attempt to enhance to the highest level
+        }
+
+        for (int i = 0;
+             i < this->playerex_->GetPlayer()->getInventory().getSize(); ++i) {
+          if (artifact->GetLevel() >= target_level) {
+            break;
+          }
+
+          auto item = this->playerex_->GetPlayer()->getInventory().getSlot(i);
+
+          if (!Artifact::CheckIsArtifact(item)) {
+            continue;
+          };
+
+          auto artifact_to_consume = Artifact::Make(item, this->playerex_);
+
+          if (artifact_to_consume->GetBaseConsumableEXP() >
+              this->playerex_->GetMoraCount()) {  // if the mora is not enough
+            continue;
+          }
+
+          // Increase the artifact EXP
+          artifact->IncreaseArtifactEXP(
+              artifact_to_consume->GetBaseConsumableEXP() +
+              static_cast<int>(0.8 * artifact_to_consume->GetArtifactEXP()));
+
+          // Consume the mora and the artifact consumable
+          this->playerex_->ConsumeMora(
+              artifact_to_consume->GetBaseConsumableEXP());
+
+          artifact_to_consume.reset();
+          
+          this->playerex_->GetPlayer()->getInventory().removeItem_s(i, 1);
+        }
+        Schedule::nextTick(
+            [this, type]() { this->OpenCharacterArtifacts(type); });
+      });
 }
 
 void Menu::OpenCharacterAscend() {

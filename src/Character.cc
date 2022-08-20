@@ -108,7 +108,8 @@ Stats Character::GetStats() const {
     stats += this->playerex_->GetWeapon()->GetBaseStats();
   }
 
-  for (auto&& artifact: this->playerex_->GetArtifactList()) {
+  for (auto artifact_pair: this->playerex_->GetArtifactDict()) {
+    auto artifact = artifact_pair.second;
     stats += artifact->GetBaseStats();
   }
 

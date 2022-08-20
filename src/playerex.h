@@ -32,16 +32,17 @@
 #define GENSHICRAFT_PLAYEREX_H_
 
 #include <MC/Player.hpp>
+#include <map>
 #include <memory>
 #include <string>
 #include <third-party/Nlohmann/json.hpp>
 #include <vector>
 
+#include "artifact.h"
 #include "character.h"
 #include "menu.h"
 #include "sidebar.h"
 #include "weapon.h"
-#include "artifact.h"
 
 namespace genshicraft {
 
@@ -94,10 +95,10 @@ class PlayerEx {
 
   /**
    * @brief Get the artifacts
-   * 
+   *
    * @return The artifacts
    */
-  std::vector<std::shared_ptr<Artifact>> GetArtifactList();
+  std::map<Artifact::Type, std::shared_ptr<Artifact>> GetArtifactDict();
 
   /**
    * @brief Get the current character

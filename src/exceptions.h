@@ -91,6 +91,77 @@ class ExceptionNotACharacter : public ExceptionCharacter {
 };
 
 /**
+ * @brief The ExceptionDamage class is the base class for exceptions related
+ * to the Damage class.
+ *
+ */
+class ExceptionDamage : public Exception {
+ public:
+  using Exception::Exception;
+};
+
+/**
+ * @brief The ExceptionNotNormalDamage class represents that the damage is not
+ * normal damage.
+ *
+ */
+class ExceptionNotNormalDamage : public ExceptionDamage {
+ public:
+  ExceptionNotNormalDamage()
+      : ExceptionDamage(
+            "[genshicraft::ExceptionNotNormalDamage] The damage is not normal "
+            "damage.") {}
+
+  using ExceptionDamage::ExceptionDamage;
+};
+
+/**
+ * @brief The ExceptionNotPrimaryDamage class represents that the damage is not
+ * secondary transformative damage.
+ *
+ */
+class ExceptionNotPrimaryDamage : public ExceptionDamage {
+ public:
+  ExceptionNotPrimaryDamage()
+      : ExceptionDamage(
+            "[genshicraft::ExceptionNotPrimaryDamage] The damage is not "
+            "primary damage.") {}
+
+  using ExceptionDamage::ExceptionDamage;
+};
+
+/**
+ * @brief The ExceptionNotTransformativeDamage class represents that the damage
+ * is not transformative damage.
+ *
+ */
+class ExceptionNotTransformativeDamage : public ExceptionDamage {
+ public:
+  ExceptionNotTransformativeDamage()
+      : ExceptionDamage(
+            "[genshicraft::ExceptionNotTransformativeDamage] The damage is not "
+            "transformative "
+            "damage.") {}
+
+  using ExceptionDamage::ExceptionDamage;
+};
+
+/**
+ * @brief The ExceptionNotTrueDamage class represents that the damage is not
+ * true damage.
+ *
+ */
+class ExceptionNotTrueDamage : public ExceptionDamage {
+ public:
+  ExceptionNotTrueDamage()
+      : ExceptionDamage(
+            "[genshicraft::ExceptionNotTrueDamage] The damage is not true "
+            "damage.") {}
+
+  using ExceptionDamage::ExceptionDamage;
+};
+
+/**
  * @brief The ExceptionFood class is the base class for exceptions related
  * to food.
  *
@@ -218,8 +289,8 @@ class ExceptionNotAWeapon : public ExceptionWeapon {
 };
 
 /**
- * @brief The ExceptionArtifact class is the base class for exceptions related to
- * the Artifact class.
+ * @brief The ExceptionArtifact class is the base class for exceptions related
+ * to the Artifact class.
  *
  */
 class ExceptionArtifact : public Exception {
@@ -236,7 +307,8 @@ class ExceptionNotAnArtifact : public ExceptionArtifact {
  public:
   ExceptionNotAnArtifact()
       : ExceptionArtifact(
-            "[genshicraft::ExceptionNotAnArtifact] The item is not a GenshiCraft "
+            "[genshicraft::ExceptionNotAnArtifact] The item is not a "
+            "GenshiCraft "
             "Artifact.") {}
 
   using ExceptionArtifact::ExceptionArtifact;

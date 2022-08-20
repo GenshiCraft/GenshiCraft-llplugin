@@ -41,6 +41,7 @@
 #include <MC/Player.hpp>
 #include <MC/SimpleContainer.hpp>
 #include <algorithm>
+#include <map>
 #include <memory>
 #include <random>
 #include <string>
@@ -221,23 +222,26 @@ std::vector<std::shared_ptr<Character>> PlayerEx::GetAllCharacters() const {
   return this->character_owned_;
 }
 
-std::vector<std::shared_ptr<Artifact>> PlayerEx::GetArtifactList() {
+std::map<Artifact::Type, std::shared_ptr<Artifact>>
+PlayerEx::GetArtifactDict() {
   std::vector<ItemStack*> item_list;
   item_list.push_back(this->GetPlayer()->getArmorContainer().getSlot(0));
   item_list.push_back(this->GetPlayer()->getArmorContainer().getSlot(1));
   item_list.push_back(this->GetPlayer()->getArmorContainer().getSlot(2));
   item_list.push_back(this->GetPlayer()->getArmorContainer().getSlot(3));
-  item_list.push_back(const_cast<ItemStack*>(&(this->GetPlayer()->getOffhandSlot())));
+  item_list.push_back(
+      const_cast<ItemStack*>(&(this->GetPlayer()->getOffhandSlot())));
 
-  std::vector<std::shared_ptr<Artifact>> artifact_list;
+  std::map<Artifact::Type, std::shared_ptr<Artifact>> artifact_dict;
 
   for (auto&& item : item_list) {
     if (Artifact::CheckIsArtifact(item)) {
-      artifact_list.push_back(Artifact::Make(item, this));
+      auto artifact = Artifact::Make(item, this);
+      artifact_dict[artifact->GetType()] = artifact;
     }
   }
 
-  return artifact_list;
+  return artifact_dict;
 }
 
 std::shared_ptr<Character> PlayerEx::GetCharacter() const {

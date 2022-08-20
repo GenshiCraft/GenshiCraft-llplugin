@@ -41,6 +41,7 @@
 #include "plugin.h"
 #include "stats.h"
 #include "weapon.h"
+#include "world.h"
 
 namespace genshicraft {
 
@@ -102,27 +103,30 @@ Damage KukiShinobu::GetDamageNormalAttack() {
   static auto last_hit_clock = GetNowClock();
 
   Damage damage;
-  damage.SetStats(this->GetStats());
 
   if (!(this->GetPlayerEx()->GetPlayer()->isOnGround()) &&
       (this->GetPlayerEx()->GetPlayer()->isSneaking())) {  // plunge
-    damage.SetAmplifier(this->kTalentNormalAttackLowPlungeDMG
-                            [this->GetTalentNormalAttackLevel()]);
+
+    damage.SetAttackerAmplifier(this->kTalentNormalAttackLowPlungeDMG
+                                    [this->GetTalentNormalAttackLevel()]);
+
   } else if ((this->GetPlayerEx()->GetPlayer()->isSneaking()) &&
              (this->GetPlayerEx()->GetStamina() >
               this->kTalentNormalAttackChargedAttackStaminaCost)) {  // charged
                                                                      // attack
 
-    damage.SetAmplifier(this->kTalentNormalAttackChargedAttackDMG
-                            [this->GetTalentNormalAttackLevel()]);
+    damage.SetAttackerAmplifier(this->kTalentNormalAttackChargedAttackDMG
+                                    [this->GetTalentNormalAttackLevel()]);
     this->GetPlayerEx()->IncreaseStamina(
         -(this->kTalentNormalAttackChargedAttackStaminaCost));
-  } else {
+  } else {  // normal attack
+
     // Reset hit count if not attacking in 5s
     if (GetNowClock() - last_hit_clock > 5) {
       hit_count = 1;
     }
-    damage.SetAmplifier(
+
+    damage.SetAttackerAmplifier(
         this->kTalentNormalAttackHitDMG[hit_count]
                                        [this->GetTalentNormalAttackLevel()]);
 
@@ -134,8 +138,9 @@ Damage KukiShinobu::GetDamageNormalAttack() {
     last_hit_clock = GetNowClock();
   }
 
-  damage.SetElementType(Damage::ElementType::kPhysical);
-  damage.SetLevel(this->GetLevel());
+  damage.SetAttackElementType(world::ElementType::kPhysical);
+  damage.SetAttackerLevel(this->GetLevel());
+  damage.SetAttackerStats(this->GetStats());
   damage.SetSourceType(Damage::SourceType::kMob);
 
   return damage;

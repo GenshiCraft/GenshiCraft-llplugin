@@ -176,8 +176,11 @@ bool OnMobHurt(Event::MobHurtEvent& event) {
             event.mDamage * playerex->GetCharacter()->GetStats().GetATK() *
             0.1974);
 
-        damage.SetStats(stats);
-        damage.SetLevel(playerex->GetCharacter()->GetLevel());
+        damage.SetAttackElementType(world::ElementType::kPhysical);
+        damage.SetAttackerAmplifier(1.);
+        damage.SetAttackerLevel(playerex->GetCharacter()->GetLevel());
+        damage.SetAttackerStats(stats);
+        damage.SetSourceType(Damage::SourceType::kMob);
 
       } else {  // if the damage is not from Minecraft weapons
 
@@ -195,8 +198,11 @@ bool OnMobHurt(Event::MobHurtEvent& event) {
           event.mDamage * playerex->GetCharacter()->GetStats().GetATK() *
           0.1974);
 
-      damage.SetStats(stats);
-      damage.SetLevel(playerex->GetCharacter()->GetLevel());
+      damage.SetAttackElementType(world::ElementType::kPhysical);
+      damage.SetAttackerAmplifier(1.);
+      damage.SetAttackerLevel(playerex->GetCharacter()->GetLevel());
+      damage.SetAttackerStats(stats);
+      damage.SetSourceType(Damage::SourceType::kMob);
     }
 
     player_attacker = player;  // for damage value displaying
@@ -224,6 +230,7 @@ bool OnMobHurt(Event::MobHurtEvent& event) {
       data["level"] = world_level * 11 + dist(random_engine);  // the mob level
 
       data["ATK"] = 0;  // awaiting for further initialization
+
       data["max_HP"] = static_cast<int>(
           event.mDamageSource->getEntity()->getMaxHealth() *
           world::GetEnemyMaxHPMultiplier(data["level"].get<int>()) * 3.65);
@@ -231,7 +238,11 @@ bool OnMobHurt(Event::MobHurtEvent& event) {
           static_cast<int>(data["max_HP"].get<double>() *
                            event.mDamageSource->getEntity()->getHealth() /
                            event.mDamageSource->getEntity()->getMaxHealth());
+
+      data["last_minecraft_health"] =
+          event.mDamageSource->getEntity()->getHealth();
     }
+
     if (data["ATK"].get<int>() ==
         0) {  // if the ATK of the mob has not been initialized
       data["ATK"] = static_cast<int>(
@@ -246,9 +257,11 @@ bool OnMobHurt(Event::MobHurtEvent& event) {
     stats.DEF_base = data["level"].get<int>() * 5 + 500;
     stats.max_HP_base = data["max_HP"].get<int>();
 
-    damage.SetStats(stats);
-    // damage.SetElementType();
-    damage.SetLevel(data["level"].get<int>());
+    damage.SetAttackElementType(world::ElementType::kPhysical);
+    damage.SetAttackerAmplifier(1.);
+    damage.SetAttackerLevel(data["level"].get<int>());
+    damage.SetAttackerStats(stats);
+    damage.SetSourceType(Damage::SourceType::kMob);
 
     // Write the data to the mob
     auto tag = Base64::Encode(nlohmann::to_string(data));
@@ -257,13 +270,8 @@ bool OnMobHurt(Event::MobHurtEvent& event) {
 
   } else {  // if the damage is caused by the environment
 
-    Stats stats;
-    stats.ATK_base = static_cast<int>(event.mDamage);
-
-    damage.SetStats(stats);
-    // damage.SetElementType();
-    damage.SetLevel(world_level * 11 - 10);
     damage.SetSourceType(Damage::SourceType::kEnvironment);
+    damage.SetTrueDamageProportion(0.01);
   }
 
   // The victim
@@ -275,30 +283,24 @@ bool OnMobHurt(Event::MobHurtEvent& event) {
     auto player = static_cast<Player*>(event.mMob);
     auto playerex = PlayerEx::Get(player->getXuid());
 
-    damage.SetVictimStats(playerex->GetCharacter()->GetStats());
-    // damage.SetVictimElementType();
+    damage.SetVictimAttachedElement(world::ElementType::kPhysical);
     damage.SetVictimLevel(playerex->GetCharacter()->GetLevel());
+    damage.SetVictimStats(playerex->GetCharacter()->GetStats());
 
     double damage_value = damage.Get();
 
-    // Environment damage
-    if (damage.GetSourceType() == Damage::SourceType::kEnvironment) {
-      damage_value *=
-          static_cast<double>(playerex->GetCharacter()->GetStats().GetMaxHP()) /
-          player->getMaxHealth();
-
-      // Prevent the too frequent damage
-      if (event.mDamageSource->getCause() == ActorDamageCause::Contact ||
-          event.mDamageSource->getCause() == ActorDamageCause::Fire ||
-          event.mDamageSource->getCause() == ActorDamageCause::FireTick ||
-          event.mDamageSource->getCause() == ActorDamageCause::Lava) {
-        damage_value /= 20;
-      }
+    // Prevent the too frequent environment damage
+    if (event.mDamageSource->getCause() == ActorDamageCause::Contact ||
+        event.mDamageSource->getCause() == ActorDamageCause::Fire ||
+        event.mDamageSource->getCause() == ActorDamageCause::FireTick ||
+        event.mDamageSource->getCause() == ActorDamageCause::Lava ||
+        event.mDamageSource->getCause() == ActorDamageCause::Suffocation) {
+      damage_value /= 20;
     }
 
     playerex->GetCharacter()->IncreaseHP(
         static_cast<int>(-std::ceil(damage_value)));  // damage the character
-    event.mDamage = 0;  // not to damage the Minecraft player
+    event.mDamage = 0;  // not to reduct the Minecraft native health
 
     victim_HP = playerex->GetCharacter()->GetHP();
     victim_max_HP = playerex->GetCharacter()->GetStats().GetMaxHP();
@@ -327,6 +329,8 @@ bool OnMobHurt(Event::MobHurtEvent& event) {
       data["HP"] = static_cast<int>(data["max_HP"].get<double>() *
                                     event.mMob->getHealth() /
                                     event.mMob->getMaxHealth());
+
+      data["last_minecraft_health"] = event.mMob->getHealth();
     }
 
     Stats stats;
@@ -334,44 +338,40 @@ bool OnMobHurt(Event::MobHurtEvent& event) {
     stats.DEF_base = data["level"].get<int>() * 5 + 500;
     stats.max_HP_base = data["max_HP"].get<int>();
 
-    damage.SetVictimStats(stats);
-    // damage.SetVictimElementType();
+    damage.SetVictimAttachedElement(world::ElementType::kPhysical);
     damage.SetVictimLevel(data["level"].get<int>());
+    damage.SetVictimStats(stats);
 
-    // Ensure that the mob can be healed
-    if (data["HP"].get<int>() * event.mMob->getMaxHealth() /
-            data["max_HP"].get<int>() <
-        event.mMob->getHealth()) {
+    // Apply the Minecraft native healing actions
+    if (data["last_minecraft_health"].get<int>() < event.mMob->getHealth()) {
       data["HP"] = static_cast<int>(
           data["HP"].get<int>() +
-          (event.mMob->getHealth() - data["HP"].get<int>() *
-                                         event.mMob->getMaxHealth() /
-                                         data["max_HP"].get<int>()) *
+          (event.mMob->getHealth() - data["last_minecraft_health"].get<int>()) *
               (data["max_HP"].get<double>() / event.mMob->getMaxHealth()));
     }
+    data["last_minecraft_health"] = event.mMob->getHealth();
 
     double damage_value = damage.Get();
 
-    // Environment damage
-    if (damage.GetSourceType() == Damage::SourceType::kEnvironment) {
-      damage_value *= data["max_HP"].get<double>() / event.mMob->getMaxHealth();
-
-      // Prevent the too frequent damage
-      if (event.mDamageSource->getCause() == ActorDamageCause::Contact ||
-          event.mDamageSource->getCause() == ActorDamageCause::Fire ||
-          event.mDamageSource->getCause() == ActorDamageCause::FireTick ||
-          event.mDamageSource->getCause() == ActorDamageCause::Lava) {
-        damage_value /= 20;
-      }
+    // Prevent the too frequent environment damage
+    if (event.mDamageSource->getCause() == ActorDamageCause::Contact ||
+        event.mDamageSource->getCause() == ActorDamageCause::Fire ||
+        event.mDamageSource->getCause() == ActorDamageCause::FireTick ||
+        event.mDamageSource->getCause() == ActorDamageCause::Lava ||
+        event.mDamageSource->getCause() == ActorDamageCause::Suffocation) {
+      damage_value /= 20;
     }
 
     // Damage the mob
     data["HP"] =
         static_cast<int>(data["HP"].get<int>() - std::ceil(damage_value));
+
+    // Calculate the corresponding damage for native health
     event.mDamage = static_cast<float>(
         event.mMob->getHealth() -
         (data["HP"].get<double>() / data["max_HP"].get<double>() *
          event.mMob->getMaxHealth()));
+
     if (data["HP"].get<int>() <= 0) {
       event.mDamage = 999999;  // kill the mob instantly
     }
@@ -393,17 +393,16 @@ bool OnMobHurt(Event::MobHurtEvent& event) {
 
   // Show the damage value at the action bar
   if (player_attacker != nullptr) {
-    static const std::map<Damage::ElementType, std::string> kElementTypeColor =
-        {
-            {Damage::ElementType::kAnemo, "§3"},
-            {Damage::ElementType::kCryo, "§b"},
-            {Damage::ElementType::kDendro, "§a"},
-            {Damage::ElementType::kElectro, "§d"},
-            {Damage::ElementType::kGeo, "§g"},
-            {Damage::ElementType::kHydro, "§9"},
-            {Damage::ElementType::kPhysical, "§f"},
-            {Damage::ElementType::kPyro, "§c"},
-        };
+    static const std::map<world::ElementType, std::string> kElementTypeColor = {
+        {world::ElementType::kAnemo, "§3"},
+        {world::ElementType::kCryo, "§b"},
+        {world::ElementType::kDendro, "§a"},
+        {world::ElementType::kElectro, "§d"},
+        {world::ElementType::kGeo, "§g"},
+        {world::ElementType::kHydro, "§9"},
+        {world::ElementType::kPhysical, "§f"},
+        {world::ElementType::kPyro, "§c"},
+    };
 
     player_attacker->sendTitlePacket(
         kElementTypeColor.at(damage.GetElementType()) +
