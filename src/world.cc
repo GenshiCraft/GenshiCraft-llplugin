@@ -38,6 +38,11 @@ namespace genshicraft {
 
 namespace world {
 
+double Get2DDistance(const Vec3& position_1, const Vec3& position_2) {
+  return std::sqrt(std::pow(position_1.x - position_2.x, 2) +
+                   std::pow(position_1.z - position_2.z, 2));
+}
+
 int GetWorldLevel(const Vec3& position, const Dimension& dimension) {
   static const double kWorldLevelMinDistanceList[9] = {
       0, 0, 1024, 2048, 4096, 8192, 16384, 32768, 65536};
@@ -46,7 +51,7 @@ int GetWorldLevel(const Vec3& position, const Dimension& dimension) {
     return 9;
   }
 
-  auto distance = std::sqrt(position.x * position.x + position.z * position.z);
+  auto distance = Get2DDistance(position, Vec3(0., 0., 0.));
 
   if (dimension.getDimensionId() == 1) {  // the Nether
     distance *=

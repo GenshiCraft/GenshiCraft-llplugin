@@ -85,6 +85,15 @@ enum class ElementalReactionType {
 };
 
 /**
+ * @brief Get the 2D distance between two positions
+ * 
+ * @param position_1 The first position
+ * @param position_2 The second position
+ * @return The distance
+ */
+double Get2DDistance(const Vec3& position_1, const Vec3& position_2);
+
+/**
  * @brief Get the world level of the position
  *
  * @param position The position

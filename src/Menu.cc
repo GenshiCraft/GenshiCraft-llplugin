@@ -58,7 +58,7 @@ void Menu::OpenCharacter() {
 
   std::string content;
 
-  content += " §f";
+  content += "§f";
   for (int i = 0; i < 6; ++i) {
     if (i == character->GetAscensionPhase()) {
       content += "§7";
@@ -881,7 +881,7 @@ void Menu::OpenPartySetup() {
       return;
     }
 
-    this->playerex_->SetCharacter(option);
+    this->playerex_->SelectCharacter(option);
 
     this->OpenPartySetup();
   });

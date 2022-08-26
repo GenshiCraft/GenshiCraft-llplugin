@@ -31,10 +31,11 @@
 #include "playerex.h"
 
 #include <EventAPI.h>
-#include <Global.h>
+#include <GlobalServiceAPI.h>
 #include <KVDBAPI.h>
 #include <ScheduleAPI.h>
 
+#include <MC/ActorUniqueID.hpp>
 #include <MC/Container.hpp>
 #include <MC/ItemStack.hpp>
 #include <MC/Level.hpp>
@@ -50,113 +51,41 @@
 
 #include "artifact.h"
 #include "character.h"
+#include "damage.h"
 #include "exceptions.h"
 #include "menu.h"
+#include "mobex.h"
 #include "plugin.h"
 #include "sidebar.h"
+#include "stats.h"
 #include "weapon.h"
 #include "world.h"
 
 namespace genshicraft {
 
 PlayerEx::PlayerEx(Player* player)
-    : is_opening_container_(false),
+    : MobEx(player),
+      is_opening_container_(false),
       last_world_level_(0),
       menu_(Menu(this)),
       sidebar_(Sidebar(this)),
+      stamina_(0),
+      stamina_max_(0),
       xuid_(player->getXuid()) {
-  // Ensure that the PlayerEx system is initialized
-  if (!PlayerEx::is_initialized_) {
-    PlayerEx::Init();
-  }
-
-  auto players_db = KVDB::open("plugins/GenshiCraft/db/players");
-
-  std::string player_data_str;
-  nlohmann::json player_data;
-
-  if (!players_db->get(this->xuid_,
-                       player_data_str)) {  // if the player is not registered
-    player_data = PlayerEx::kPlayerDataTemplate;
-    player_data_str = player_data.dump();
-    players_db->set(this->xuid_, player_data_str);
-  } else {
-    player_data = nlohmann::json::parse(player_data_str);
-  }
-
-  auto LoadCharacterData = [player_data, this]() {
-    this->character_owned_.clear();
-
-    for (const auto& character_data : player_data["character_owned"]) {
-      auto name = character_data["name"].get<std::string>();
-      auto ascension_phase = character_data["ascension_phase"].get<int>();
-      auto character_EXP = character_data["character_EXP"].get<int>();
-      auto constellation = character_data["constellation"].get<int>();
-      auto energy = character_data["energy"].get<int>();
-      auto HP = character_data["HP"].get<int>();
-      auto talent_elemental_burst_level =
-          character_data["talent_elemental_burst_level"].get<int>();
-      auto talent_elemental_skill_level =
-          character_data["talent_elemental_skill_level"].get<int>();
-      auto talent_normal_attack_level =
-          character_data["talent_normal_attack_level"].get<int>();
-
-      auto character = Character::Make(
-          this, name, ascension_phase, character_EXP, constellation, energy, HP,
-          talent_elemental_burst_level, talent_elemental_skill_level,
-          talent_normal_attack_level);
-
-      this->character_owned_.push_back(character);
-
-      if (name == player_data["character"].get<std::string>()) {
-        this->character_ = character;
-      }
-    }
-  };
-
-  try {
-    LoadCharacterData();
-  } catch (const nlohmann::json::type_error&) {
-    // Load default
-    player_data = PlayerEx::kPlayerDataTemplate;
-    player_data_str = player_data.dump();
-    players_db->set(this->xuid_, player_data_str);
-
-    LoadCharacterData();
-  }
-
-  // Load stamina
-  this->stamina_max_ = player_data["stamina_max"].get<int>();
-  this->stamina_ = this->stamina_max_;
+  // Empty
 }
 
-PlayerEx::~PlayerEx() {
-  auto players_db = KVDB::open("plugins/GenshiCraft/db/players");
+PlayerEx::~PlayerEx() { this->SaveData(); }
 
-  nlohmann::json player_data;
-  player_data["character"] = this->character_->GetName();
-  player_data["character_owned"] = nlohmann::json::array();
-  for (const auto& character : this->character_owned_) {
-    nlohmann::json character_data;
-    character_data["name"] = character->GetName();
-    character_data["ascension_phase"] = character->GetAscensionPhase();
-    character_data["character_EXP"] = character->GetCharacterEXP();
-    character_data["constellation"] = character->GetConstellation();
-    character_data["energy"] = character->GetEnergy();
-    character_data["HP"] = character->GetHP();
-    character_data["talent_elemental_burst_level"] =
-        character->GetTalentElementalBurstLevel();
-    character_data["talent_elemental_skill_level"] =
-        character->GetTalentElementalSkillLevel();
-    character_data["talent_normal_attack_level"] =
-        character->GetTalentNormalAttackLevel();
+void PlayerEx::ApplyDamage(const Damage& damage) {
+  this->latest_damage_ = damage;
 
-    player_data["character_owned"].push_back(character_data);
-  }
+  this->latest_damage_.SetVictimAttachedElement(world::ElementType::kPhysical);
+  this->latest_damage_.SetVictimLevel(this->GetLevel());
+  this->latest_damage_.SetVictimStats(this->GetStats());
 
-  player_data["stamina_max"] = this->stamina_max_;
-
-  players_db->set(this->xuid_, player_data.dump());
+  this->GetCharacter()->IncreaseHP(
+      static_cast<int>(-std::ceil(this->latest_damage_.Get())));
 }
 
 void PlayerEx::ConsumeItem(std::string identifier, int value) {
@@ -222,8 +151,8 @@ std::vector<std::shared_ptr<Character>> PlayerEx::GetAllCharacters() const {
   return this->character_owned_;
 }
 
-std::map<Artifact::Type, std::shared_ptr<Artifact>>
-PlayerEx::GetArtifactDict() {
+std::map<Artifact::Type, std::shared_ptr<Artifact>> PlayerEx::GetArtifactDict()
+    const {
   std::vector<ItemStack*> item_list;
   item_list.push_back(this->GetPlayer()->getArmorContainer().getSlot(0));
   item_list.push_back(this->GetPlayer()->getArmorContainer().getSlot(1));
@@ -236,7 +165,7 @@ PlayerEx::GetArtifactDict() {
 
   for (auto&& item : item_list) {
     if (Artifact::CheckIsArtifact(item)) {
-      auto artifact = Artifact::Make(item, this);
+      auto artifact = Artifact::Make(item, const_cast<PlayerEx*>(this));
       artifact_dict[artifact->GetType()] = artifact;
     }
   }
@@ -244,11 +173,40 @@ PlayerEx::GetArtifactDict() {
   return artifact_dict;
 }
 
+Damage PlayerEx::GetAttackDamage() const {
+  if (this->GetWeapon()) {  // if the player attacks with a GenshiCraft weapon
+    return this->GetCharacter()->GetDamageNormalAttack();
+  } else {
+    static double last_attack_clock =
+        GetNowClock();  // the clock of the last attack
+
+    // Prevent too frequent attack
+    if (GetNowClock() - last_attack_clock < 1.) {
+      return Damage();
+    }
+    last_attack_clock = GetNowClock() - 999999;
+
+    Stats stats;
+    stats.ATK_base = static_cast<int>(this->GetStats().GetATK() * 0.1974);
+
+    Damage damage;
+    damage.SetAttackElementType(world::ElementType::kPhysical);
+    damage.SetAttackerAmplifier(1.);
+    damage.SetAttackerLevel(this->GetLevel());
+    damage.SetAttackerStats(stats);
+    damage.SetSourceType(Damage::SourceType::kMob);
+
+    return damage;
+  }
+}
+
 std::shared_ptr<Character> PlayerEx::GetCharacter() const {
   return this->character_;
 }
 
-int PlayerEx::GetItemCount(std::string identifier) {
+int PlayerEx::GetHP() const { return this->GetCharacter()->GetHP(); }
+
+int PlayerEx::GetItemCount(std::string identifier) const {
   auto& inventory = this->GetPlayer()->getInventory();
 
   int item_count = 0;
@@ -261,9 +219,15 @@ int PlayerEx::GetItemCount(std::string identifier) {
   return item_count;
 }
 
+int PlayerEx::GetLastNativeHealth() const { throw ExceptionMethodNotAllowed(); }
+
+int PlayerEx::GetLevel() const { return this->GetCharacter()->GetLevel(); }
+
+Stats PlayerEx::GetStats() const { return this->GetCharacter()->GetStats(); }
+
 Menu& PlayerEx::GetMenu() { return this->menu_; }
 
-int PlayerEx::GetMoraCount() {
+int PlayerEx::GetMoraCount() const {
   int mora_count = 0;
   mora_count += this->GetItemCount("genshicraft:mora_10000") * 10000;
   mora_count += this->GetItemCount("genshicraft:mora_5000") * 5000;
@@ -278,16 +242,18 @@ int PlayerEx::GetMoraCount() {
   return mora_count;
 }
 
-Player* PlayerEx::GetPlayer() { return Global<Level>->getPlayer(this->xuid_); }
+Player* PlayerEx::GetPlayer() const {
+  return Global<Level>->getPlayer(this->xuid_);
+}
 
 int PlayerEx::GetStamina() const { return this->stamina_; }
 
 int PlayerEx::GetStaminaMax() const { return this->stamina_max_; }
 
-std::shared_ptr<Weapon> PlayerEx::GetWeapon() {
+std::shared_ptr<Weapon> PlayerEx::GetWeapon() const {
   auto mainhand_item = this->GetPlayer()->getHandSlot();
   if (Weapon::CheckIsWeapon(mainhand_item)) {
-    return Weapon::Make(mainhand_item, this);
+    return Weapon::Make(mainhand_item, const_cast<PlayerEx*>(this));
   } else {
     return std::shared_ptr<Weapon>();  // empty pointer
   }
@@ -305,6 +271,10 @@ void PlayerEx::GiveItem(const std::string& identifier, int value) {
   this->GetPlayer()->giveItem(item);
 }
 
+void PlayerEx::IncreaseHP(int value) {
+  this->GetCharacter()->IncreaseHP(value);
+}
+
 void PlayerEx::IncreaseStamina(int value) {
   this->stamina_ += value;
   this->stamina_ = std::max(this->stamina_, 0);
@@ -314,6 +284,8 @@ void PlayerEx::IncreaseStamina(int value) {
 bool PlayerEx::IsOpeningContainer() const {
   return this->is_opening_container_;
 }
+
+bool PlayerEx::IsPlayer() const { return true; }
 
 void PlayerEx::RefreshItems() const {
   auto xuid = this->xuid_;
@@ -325,24 +297,34 @@ void PlayerEx::RefreshItems() const {
   });
 }
 
-void PlayerEx::SetCharacter(int no) {
-  if (no >= this->character_owned_.size()) {
+void PlayerEx::SelectCharacter(int no) {
+  if (no >= this->GetAllCharacters().size()) {
     throw ExceptionCharacterNumberOutOfRange();
   }
 
-  this->character_ = this->character_owned_.at(no);
+  this->character_ = this->GetAllCharacters().at(no);
+}
+
+void PlayerEx::SetATKByNativeDamage(double native_damage) {
+  throw ExceptionMethodNotAllowed();
 }
 
 void PlayerEx::SetIsOpeningContainer(bool is_opening_container) {
   this->is_opening_container_ = is_opening_container;
 }
 
-void PlayerEx::Init() {
-  if (PlayerEx::is_initialized_) {
-    return;
+void PlayerEx::SetLastNativeHealth(int health) {
+  throw ExceptionMethodNotAllowed();
+}
+
+std::shared_ptr<PlayerEx> PlayerEx::Get(long long unique_id) {
+  auto player = Global<Level>->getPlayer(ActorUniqueID(unique_id));
+
+  if (player == nullptr) {
+    return std::shared_ptr<PlayerEx>();
   }
 
-  PlayerEx::is_initialized_ = true;
+  return PlayerEx::Get(player->getXuid());
 }
 
 std::shared_ptr<PlayerEx> PlayerEx::Get(const std::string& xuid) {
@@ -365,7 +347,9 @@ std::vector<std::shared_ptr<PlayerEx>>& PlayerEx::GetAll() {
 
 void PlayerEx::LoadPlayer(Player* player) {
   if (!PlayerEx::Get(player->getXuid())) {  // to prevent duplicated load
-    PlayerEx::all_playerex_.push_back(std::make_shared<PlayerEx>(player));
+    auto playerex = std::make_shared<PlayerEx>(player);
+    playerex->LoadData();
+    PlayerEx::all_playerex_.push_back(playerex);
   }
 }
 
@@ -387,10 +371,10 @@ void PlayerEx::OnTick() {
         world::GetWorldLevel(playerex->GetPlayer()->getPosition(),
                              playerex->GetPlayer()->getDimension());
     if (world_level != playerex->last_world_level_) {
-      if (world_level * 11 - 10 > playerex->character_->GetLevel() + 10) {
+      if (world_level * 11 - 10 > playerex->GetLevel() + 10) {
         playerex->GetPlayer()->sendTitlePacket("§cHighly Dangerous",
                                                TitleType::SetSubtitle, 0, 1, 0);
-      } else if (world_level * 11 - 10 > playerex->character_->GetLevel()) {
+      } else if (world_level * 11 - 10 > playerex->GetLevel()) {
         playerex->GetPlayer()->sendTitlePacket("§6Dangerous",
                                                TitleType::SetSubtitle, 0, 1, 0);
       }
@@ -458,6 +442,13 @@ void PlayerEx::OnTick() {
       character->IncreaseFullness(-0.015);
     }
 
+    // Maintain the native health
+    if (playerex->GetPlayer()->getHealth() <
+        playerex->GetPlayer()
+            ->getMaxHealth()) {  // if the player loses health abnormally
+      playerex->GetPlayer()->heal(20);
+    }
+
     // Refresh the sidebar
     playerex->sidebar_.Refresh();
   }
@@ -495,8 +486,130 @@ const nlohmann::json PlayerEx::kPlayerDataTemplate = R"(
   }
 )"_json;
 
-bool PlayerEx::is_initialized_ = false;
+void PlayerEx::LoadData() {
+  auto players_db = KVDB::open("plugins/GenshiCraft/db/players");
 
-std::vector<std::shared_ptr<PlayerEx>> PlayerEx::all_playerex_;
+  nlohmann::json data;
+
+  // Attempt to get the data from the database
+  std::string data_str;
+  players_db->get(this->xuid_, data_str);
+  try {
+    data = nlohmann::json::parse(data_str);
+  } catch (const nlohmann::json::parse_error&) {
+    // Empty
+  }
+
+  // Migrate the data and check its validity
+  data = PlayerEx::MigrateData(data);
+
+  if (data.empty()) {
+    data = PlayerEx::kPlayerDataTemplate;
+
+    // Save the data
+    players_db->set(this->xuid_, data.dump());
+  }
+
+  // Load the data
+  this->character_owned_.clear();
+  for (const auto& character_data : data["character_owned"]) {
+    auto name = character_data["name"].get<std::string>();
+    auto ascension_phase = character_data["ascension_phase"].get<int>();
+    auto character_EXP = character_data["character_EXP"].get<int>();
+    auto constellation = character_data["constellation"].get<int>();
+    auto energy = character_data["energy"].get<int>();
+    auto HP = character_data["HP"].get<int>();
+    auto talent_elemental_burst_level =
+        character_data["talent_elemental_burst_level"].get<int>();
+    auto talent_elemental_skill_level =
+        character_data["talent_elemental_skill_level"].get<int>();
+    auto talent_normal_attack_level =
+        character_data["talent_normal_attack_level"].get<int>();
+
+    auto character = Character::Make(
+        this, name, ascension_phase, character_EXP, constellation, energy, HP,
+        talent_elemental_burst_level, talent_elemental_skill_level,
+        talent_normal_attack_level);
+
+    this->character_owned_.push_back(character);
+
+    if (name == data["character"].get<std::string>()) {
+      this->character_ = character;
+    }
+  }
+  this->stamina_max_ = data["stamina_max"].get<int>();
+  this->stamina_ = this->stamina_max_;
+}
+
+void PlayerEx::SaveData() {
+  if (this->is_data_saved_) {
+    return;
+  }
+
+  this->is_data_saved_ = true;
+
+  auto players_db = KVDB::open("plugins/GenshiCraft/db/players");
+
+  nlohmann::json data;
+  data["version"] = PlayerEx::kPlayerExDataFormatVersion;
+  data["character"] = this->GetCharacter()->GetName();
+  data["character_owned"] = nlohmann::json::array();
+  for (const auto& character : this->GetAllCharacters()) {
+    nlohmann::json character_data;
+    character_data["name"] = character->GetName();
+    character_data["ascension_phase"] = character->GetAscensionPhase();
+    character_data["character_EXP"] = character->GetCharacterEXP();
+    character_data["constellation"] = character->GetConstellation();
+    character_data["energy"] = character->GetEnergy();
+    character_data["HP"] = character->GetHP();
+    character_data["talent_elemental_burst_level"] =
+        character->GetTalentElementalBurstLevel();
+    character_data["talent_elemental_skill_level"] =
+        character->GetTalentElementalSkillLevel();
+    character_data["talent_normal_attack_level"] =
+        character->GetTalentNormalAttackLevel();
+
+    data["character_owned"].push_back(character_data);
+  }
+
+  data["stamina_max"] = this->stamina_max_;
+
+  players_db->set(this->xuid_, data.dump());
+}
+
+nlohmann::json PlayerEx::MigrateData(const nlohmann::json& old_data) {
+  nlohmann::json data = old_data;
+
+  try {
+    // Migrate to version 1
+    if (!old_data.contains("version")) {
+      data["version"] = 1;
+    }
+
+    // Check the accessibility
+    data["version"].get<int>();
+    data["character"].get<std::string>();
+    data["character"][0];  // the array should contain at least one element
+    for (auto&& character_data : data["character_owned"]) {
+      character_data["name"].get<std::string>();
+      character_data["ascension_phase"].get<int>();
+      character_data["character_EXP"].get<int>();
+      character_data["constellation"].get<int>();
+      character_data["energy"].get<int>();
+      character_data["HP"].get<int>();
+      character_data["talent_elemental_burst_level"].get<int>();
+      character_data["talent_elemental_skill_level"].get<int>();
+      character_data["talent_normal_attack_level"].get<int>();
+    }
+
+  } catch (const nlohmann::json::exception&) {
+    // Return an empty JSON object if the data is invalid
+    return nlohmann::json();
+  }
+
+  return data;
+}
+
+std::vector<std::shared_ptr<PlayerEx>> PlayerEx::all_playerex_ = {};
 
 }  // namespace genshicraft

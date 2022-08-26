@@ -31,7 +31,6 @@
 #ifndef GENSHICRAFT_DAMAGE_H_
 #define GENSHICRAFT_DAMAGE_H_
 
-#include "character.h"
 #include "stats.h"
 #include "world.h"
 
@@ -208,8 +207,9 @@ class Damage {
                              // transformative reaction
   bool is_secondary_swirl_;  // true if the damge is the secondary damage of
                              // swirl reaction
-  world::ElementalReactionType secondary_reaction_type_;  // the type of the secondary
-                                                   // transformative reaction
+  world::ElementalReactionType
+      secondary_reaction_type_;    // the type of the secondary
+                                   // transformative reaction
   double true_damage_proportion_;  // the proportion of the max HP dealt by the
                                    // true damage
 

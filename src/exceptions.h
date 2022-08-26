@@ -51,6 +51,31 @@ class Exception : public std::exception {
 };
 
 /**
+ * @brief The ExceptionActorEx class is the base class for exceptions related
+ * to the ActorEx class.
+ *
+ */
+class ExceptionActorEx : public Exception {
+ public:
+  using Exception::Exception;
+};
+
+/**
+ * @brief The ExceptionActorNotFound represents a failed attempt to get the
+ * Actor object.
+ *
+ */
+class ExceptionActorNotFound : public ExceptionActorEx {
+ public:
+  ExceptionActorNotFound()
+      : ExceptionActorEx(
+            "[genshicraft::ExceptionActorNotFound] The Actor object is not "
+            "found.") {}
+
+  using ExceptionActorEx::ExceptionActorEx;
+};
+
+/**
  * @brief The ExceptionCharacter class is the base class for exceptions related
  * to the Character class.
  *
@@ -182,6 +207,46 @@ class ExceptionNotFood : public ExceptionFood {
             "[genshicraft::ExceptionNotFood] The items are not food."){};
 
   using ExceptionFood::ExceptionFood;
+};
+
+/**
+ * @brief The ExceptionMethodNotAllowed class represents that the method is not
+ * allowed to call.
+ *
+ */
+class ExceptionMethodNotAllowed : public Exception {
+ public:
+  ExceptionMethodNotAllowed()
+      : Exception(
+            "[genshicraft::ExceptionMethodNotAllowed] This method is not "
+            "allowed to call."){};
+
+  using Exception::Exception;
+};
+
+/**
+ * @brief The ExceptionMobEx class is the base class for exceptions related
+ * to the MobEx class.
+ *
+ */
+class ExceptionMobEx : public Exception {
+ public:
+  using Exception::Exception;
+};
+
+/**
+ * @brief The ExceptionMobNotFound represents a failed attempt to get the Mob
+ * object.
+ *
+ */
+class ExceptionMobNotFound : public ExceptionMobEx {
+ public:
+  ExceptionMobNotFound()
+      : ExceptionMobEx(
+            "[genshicraft::ExceptionMobNotFound] The Mob object is not "
+            "found.") {}
+
+  using ExceptionMobEx::ExceptionMobEx;
 };
 
 /**

@@ -40,8 +40,11 @@
 
 #include "artifact.h"
 #include "character.h"
+#include "damage.h"
 #include "menu.h"
+#include "mobex.h"
 #include "sidebar.h"
+#include "stats.h"
 #include "weapon.h"
 
 namespace genshicraft {
@@ -50,12 +53,16 @@ namespace genshicraft {
  * @brief The PlayerEx class contains extended interfaces for players.
  *
  */
-class PlayerEx {
+class PlayerEx final : public MobEx {
  public:
+  PlayerEx() = delete;
+
   /**
    * @brief Construct a new PlayerEx object
    *
    * @param player A pointer to the player object
+   * 
+   * @note The method ActorEx::LoadData() should be called right after construction.
    */
   PlayerEx(Player* player);
 
@@ -64,6 +71,13 @@ class PlayerEx {
    *
    */
   ~PlayerEx();
+
+  /**
+   * @brief Apply damage to the current character
+   *
+   * @param damage The damage
+   */
+  void ApplyDamage(const Damage& damage) override;
 
   /**
    * @brief Consume items
@@ -98,7 +112,17 @@ class PlayerEx {
    *
    * @return The artifacts
    */
-  std::map<Artifact::Type, std::shared_ptr<Artifact>> GetArtifactDict();
+  std::map<Artifact::Type, std::shared_ptr<Artifact>> GetArtifactDict() const;
+
+  /**
+   * @brief Get the attack damage
+   *
+   * @return The Damage object
+   *
+   * @note If the player does not attack with a GenshiCraft weapon, this method
+   * will return the damage when the player attacks unarmed.
+   */
+  Damage GetAttackDamage() const override;
 
   /**
    * @brief Get the current character
@@ -108,12 +132,33 @@ class PlayerEx {
   std::shared_ptr<Character> GetCharacter() const;
 
   /**
-   * @brief Get the number of a type of items of the player
+   * @brief Get the HP of the current character
+   *
+   * @return The HP
+   */
+  int GetHP() const override;
+
+  /**
+   * @brief Get the number of a type of items
    *
    * @param identifier The identifier of the items
    * @return The number
    */
-  int GetItemCount(std::string identifier);
+  int GetItemCount(std::string identifier) const;
+
+  /**
+   * @brief This method is not allowed to call.
+   *
+   * @return This method is not allowed to call.
+   */
+  int GetLastNativeHealth() const override;
+
+  /**
+   * @brief Get the level
+   *
+   * @return The level
+   */
+  int GetLevel() const override;
 
   /**
    * @brief Get the Menu handler
@@ -123,18 +168,18 @@ class PlayerEx {
   Menu& GetMenu();
 
   /**
-   * @brief Get the number of mora of the player
+   * @brief Get the number of mora
    *
    * @return The number
    */
-  int GetMoraCount();
+  int GetMoraCount() const;
 
   /**
    * @brief Get the Player object
    *
    * @return The Player object
    */
-  Player* GetPlayer();
+  Player* GetPlayer() const;
 
   /**
    * @brief Get the stamina
@@ -151,11 +196,18 @@ class PlayerEx {
   int GetStaminaMax() const;
 
   /**
+   * @brief Get the stats
+   *
+   * @return The stats
+   */
+  Stats GetStats() const override;
+
+  /**
    * @brief Get the Weapon object
    *
    * @return A pointer to the weapon
    */
-  std::shared_ptr<Weapon> GetWeapon();
+  std::shared_ptr<Weapon> GetWeapon() const;
 
   /**
    * @brief Get the XUID
@@ -173,6 +225,13 @@ class PlayerEx {
   void GiveItem(const std::string& identifier, int value);
 
   /**
+   * @brief Increase the HP of the current character
+   *
+   * @param value The HP increment. Negative value means reduction.
+   */
+  void IncreaseHP(int value) override;
+
+  /**
    * @brief Increase the stamina
    *
    * @param value The stamina to increase
@@ -187,18 +246,32 @@ class PlayerEx {
   bool IsOpeningContainer() const;
 
   /**
+   * @brief Check if the mob is a player
+   *
+   * @return True
+   */
+  bool IsPlayer() const override;
+
+  /**
    * @brief Refresh items in the inventory
    *
    */
   void RefreshItems() const;
 
   /**
-   * @brief Set the current character
+   * @brief Select the character
    *
    * @param no The number of the character in the vector returned by
    * this->GetAllCharacters()
    */
-  void SetCharacter(int no);
+  void SelectCharacter(int no);
+
+  /**
+   * @brief This method is not allowed to call.
+   *
+   * @warning This method is not allowed to call.
+   */
+  void SetATKByNativeDamage(double native_damage) override;
 
   /**
    * @brief Set whether the player is opening a container or not
@@ -208,17 +281,29 @@ class PlayerEx {
   void SetIsOpeningContainer(bool is_opening_container);
 
   /**
-   * @brief Initialize the player system
+   * @brief This method is not allowed to call.
    *
+   * @param health This method is not allowed to call.
    */
-  static void Init();
+  void SetLastNativeHealth(int health) override;
 
   /**
-   * @brief Get a PlayerEx object by XUID
+   * @brief Get a PlayerEx object by a unique ID
    *
-   * @param uuid The UUID of the player
-   * @return A pointer to the PlayerEx object (null std::shared_ptr if not
-   * found)
+   * @param unique_id
+   * @return A pointer to the PlayerEx object
+   *
+   * @note This method will return an empty pointer if failed to get.
+   */
+  static std::shared_ptr<PlayerEx> Get(long long unique_id);
+
+  /**
+   * @brief Get a PlayerEx object by an XUID
+   *
+   * @param uuid The UUID
+   * @return A pointer to the PlayerEx object
+   *
+   * @note This method will return an empty pointer if failed to get.
    */
   static std::shared_ptr<PlayerEx> Get(const std::string& xuid);
 
@@ -257,8 +342,35 @@ class PlayerEx {
   static void UnloadPlayer(Player* player);
 
  private:
+  inline static const int kPlayerExDataFormatVersion = 1;
+
   static const nlohmann::json
       kPlayerDataTemplate;  // the player data template for new players
+
+  /**
+   * @brief Load the data
+   *
+   * @note This method should only be called in constructor.
+   */
+  void LoadData() override;
+
+  /**
+   * @brief Save the data
+   *
+   * @note This method should only be called in desctructor.
+   */
+  void SaveData() override;
+
+  /**
+   * @brief Migrate the data with previous data format version to current
+   * version.
+   *
+   * @param old_data The data to migrate
+   * @return The data with current data format version
+   *
+   * @note If the data is invalid, this method will return an empty JSON object.
+   */
+  static nlohmann::json MigrateData(const nlohmann::json& old_data);
 
   std::shared_ptr<Character> character_;  // a pointer to the current character
   std::vector<std::shared_ptr<Character>>
@@ -269,9 +381,8 @@ class PlayerEx {
   Sidebar sidebar_;            // the sidebar handler for the player
   int stamina_;                // the stamina
   int stamina_max_;            // the max value of the stamina
-  std::string xuid_;           // the XUID of the player
+  std::string xuid_;           // the XUID
 
-  static bool is_initialized_;
   static std::vector<std::shared_ptr<PlayerEx>>
       all_playerex_;  // All PlayerEx objects
 };
