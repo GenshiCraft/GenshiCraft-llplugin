@@ -36,11 +36,14 @@
 #include <ScheduleAPI.h>
 
 #include <MC/ActorUniqueID.hpp>
+#include <MC/Block.hpp>
 #include <MC/Container.hpp>
 #include <MC/ItemStack.hpp>
 #include <MC/Level.hpp>
+#include <MC/MobEffect.hpp>
 #include <MC/Player.hpp>
 #include <MC/SimpleContainer.hpp>
+#include <MC/Types.hpp>
 #include <algorithm>
 #include <map>
 #include <memory>
@@ -178,13 +181,13 @@ Damage PlayerEx::GetAttackDamage() const {
     return this->GetCharacter()->GetDamageNormalAttack();
   } else {
     static double last_attack_clock =
-        GetNowClock();  // the clock of the last attack
+        GetNowClock() - 999999.;  // the clock of the last attack
 
     // Prevent too frequent attack
     if (GetNowClock() - last_attack_clock < 1.) {
       return Damage();
     }
-    last_attack_clock = GetNowClock() - 999999;
+    last_attack_clock = GetNowClock();
 
     Stats stats;
     stats.ATK_base = static_cast<int>(this->GetStats().GetATK() * 0.1974);
@@ -447,6 +450,12 @@ void PlayerEx::OnTick() {
         playerex->GetPlayer()
             ->getMaxHealth()) {  // if the player loses health abnormally
       playerex->GetPlayer()->heal(20);
+    }
+
+    // Maintain the wither effect (temporary, for this is just a bug of
+    // Minecraft)
+    if (playerex->GetPlayer()->hasEffect(*MobEffect::WITHER)) {
+      world::HurtActor(playerex->GetPlayer(), 1., ActorDamageCause::Wither);
     }
 
     // Refresh the sidebar

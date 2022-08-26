@@ -31,7 +31,9 @@
 #ifndef GENSHICRAFT_WORLD_H_
 #define GENSHICRAFT_WORLD_H_
 
+#include <MC/Actor.hpp>
 #include <MC/Dimension.hpp>
+#include <MC/Types.hpp>
 #include <MC/Vec3.hpp>
 
 namespace genshicraft {
@@ -86,7 +88,7 @@ enum class ElementalReactionType {
 
 /**
  * @brief Get the 2D distance between two positions
- * 
+ *
  * @param position_1 The first position
  * @param position_2 The second position
  * @return The distance
@@ -117,6 +119,21 @@ double GetEnemyMaxHPMultiplier(int level);
  * @return The enemy ATK multiple
  */
 double GetEnemyATKMultiplier(int level);
+
+/**
+ * @brief Hurt an actor
+ *
+ * @param actor The actor to hurt
+ * @param damage The damage
+ * @param cause The damage cause
+ * @param knockback True if knockback the actor
+ * @param ignite True if ignite the actor
+ *
+ * @note This is just a temporary resolution.
+ */
+void HurtActor(Actor* actor, float damage,
+               ActorDamageCause cause = ActorDamageCause::Override,
+               bool knockback = false, bool ignite = false);
 
 }  // namespace world
 

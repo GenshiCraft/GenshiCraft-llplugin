@@ -45,7 +45,8 @@ namespace genshicraft {
 namespace food {
 
 const std::map<std::string, std::string> kFoodDescriptionDict = {
-    {"genshicraft:sunsettia", "Restores 300 HP."}};
+    {"minecraft:apple", "Restores §l300§r HP."},
+    {"genshicraft:sunsettia", "Restores §l300§r HP."}};
 
 bool CheckIsFood(ItemStack* item) {
   if (kFoodDescriptionDict.count(item->getTypeName()) == 1) {
@@ -60,12 +61,29 @@ bool EatFood(PlayerEx* playerex, ItemStack* food) {
     throw ExceptionNotFood();
   }
 
-  if (playerex->GetCharacter()->GetFullness() >
-      100.) {  // if the character is full
-    return false;
+  auto food_name = food->getTypeName();
+
+  // Players cannot eat GenshiCraft food if they are full
+  if (playerex->GetCharacter()->GetFullness() > 100.) {
+    if (food_name.substr(0, 12) == "genshicraft:") {
+      return false;
+    } else {
+      return true;
+    }
   }
 
-  auto food_name = food->getTypeName();
+  if (food_name == "minecraft:apple") {
+    // If the player's HP is full, treat the apple as a native food
+    if (playerex->GetHP() == playerex->GetStats().GetMaxHP()) {
+      return true;
+    }
+
+    playerex->ConsumeItem("minecraft:apple", 1);
+    playerex->IncreaseHP(300);
+    playerex->GetCharacter()->IncreaseFullness(GetFullnessIncrement(
+        0, true, playerex->GetCharacter()->GetStats().GetMaxHP()));
+  }
+
   if (food_name == "genshicraft:sunsettia") {
     playerex->GetCharacter()->IncreaseHP(300);
     playerex->GetCharacter()->IncreaseFullness(GetFullnessIncrement(

@@ -30,7 +30,10 @@
 
 #include "world.h"
 
+#include <MC/Actor.hpp>
+#include <MC/ActorDamageSource.hpp>
 #include <MC/Dimension.hpp>
+#include <MC/Types.hpp>
 #include <MC/Vec3.hpp>
 #include <cmath>
 
@@ -80,6 +83,15 @@ double GetEnemyATKMultiplier(int level) {
           0.275319202076914 * level * level -
           0.00019690546398588 * level * level * level) /
          25;
+}
+
+void HurtActor(Actor* actor, float damage,
+               ActorDamageCause cause,
+               bool knockback, bool ignite) {
+  char source[16];
+  (*(ActorDamageSource*)source).ActorDamageSource::ActorDamageSource(cause);
+  actor->_hurt((*(ActorDamageSource*)source), damage, knockback, ignite);
+  (*(ActorDamageSource*)source).~ActorDamageSource();
 }
 
 }  // namespace world

@@ -200,12 +200,13 @@ bool OnMobHurt(Event::MobHurtEvent& event) {
         event.mDamageSource->getCause() == ActorDamageCause::Fire ||
         event.mDamageSource->getCause() == ActorDamageCause::FireTick ||
         event.mDamageSource->getCause() == ActorDamageCause::Lava ||
-        event.mDamageSource->getCause() == ActorDamageCause::Suffocation) {
+        event.mDamageSource->getCause() == ActorDamageCause::Suffocation ||
+        event.mDamageSource->getCause() == ActorDamageCause::Wither) {
       // Reduce the damage of those triggered per tick
       damage.SetTrueDamageProportion(
-          0.0005);  // damage 1% of the max HP per second
+          0.0025 * event.mDamage);  // damage 5% of the max HP per second
     } else {
-      damage.SetTrueDamageProportion(0.01);  // damage 1% of the max HP
+      damage.SetTrueDamageProportion(0.05 * event.mDamage);  // damage 5% of the max HP
     }
   }
 
