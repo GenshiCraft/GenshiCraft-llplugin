@@ -184,7 +184,7 @@ Damage PlayerEx::GetAttackDamage() const {
         GetNowClock() - 999999.;  // the clock of the last attack
 
     // Prevent too frequent attack
-    if (GetNowClock() - last_attack_clock < 1.) {
+    if (GetNowClock() - last_attack_clock < 0.5) {
       return Damage();
     }
     last_attack_clock = GetNowClock();
@@ -391,35 +391,54 @@ void PlayerEx::OnTick() {
 
     // Maintain the stamina
     if (playerex->GetPlayer()->isSprinting() &&
-        !playerex->GetPlayer()->isInWater()) {
-      if (playerex->stamina_ != 0) {
-        // Consume stamina when sprinting
-        // Reduce 18 stamina per second
-        if (dist(random_engine) < 0.9) {
-          playerex->stamina_ = std::max(playerex->stamina_ - 1, 0);
-        }
-      } else {  // if the stamina is used up
-        playerex->GetPlayer()->setSprinting(false);  // prevent sprinting
+        !playerex->GetPlayer()->isSwimming()) {
+      // Prevent sprinting if the stamina is used up
+      if (playerex->stamina_ == 0) {
+        playerex->GetPlayer()->setSprinting(false);
       }
-    } else if (playerex->GetPlayer()->isSwimming()) {  // dash swimming
-      if (playerex->stamina_ != 0) {
-        // Consume stamina when dash swimming
-        // Reduce 10.2 stamina per second
-        if (dist(random_engine) < 0.51) {
-          playerex->stamina_ = std::max(playerex->stamina_ - 1, 0);
-        }
-      } else {                          // if the stamina is used up
-        playerex->GetPlayer()->kill();  // drowned
+
+      // Reduce 18 stamina per second when sprinting
+      if (dist(random_engine) < 0.9) {
+        playerex->IncreaseStamina(-1);
+      }
+
+    } else if (playerex->GetPlayer()->isSwimming()) {
+      // The player drowns if the stamina is used up
+      if (playerex->stamina_ == 0) {
+        world::HurtActor(playerex->GetPlayer(), 999999., ActorDamageCause::Override);
+      }
+
+      // Reduce 10.2 stamina per second when swimming dash
+      if (dist(random_engine) < 0.51) {
+        playerex->IncreaseStamina(-1);
+      }
+
+    } else if (playerex->GetPlayer()->isInWater() &&
+               !playerex->GetPlayer()->isOnGround() &&
+               playerex->GetPlayer()->isMoving()) {
+      // The player drowns if the stamina is used up
+      if (playerex->stamina_ == 0) {
+        world::HurtActor(playerex->GetPlayer(), 999999., ActorDamageCause::Override);
+      }
+
+      // Reduce 4 stamina per second when swimming
+      if (dist(random_engine) < 0.51) {
+        playerex->IncreaseStamina(-1);
+      }
+
+    } else if (playerex->GetPlayer()->isInWater() &&
+               !playerex->GetPlayer()->isOnGround()) {
+      // The player drowns if the stamina is used up
+      if (playerex->stamina_ == 0) {
+        world::HurtActor(playerex->GetPlayer(), 999999., ActorDamageCause::Override);
       }
     } else {
       // Regenerate stamina when idle
-      // Regenerate 25 stamina per second
+      // Regenerate 25 stamina per second when idle and on ground
       if (dist(random_engine) < 0.25) {
-        playerex->stamina_ =
-            std::min(playerex->stamina_ + 2, playerex->stamina_max_);
+        playerex->IncreaseStamina(2);
       } else {
-        playerex->stamina_ =
-            std::min(playerex->stamina_ + 1, playerex->stamina_max_);
+        playerex->IncreaseStamina(1);
       }
     }
 
@@ -436,7 +455,7 @@ void PlayerEx::OnTick() {
         }
       }
       if (!is_switched) {  // if every character is dead
-        playerex->GetPlayer()->kill();
+        world::HurtActor(playerex->GetPlayer(), 999999., ActorDamageCause::Override);
       }
     }
 

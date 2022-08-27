@@ -36,14 +36,11 @@
 #include <string>
 #include <vector>
 
+#include "damage.h"
 #include "modifier.h"
 #include "stats.h"
 
 namespace genshicraft {
-
-class Damage;
-
-class Modifier;
 
 class PlayerEx;
 
@@ -67,7 +64,7 @@ class Character {
 
   /**
    * @brief Get the ascension materials
-   * 
+   *
    * @return The names and the numbers of the ascension materials
    */
   virtual std::map<std::string, int> GetAscensionMaterials() const = 0;

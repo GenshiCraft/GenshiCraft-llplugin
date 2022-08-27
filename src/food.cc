@@ -73,7 +73,7 @@ bool EatFood(PlayerEx* playerex, ItemStack* food) {
   }
 
   if (food_name == "minecraft:apple") {
-    // If the player's HP is full, treat the apple as a native food
+    // Treat the apple as a native food if the player's HP is full
     if (playerex->GetHP() == playerex->GetStats().GetMaxHP()) {
       return true;
     }
@@ -85,6 +85,11 @@ bool EatFood(PlayerEx* playerex, ItemStack* food) {
   }
 
   if (food_name == "genshicraft:sunsettia") {
+    // Prevent eating if the player's HP is full,
+    if (playerex->GetHP() == playerex->GetStats().GetMaxHP()) {
+      return false;
+    }
+
     playerex->GetCharacter()->IncreaseHP(300);
     playerex->GetCharacter()->IncreaseFullness(GetFullnessIncrement(
         0, true, playerex->GetCharacter()->GetStats().GetMaxHP()));
