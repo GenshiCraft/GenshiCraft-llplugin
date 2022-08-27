@@ -5,7 +5,7 @@ on: [ workflow_dispatch ]
 env:
   PLUGIN_NAME: GenshiCraft-llplugin
   SOLUTION_FILE_PATH: ./project.sln
-  VERSION_FILE_PATH: src/Version.h
+  VERSION_FILE_PATH: src/version.h
   BUILD_CONFIGURATION: Release
   Platform: X64
   SDK_DIR: ./SDK
@@ -20,7 +20,7 @@ jobs:
         with:
           submodules: 'true'
 
-      # - name: Get information from Version.h file (TODO)
+      # - name: Get information from version.h file (TODO)
       #   working-directory: ${{env.GITHUB_WORKSPACE}}
       #   id: ver
       #   run: |

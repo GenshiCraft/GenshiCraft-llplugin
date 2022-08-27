@@ -1,13 +1,3 @@
-.vs/
-**/x64/
-**/*.user
-**/.vscode/
-
-**/bedrock_server_api.lib
-**/bedrock_server_var.lib
-
-/.idea/*
-!/.idea/cmake.xml
-/cmake-build-*
-build/*
-/out/*
+.vscode
+build
+docs
