@@ -405,7 +405,8 @@ void PlayerEx::OnTick() {
     } else if (playerex->GetPlayer()->isSwimming()) {
       // The player drowns if the stamina is used up
       if (playerex->stamina_ == 0) {
-        world::HurtActor(playerex->GetPlayer(), 999999., ActorDamageCause::Override);
+        world::HurtActor(playerex->GetPlayer(), 999999.,
+                         ActorDamageCause::Override);
       }
 
       // Reduce 10.2 stamina per second when swimming dash
@@ -418,7 +419,8 @@ void PlayerEx::OnTick() {
                playerex->GetPlayer()->isMoving()) {
       // The player drowns if the stamina is used up
       if (playerex->stamina_ == 0) {
-        world::HurtActor(playerex->GetPlayer(), 999999., ActorDamageCause::Override);
+        world::HurtActor(playerex->GetPlayer(), 999999.,
+                         ActorDamageCause::Override);
       }
 
       // Reduce 4 stamina per second when swimming
@@ -430,7 +432,8 @@ void PlayerEx::OnTick() {
                !playerex->GetPlayer()->isOnGround()) {
       // The player drowns if the stamina is used up
       if (playerex->stamina_ == 0) {
-        world::HurtActor(playerex->GetPlayer(), 999999., ActorDamageCause::Override);
+        world::HurtActor(playerex->GetPlayer(), 999999.,
+                         ActorDamageCause::Override);
       }
     } else {
       // Regenerate stamina when idle
@@ -455,7 +458,8 @@ void PlayerEx::OnTick() {
         }
       }
       if (!is_switched) {  // if every character is dead
-        world::HurtActor(playerex->GetPlayer(), 999999., ActorDamageCause::Override);
+        world::HurtActor(playerex->GetPlayer(), 999999.,
+                         ActorDamageCause::Override);
       }
     }
 
@@ -617,7 +621,7 @@ nlohmann::json PlayerEx::MigrateData(const nlohmann::json& old_data) {
     // Check the accessibility
     data["version"].get<int>();
     data["character"].get<std::string>();
-    data["character"][0];  // the array should contain at least one element
+    data["character_owned"][0];  // the array should contain at least one element
     for (auto&& character_data : data["character_owned"]) {
       character_data["name"].get<std::string>();
       character_data["ascension_phase"].get<int>();

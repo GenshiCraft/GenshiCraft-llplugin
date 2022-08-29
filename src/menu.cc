@@ -340,6 +340,7 @@ void Menu::OpenCharacterArtifacts(Artifact::Type type) {
 
     if (max_level_increment ==
         0) {  // if the artifact EXP is not enough to inrease at least one level
+      form = form.addLabel("materials_not_enough_hint", "§cNo enough artifact or mora to upgrade to the next level! But you can just increase the artifact EXP.");
       form = form.addToggle("is_all_in", "Consume the most artifacts", false);
     } else {
       form = form.addSlider("level", "The levels to increase", 0,
