@@ -127,6 +127,12 @@ bool OnMobHurt(Event::MobHurtEvent& event) {
   static std::default_random_engine random_engine;
   static std::uniform_int_distribution dist(-10, 1);
 
+  // Maintain the poison effect (temporary, for this is just a bug of
+  // Minecraft)
+  if (event.mDamageSource->getCause() == ActorDamageCause::Magic) {
+    event.mDamage = std::abs(event.mDamage);
+  }
+
   // Override damage directly affects the native health
   if (event.mDamageSource->getCause() == ActorDamageCause::Override) {
     return true;
@@ -206,7 +212,8 @@ bool OnMobHurt(Event::MobHurtEvent& event) {
       damage.SetTrueDamageProportion(
           0.0025 * event.mDamage);  // damage 5% of the max HP per second
     } else {
-      damage.SetTrueDamageProportion(0.05 * event.mDamage);  // damage 5% of the max HP
+      damage.SetTrueDamageProportion(0.05 *
+                                     event.mDamage);  // damage 5% of the max HP
     }
   }
 
