@@ -37,6 +37,7 @@
 
 #include <MC/ActorUniqueID.hpp>
 #include <MC/Block.hpp>
+#include <MC/BlockPos.hpp>
 #include <MC/Container.hpp>
 #include <MC/ItemStack.hpp>
 #include <MC/Level.hpp>
@@ -69,11 +70,14 @@ namespace genshicraft {
 PlayerEx::PlayerEx(Player* player)
     : MobEx(player),
       is_opening_container_(false),
+      last_dimension_id_(player->getDimensionId()),
+      last_position_(player->getPosition()),
       last_world_level_(0),
       menu_(Menu(this)),
       sidebar_(Sidebar(this)),
       stamina_(0),
       stamina_max_(0),
+      velocity_(0., 0., 0.),
       xuid_(player->getXuid()) {
   // Empty
 }
@@ -178,7 +182,42 @@ std::map<Artifact::Type, std::shared_ptr<Artifact>> PlayerEx::GetArtifactDict()
 
 Damage PlayerEx::GetAttackDamage() const {
   if (this->GetWeapon()) {  // if the player attacks with a GenshiCraft weapon
-    return this->GetCharacter()->GetDamageNormalAttack();
+    auto player = this->GetPlayer();
+
+    // Charged attack
+    if (player->isSneaking()) {
+      return this->GetCharacter()->GetAttackDamage(
+          world::AttackType::kChargedAttack);
+    }
+
+    // Plunge
+    if (this->GetVelocity().y < -8.) {  // normal jump cannot trigger plunge
+      auto block_under =
+          Level::getBlock(this->GetPlayer()->getPosition() - Vec3(0., 1., 0.),
+                          this->GetPlayer()->getDimensionId());
+
+      if (!block_under->isEmpty()) {  // if the player is about to hit the ground
+        if (this->GetVelocity().y < -10.) {
+          // High plunge
+          logger.warn("A");
+          return this->GetCharacter()->GetAttackDamage(
+              world::AttackType::kPlungeHigh);
+        } else {
+          // Low plunge
+          logger.warn("B");
+          return this->GetCharacter()->GetAttackDamage(
+              world::AttackType::kPlungeLow);
+        }
+      }
+
+      logger.warn("C");
+      return this->GetCharacter()->GetAttackDamage(
+          world::AttackType::kPlungeRegular);
+    }
+
+    // Hit
+    return this->GetCharacter()->GetAttackDamage(world::AttackType::kHit);
+
   } else {
     static double last_attack_clock =
         GetNowClock() - 999999.;  // the clock of the last attack
@@ -252,6 +291,8 @@ Player* PlayerEx::GetPlayer() const {
 int PlayerEx::GetStamina() const { return this->stamina_; }
 
 int PlayerEx::GetStaminaMax() const { return this->stamina_max_; }
+
+Vec3 PlayerEx::GetVelocity() const { return this->velocity_; }
 
 std::shared_ptr<Weapon> PlayerEx::GetWeapon() const {
   auto mainhand_item = this->GetPlayer()->getHandSlot();
@@ -481,8 +522,24 @@ void PlayerEx::OnTick() {
       world::HurtActor(playerex->GetPlayer(), 1., ActorDamageCause::Wither);
     }
 
+    // Maintain the velocity
+    if (playerex->GetPlayer()->getDimensionId() !=
+        playerex->last_dimension_id_) {
+      playerex->velocity_ = Vec3(0., 0., 0.);
+    } else {
+      playerex->velocity_ =
+          (playerex->GetPlayer()->getPosition() - playerex->last_position_) *
+          20.;
+    }
+    playerex->last_dimension_id_ = playerex->GetPlayer()->getDimensionId();
+    playerex->last_position_ = playerex->GetPlayer()->getPosition();
+
     // Refresh the sidebar
     playerex->sidebar_.Refresh();
+
+    if (std::abs(playerex->GetVelocity().y) > 0.0001) {
+      logger.warn(std::to_string(playerex->GetVelocity().y));
+    }
   }
 }
 
@@ -595,11 +652,11 @@ void PlayerEx::SaveData() {
     character_data["energy"] = character->GetEnergy();
     character_data["HP"] = character->GetHP();
     character_data["talent_elemental_burst_level"] =
-        character->GetTalentElementalBurstLevel();
+        character->GetTalentLevel(world::TalentType::kElementalBurst);
     character_data["talent_elemental_skill_level"] =
-        character->GetTalentElementalSkillLevel();
+        character->GetTalentLevel(world::TalentType::kElementalSkill);
     character_data["talent_normal_attack_level"] =
-        character->GetTalentNormalAttackLevel();
+        character->GetTalentLevel(world::TalentType::kNormalAttack);
 
     data["character_owned"].push_back(character_data);
   }
@@ -621,7 +678,8 @@ nlohmann::json PlayerEx::MigrateData(const nlohmann::json& old_data) {
     // Check the accessibility
     data["version"].get<int>();
     data["character"].get<std::string>();
-    data["character_owned"][0];  // the array should contain at least one element
+    data["character_owned"]
+        [0];  // the array should contain at least one element
     for (auto&& character_data : data["character_owned"]) {
       character_data["name"].get<std::string>();
       character_data["ascension_phase"].get<int>();

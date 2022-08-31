@@ -39,6 +39,7 @@
 
 #include "playerex.h"
 #include "plugin.h"
+#include "world.h"
 
 namespace genshicraft {
 
@@ -88,9 +89,12 @@ void Sidebar::Refresh() {
 
   // Elemental Skill CD
   auto elemental_skill_CD_progress =
-      1 - static_cast<double>(
-              this->playerex_->GetCharacter()->GetCDElementalSkill()) /
-              this->playerex_->GetCharacter()->GetCDElementalSkillMax();
+      1 -
+      static_cast<double>(this->playerex_->GetCharacter()->GetCD(
+          world::TalentType::kElementalSkill)) /
+          this->playerex_->GetCharacter()->GetCDMax(
+              world::TalentType::kElementalSkill) +
+      0.0001;
   content.push_back(
       {"Skill CD " + Sidebar::GenerateProgressBar(
                          elemental_skill_CD_progress, 24,
@@ -99,9 +103,12 @@ void Sidebar::Refresh() {
 
   // Elemental Burst CD
   auto elemental_burst_CD_progress =
-      1 - static_cast<double>(
-              this->playerex_->GetCharacter()->GetCDElementalBurst()) /
-              this->playerex_->GetCharacter()->GetCDElementalBurstMax();
+      1 -
+      static_cast<double>(this->playerex_->GetCharacter()->GetCD(
+          world::TalentType::kElementalBurst)) /
+          this->playerex_->GetCharacter()->GetCDMax(
+              world::TalentType::kElementalBurst) +
+      0.0001;
   content.push_back(
       {"Burst CD " + Sidebar::GenerateProgressBar(
                          elemental_burst_CD_progress, 20,
@@ -111,7 +118,7 @@ void Sidebar::Refresh() {
   // Elemental Burst Energy
   auto elemental_burst_energy_progress =
       static_cast<double>(this->playerex_->GetCharacter()->GetEnergy()) /
-      this->playerex_->GetCharacter()->GetEnergyMax();
+      this->playerex_->GetCharacter()->GetEnergyMax() + 0.0001;
   content.push_back(
       {"Energy " + Sidebar::GenerateProgressBar(
                        elemental_burst_energy_progress, 24,

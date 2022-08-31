@@ -86,6 +86,21 @@ class ExceptionCharacter : public Exception {
 };
 
 /**
+ * @brief The ExceptionInvalidAttackType class represents that the attack type
+ * is invalid.
+ *
+ */
+class ExceptionInvalidAttackType : public ExceptionCharacter {
+ public:
+  ExceptionInvalidAttackType()
+      : ExceptionCharacter(
+            "[genshicraft::ExceptionInvalidAttackType] The attack type is "
+            "invalid.") {}
+
+  using ExceptionCharacter::ExceptionCharacter;
+};
+
+/**
  * @brief The ExceptionInvalidCharacterData class represents that the character
  * data is invalid.
  *

@@ -67,12 +67,8 @@ void Menu::OpenCharacter() {
   }
   content += "\n";
 
-  content +=
-      "§fLevel " + std::to_string(character->GetLevel()) + " §7/ " +
-      std::to_string(
-          Character::kAcensionPhaseMaxLevelList[character
-                                                    ->GetAscensionPhase()]) +
-      "\n";
+  content += "§fLevel " + std::to_string(character->GetLevel()) + " §7/ " +
+             std::to_string(character->GetLevelMax()) + "\n";
 
   content += "§f";
   for (const auto& line : character->GetStatsDescription(false)) {
@@ -84,8 +80,7 @@ void Menu::OpenCharacter() {
   form = form.addButton(
       "Details", "", [this](Player* player) { this->OpenCharacterDetails(); });
 
-  if (Character::kAcensionPhaseMaxLevelList[character->GetAscensionPhase()] ==
-      character->GetLevel()) {
+  if (character->GetLevelMax() == character->GetLevel()) {
     if (character->GetLevel() != 90) {
       form = form.addButton("Ascend", "", [this](Player* player) {
         this->OpenCharacterAscend();
@@ -340,7 +335,10 @@ void Menu::OpenCharacterArtifacts(Artifact::Type type) {
 
     if (max_level_increment ==
         0) {  // if the artifact EXP is not enough to inrease at least one level
-      form = form.addLabel("materials_not_enough_hint", "§cNo enough artifact or mora to upgrade to the next level! But you can just increase the artifact EXP.");
+      form =
+          form.addLabel("materials_not_enough_hint",
+                        "§cNo enough artifact or mora to upgrade to the next "
+                        "level! But you can just increase the artifact EXP.");
       form = form.addToggle("is_all_in", "Consume the most artifacts", false);
     } else {
       form = form.addSlider("level", "The levels to increase", 0,
@@ -402,7 +400,7 @@ void Menu::OpenCharacterArtifacts(Artifact::Type type) {
               artifact_to_consume->GetBaseConsumableEXP());
 
           artifact_to_consume.reset();
-          
+
           this->playerex_->GetPlayer()->getInventory().removeItem_s(i, 1);
         }
         Schedule::nextTick(
@@ -414,8 +412,7 @@ void Menu::OpenCharacterAscend() {
   auto character = this->playerex_->GetCharacter();
 
   // Check if it is time to ascend
-  if ((Character::kAcensionPhaseMaxLevelList[character->GetAscensionPhase()] !=
-       character->GetLevel()) ||
+  if ((character->GetLevelMax() != character->GetLevel()) ||
       character->GetLevel() == 90) {
     this->OpenCharacter();
     return;
@@ -522,8 +519,7 @@ void Menu::OpenCharacterLevelUp() {
   auto character = this->playerex_->GetCharacter();
 
   // Check if it is time to level up
-  if (Character::kAcensionPhaseMaxLevelList[character->GetAscensionPhase()] ==
-      character->GetLevel()) {
+  if (character->GetLevelMax() == character->GetLevel()) {
     this->OpenCharacter();
     return;
   }

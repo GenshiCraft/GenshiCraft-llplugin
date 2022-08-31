@@ -41,6 +41,19 @@ namespace genshicraft {
 namespace world {
 
 /**
+ * @brief The attack type
+ * 
+ */
+enum class AttackType {
+  kHit = 0,
+  kChargedAttack,
+  kChargedAttack2ndStage,
+  kPlungeRegular,
+  kPlungeLow,
+  kPlungeHigh
+};
+
+/**
  * @brief The element type
  *
  */
@@ -84,6 +97,19 @@ enum class ElementalReactionType {
   kSuperconduct,
   kSwirl,
   kVaporize
+};
+
+/**
+ * @brief The talent type
+ * 
+ */
+enum class TalentType {
+  kNormalAttack = 0,
+  kElementalSkill,
+  kElementalBurst,
+  k1stAscensionPassive,
+  k4thAscensionPassive,
+  kUtility
 };
 
 /**

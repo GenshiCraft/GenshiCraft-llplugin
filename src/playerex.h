@@ -32,6 +32,8 @@
 #define GENSHICRAFT_PLAYEREX_H_
 
 #include <MC/Player.hpp>
+#include <MC/Types.hpp>
+#include <MC/Vec3.hpp>
 #include <map>
 #include <memory>
 #include <string>
@@ -61,8 +63,9 @@ class PlayerEx final : public MobEx {
    * @brief Construct a new PlayerEx object
    *
    * @param player A pointer to the player object
-   * 
-   * @note The method ActorEx::LoadData() should be called right after construction.
+   *
+   * @note The method ActorEx::LoadData() should be called right after
+   * construction.
    */
   PlayerEx(Player* player);
 
@@ -201,6 +204,13 @@ class PlayerEx final : public MobEx {
    * @return The stats
    */
   Stats GetStats() const override;
+
+  /**
+   * @brief Get the velocity
+   *
+   * @return The velocity vector
+   */
+  virtual Vec3 GetVelocity() const;
 
   /**
    * @brief Get the Weapon object
@@ -376,11 +386,14 @@ class PlayerEx final : public MobEx {
   std::vector<std::shared_ptr<Character>>
       character_owned_;        // all characters owned
   bool is_opening_container_;  // true if the player is opening a container
+  int last_dimension_id_;      // the dimension id last tick
+  Vec3 last_position_;         // the position last tick
   int last_world_level_;       // the world level last tick
   Menu menu_;                  // the menu handler for the player
   Sidebar sidebar_;            // the sidebar handler for the player
   int stamina_;                // the stamina
   int stamina_max_;            // the max value of the stamina
+  Vec3 velocity_;              // the velocity
   std::string xuid_;           // the XUID
 
   static std::vector<std::shared_ptr<PlayerEx>>

@@ -39,6 +39,7 @@
 #include "damage.h"
 #include "modifier.h"
 #include "stats.h"
+#include "world.h"
 
 namespace genshicraft {
 
@@ -50,9 +51,6 @@ class PlayerEx;
  */
 class Character {
  public:
-  static const int kAcensionPhaseMaxLevelList[7];  // the maximum level of each
-                                                   // acension phase
-
   Character() = delete;
 
   /**
@@ -60,7 +58,7 @@ class Character {
    *
    * @param modifier The modifier
    */
-  void AddModifier(Modifier modifier);
+  virtual void AddModifier(Modifier modifier);
 
   /**
    * @brief Get the ascension materials
@@ -74,7 +72,15 @@ class Character {
    *
    * @return The ascension phase (0 <= x <= 6)
    */
-  int GetAscensionPhase() const;
+  virtual int GetAscensionPhase() const;
+
+  /**
+   * @brief Perform an attack and return its damage
+   *
+   * @param attack_type The attack type
+   * @return The damage
+   */
+  virtual Damage GetAttackDamage(const world::AttackType& attack_type) = 0;
 
   /**
    * @brief Get the base stats
@@ -84,74 +90,47 @@ class Character {
   virtual Stats GetBaseStats() const = 0;
 
   /**
-   * @brief Get the CD remaining of elemental burst
+   * @brief Get the remaining CD of the talent
    *
-   * @return The CD remaing
+   * @param talent The talent
+   * @return The remaining CD
+   *
+   * @note For talents without CD or nonexistent, this method will always return
+   * 0.
    */
-  double GetCDElementalBurst() const;
+  virtual double GetCD(const world::TalentType& talent) const;
 
   /**
-   * @brief Get the CD remaining of elemental burst
+   * @brief Get the CD of the talent
    *
-   * @return The CD remaing
-   */
-  virtual double GetCDElementalBurstMax() const = 0;
-
-  /**
-   * @brief Get the CD remaining of elemental skill
-   *
-   * @return The CD remaining
-   */
-  double GetCDElementalSkill() const;
-
-  /**
-   * @brief Get the CD of elemental skill
-   *
+   * @param talent The talent
    * @return The CD
+   *
+   * @note For talents without CD or nonexistent, this method will always return
+   * 0.
    */
-  virtual double GetCDElementalSkillMax() const = 0;
+  virtual double GetCDMax(const world::TalentType& talent) const = 0;
 
   /**
    * @brief Get the character EXP
    *
    * @return The character EXP (x >= 0)
    */
-  int GetCharacterEXP() const;
+  virtual int GetCharacterEXP() const;
 
   /**
    * @brief Get the constellation
    *
    * @return The constellation (0 <= x <= 6)
    */
-  int GetConstellation() const;
-
-  /**
-   * @brief Get the Damage object of elemental burst
-   *
-   * @return The Damage object
-   */
-  virtual Damage GetDamageElementalBurst() = 0;
-
-  /**
-   * @brief Get the Damage object of elemental skill
-   *
-   * @return The Damage object
-   */
-  virtual Damage GetDamageElementalSkill() = 0;
-
-  /**
-   * @brief Get the Damage object of normal attack
-   *
-   * @return The Damage object
-   */
-  virtual Damage GetDamageNormalAttack() = 0;
+  virtual int GetConstellation() const;
 
   /**
    * @brief Get the energy
    *
    * @return The energy
    */
-  int GetEnergy() const;
+  virtual int GetEnergy() const;
 
   /**
    * @brief Get the max energy
@@ -165,21 +144,21 @@ class Character {
    *
    * @return The fullness
    */
-  double GetFullness() const;
+  virtual double GetFullness() const;
 
   /**
    * @brief Get the HP
    *
    * @return The HP (x >= 0)
    */
-  int GetHP() const;
+  virtual int GetHP() const;
 
   /**
    * @brief Get the level (1 <= x <= 90)
    *
    * @return The level
    */
-  int GetLevel() const;
+  virtual int GetLevel() const;
 
   /**
    * @brief Get the level with the character EXP
@@ -187,7 +166,16 @@ class Character {
    * @param character_exp The character EXP
    * @return The level
    */
-  int GetLevelByCharacterEXP(int character_exp) const;
+  virtual int GetLevelByCharacterEXP(int character_exp) const;
+
+  /**
+   * @brief Get the max level under current ascension phase
+   *
+   * @return The max level
+   *
+   * @note The result is not the max level of the character.
+   */
+  virtual int GetLevelMax() const;
 
   /**
    * @brief Get the name
@@ -201,7 +189,7 @@ class Character {
    *
    * @return The PlayerEx object
    */
-  PlayerEx* GetPlayerEx() const;
+  virtual PlayerEx* GetPlayerEx() const;
 
   /**
    * @brief Get the rarity
@@ -215,7 +203,7 @@ class Character {
    *
    * @return The stats
    */
-  Stats GetStats() const;
+  virtual Stats GetStats() const;
 
   /**
    * @brief Describe the stats
@@ -223,28 +211,36 @@ class Character {
    * @param verbose True if get verbose description
    * @return The description
    */
-  std::vector<std::string> GetStatsDescription(bool verbose = false) const;
+  virtual std::vector<std::string> GetStatsDescription(
+      bool verbose = false) const;
 
   /**
-   * @brief Get the talent elemental burst level
+   * @brief Get the level of the talent
    *
-   * @return The level (1 <= x <= 13)
+   * @param talent The talent
+   * @return The level
+   *
+   * @note For talents not activated, this method returns 0.
+   *       For normal attack, this method returns 0 ~ 11.
+   *       For elemental skill and elemental burst, this method returns 0 ~ 13.
    */
-  int GetTalentElementalBurstLevel() const;
+  virtual int GetTalentLevel(const world::TalentType& talent) const;
 
   /**
-   * @brief Get the talent elemental skill level
+   * @brief Get the max talent level of current acension phase
    *
-   * @return The level (1 <= x <= 13)
+   * @param talent The talent
+   * @return The max talent level
    */
-  int GetTalentElementalSkillLevel() const;
+  virtual int GetTalentLevelMax() const;
 
   /**
-   * @brief Get the talent normal attack level
+   * @brief Get the talent level-up materials
    *
-   * @return The level (1 <= x <= 11)
+   * @return The names and the numbers of the materials
    */
-  int GetTalentNormalAttackLevel() const;
+  virtual std::map<std::string, int> GetTalentLevelUpMaterials(
+      const world::TalentType& talent) const = 0;
 
   /**
    * @brief Check if the character is holding a weapon
@@ -258,74 +254,74 @@ class Character {
    * not take effect.
    *
    */
-  void IncreaseAscensionPhase();
+  virtual void IncreaseAscensionPhase();
 
   /**
    * @brief Increase the character EXP
    *
    * @param value The value to increase. Negative value will not take effect.
    */
-  void IncreaseCharacterEXP(int value);
+  virtual void IncreaseCharacterEXP(int value);
 
   /**
    * @brief Increase 1 constellation till 6
    *
    */
-  void IncreaseConstellation();
+  virtual void IncreaseConstellation();
 
   /**
    * @brief Increase energy
    *
    * @param value The value to increase. Negative value for decreasing
    */
-  void IncreaseEnergy(int value);
+  virtual void IncreaseEnergy(int value);
 
   /**
    * @brief Increase fullness
    *
    * @param value The value to increase. Negative value for decreasing
    */
-  void IncreaseFullness(double value);
+  virtual void IncreaseFullness(double value);
 
   /**
    * @brief Increase the HP. If dead, the HP would not increase
    *
    * @param value The value to increase. Negative value for decreasing
    */
-  void IncreaseHP(int value);
+  virtual void IncreaseHP(int value);
 
   /**
    * @brief Check if the character is dead
    *
    * @return True if dead
    */
-  bool IsDead() const;
+  virtual bool IsDead() const;
 
   /**
    * @brief Check if the energy is full
    *
    * @return True if full
    */
-  bool IsEnergyFull() const;
+  virtual bool IsEnergyFull() const;
 
   /**
    * @brief Refresh the character
    *
    */
-  void Refresh();
+  virtual void Refresh();
 
   /**
    * @brief Remove a modifier
    *
    * @param id The ID of the modifier
    */
-  void RemoveModifier(int id);
+  virtual void RemoveModifier(int id);
 
   /**
    * @brief Revive
    *
    */
-  void Revive();
+  virtual void Revive();
 
   /**
    * @brief Make a Character object
@@ -379,8 +375,11 @@ class Character {
 
   double last_elemental_burst_clock_;  // the clock of last elemental burst
   double last_elemental_skill_clock_;  // the clock of last elemental skill
+  std::vector<Modifier> modifier_list_;
 
  private:
+  static const int kAcensionPhaseMaxLevelList[7];  // the maximum level of each
+                                                   // acension phase
   static const int
       kLevelMinCharacterEXPList[91];  // the minimum character EXP of each level
 
@@ -390,7 +389,6 @@ class Character {
   int energy_;
   double fullness_;
   int HP_;
-  std::vector<Modifier> modifier_list_;  // the modifiers
   PlayerEx* playerex_;
   int talent_elemental_burst_level_;
   int talent_elemental_skill_level_;

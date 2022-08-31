@@ -44,6 +44,7 @@
 #include "playerex.h"
 #include "plugin.h"
 #include "stats.h"
+#include "world.h"
 
 namespace genshicraft {
 
@@ -56,15 +57,24 @@ void Character::AddModifier(Modifier modifier) {
 
 int Character::GetAscensionPhase() const { return this->ascension_phase_; }
 
-double Character::GetCDElementalBurst() const {
-  auto past_time = GetNowClock() - this->last_elemental_burst_clock_;
-  return std::max(this->GetCDElementalBurstMax() - past_time, 0.);
-};
+double Character::GetCD(const world::TalentType& talent) const {
+  double past_time = 0.;
 
-double Character::GetCDElementalSkill() const {
-  auto past_time = GetNowClock() - this->last_elemental_skill_clock_;
-  return std::max(this->GetCDElementalSkillMax() - past_time, 0.);
-};
+  switch (talent) {
+    case world::TalentType::kElementalSkill:
+      past_time = GetNowClock() - this->last_elemental_skill_clock_;
+      return std::max(
+          this->GetCDMax(world::TalentType::kElementalSkill) - past_time, 0.);
+
+    case world::TalentType::kElementalBurst:
+      past_time = GetNowClock() - this->last_elemental_burst_clock_;
+      return std::max(
+          this->GetCDMax(world::TalentType::kElementalBurst) - past_time, 0.);
+
+    default:
+      return 0.;
+  }
+}
 
 int Character::GetCharacterEXP() const { return this->character_EXP_; }
 
@@ -99,6 +109,10 @@ int Character::GetLevelByCharacterEXP(int character_exp) const {
   return level;
 }
 
+int Character::GetLevelMax() const {
+  return Character::kAcensionPhaseMaxLevelList[this->GetAscensionPhase()];
+}
+
 PlayerEx* Character::GetPlayerEx() const { return this->playerex_; }
 
 Stats Character::GetStats() const {
@@ -108,7 +122,7 @@ Stats Character::GetStats() const {
     stats += this->playerex_->GetWeapon()->GetBaseStats();
   }
 
-  for (auto artifact_pair: this->playerex_->GetArtifactDict()) {
+  for (auto artifact_pair : this->playerex_->GetArtifactDict()) {
     auto artifact = artifact_pair.second;
     stats += artifact->GetBaseStats();
   }
@@ -249,16 +263,44 @@ std::vector<std::string> Character::GetStatsDescription(bool verbose) const {
   return description;
 }
 
-int Character::GetTalentElementalBurstLevel() const {
-  return this->talent_elemental_burst_level_;
+int Character::GetTalentLevel(const world::TalentType& talent) const {
+  switch (talent) {
+    case world::TalentType::kNormalAttack:
+      return this->talent_normal_attack_level_;
+      break;
+
+    case world::TalentType::kElementalSkill:
+      return this->talent_elemental_skill_level_;
+      break;
+
+    case world::TalentType::kElementalBurst:
+      return this->talent_elemental_burst_level_;
+      break;
+
+    case world::TalentType::k1stAscensionPassive:
+      return (this->GetAscensionPhase() >= 1) ? 1 : 0;
+      break;
+
+    case world::TalentType::k4thAscensionPassive:
+      return (this->GetAscensionPhase() >= 4) ? 1 : 0;
+      break;
+
+    case world::TalentType::kUtility:
+      return 1;
+      break;
+
+    default:
+      break;
+  }
+
+  return 0;
 }
 
-int Character::GetTalentElementalSkillLevel() const {
-  return this->talent_elemental_skill_level_;
-}
+int Character::GetTalentLevelMax() const {
+  static const std::vector kAcensionPhaseTalentLevelMaxList = {1, 1, 2, 4,
+                                                               6, 8, 10};
 
-int Character::GetTalentNormalAttackLevel() const {
-  return this->talent_normal_attack_level_;
+  return kAcensionPhaseTalentLevelMaxList.at(this->GetAscensionPhase());
 }
 
 void Character::IncreaseAscensionPhase() {

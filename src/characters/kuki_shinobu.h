@@ -33,6 +33,8 @@
 
 #include <map>
 #include <memory>
+#include <string>
+#include <vector>
 
 #include "character.h"
 #include "playerex.h"
@@ -44,7 +46,7 @@ namespace genshicraft {
  * @brief The KukiShinobu class contains interfaces for Kuki Shinobu.
  *
  */
-class KukiShinobu : public Character {
+class KukiShinobu final : public Character {
  public:
   /**
    * @brief Construct a new Kuki Shinobu object
@@ -79,6 +81,14 @@ class KukiShinobu : public Character {
   std::map<std::string, int> GetAscensionMaterials() const override;
 
   /**
+   * @brief Perform an attack and return its damage
+   *
+   * @param attack_type The attack type
+   * @return The damage
+   */
+  Damage GetAttackDamage(const world::AttackType& attack_type) override;
+
+  /**
    * @brief Get the base stats
    *
    * @return The stats
@@ -86,39 +96,15 @@ class KukiShinobu : public Character {
   Stats GetBaseStats() const override;
 
   /**
-   * @brief Get the CD of elemental burst
+   * @brief Get the CD of the talent
    *
-   * @return 15.
-   */
-  double GetCDElementalBurstMax() const override;
-
-  /**
-   * @brief Get the CD remaining of elemental skill
+   * @param talent The talent
+   * @return The CD
    *
-   * @return 15.
+   * @note For talents without CD or nonexistent, this method will always return
+   * 0.
    */
-  double GetCDElementalSkillMax() const override;
-
-  /**
-   * @brief Get the Damage object of elemental burst
-   *
-   * @return The Damage object
-   */
-  Damage GetDamageElementalBurst() override;
-
-  /**
-   * @brief Get the Damage object of elemental skill
-   *
-   * @return The Damage object
-   */
-  Damage GetDamageElementalSkill() override;
-
-  /**
-   * @brief Get the Damage object of normal attack
-   *
-   * @return The Damage object
-   */
-  Damage GetDamageNormalAttack() override;
+  double GetCDMax(const world::TalentType& talent) const override;
 
   /**
    * @brief Get the max energy
@@ -142,6 +128,14 @@ class KukiShinobu : public Character {
   int GetRarity() const override;
 
   /**
+   * @brief Get the talent level-up materials
+   *
+   * @return The names and the numbers of the materials
+   */
+  std::map<std::string, int> GetTalentLevelUpMaterials(
+      const world::TalentType& talent) const override;
+
+  /**
    * @brief Check if the character is holding a weapon
    *
    * @return True if the character is holding a weapon
@@ -149,31 +143,37 @@ class KukiShinobu : public Character {
   bool HasWeapon() const override;
 
  private:
-  static const std::map<std::string, int>
-      kAscensionMaterialsList[7];  // the ascension materials
+  static const std::vector<std::map<std::string, int>>
+      kAscensionMaterialsList;  // the ascension materials
 
-  static const int
-      kStatsATKBase[7];  // the inferred 0-level ATK of each ascension phase
+  static const std::vector<int>
+      kStatsATKBase;  // the inferred 0-level ATK of each ascension phase
   static const int kStatsATKDiff;  // the difference of ATK between levels
 
-  static const int
-      kStatsDEFBase[7];  // the inferred 0-level DEF of each ascension phase
+  static const std::vector<int>
+      kStatsDEFBase;  // the inferred 0-level DEF of each ascension phase
   static const int kStatsDEFDiff;  // the difference of DEF between levels
 
-  static const int kStatsMaxHPBase[7];  // the inferred 0-level max HP of each
-                                        // ascension phase
+  static const std::vector<int> kStatsMaxHPBase;  // the inferred 0-level max HP
+                                                  // of each ascension phase
   static const int kStatsMaxHPDiff;  // the difference of max HP between levels
 
-  static const double
-      kStatsMaxHPPercent[7];  // the max HP % attributes of each ascension phase
+  static const std::vector<double>
+      kStatsMaxHPPercent;  // the max HP % attributes of each ascension phase
 
-  static const double kTalentNormalAttackChargedAttackDMG[12];
+  static const std::vector<std::vector<double>>
+      kTalentNormalAttackChargedAttackDMG;
 
-  static const int kTalentNormalAttackChargedAttackStaminaCost;
+  static const std::vector<std::vector<double>> kTalentNormalAttackHitDMG;
 
-  static const double kTalentNormalAttackHitDMG[5][12];
+  static const std::vector<double> kTalentNormalAttackPlungeHighDMG;
 
-  static const double kTalentNormalAttackLowPlungeDMG[12];
+  static const std::vector<double> kTalentNormalAttackPlungeLowDMG;
+
+  static const std::vector<double> kTalentNormalAttackPlungeRegularDMG;
+
+  static const std::vector<std::map<std::string, int>>
+      kTalentLevelUpMaterialList;  // the talent level-up materials
 };
 
 }  // namespace genshicraft
