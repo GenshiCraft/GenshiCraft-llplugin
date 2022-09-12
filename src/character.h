@@ -54,11 +54,28 @@ class Character {
   Character() = delete;
 
   /**
+   * @brief Add an attached element gauge
+   *
+   * @param gauge The element gauge
+   */
+  virtual void AddAttachedElement(struct world::ElementGaugeUnit gauge);
+
+  /**
    * @brief Add a modifier
    *
    * @param modifier The modifier
    */
   virtual void AddModifier(Modifier modifier);
+
+  /**
+   * @brief Get all attached element gauges
+   *
+   * @return A list of all attached element gauges
+   *
+   * @note The expiration of the gauges is meaningless.
+   */
+  virtual std::vector<struct world::ElementGaugeUnit> GetAllAttachedElements()
+      const;
 
   /**
    * @brief Get the ascension materials
@@ -373,10 +390,6 @@ class Character {
             int talent_elemental_burst_level, int talent_elemental_skill_level,
             int talent_normal_attack_level);
 
-  double last_elemental_burst_clock_;  // the clock of last elemental burst
-  double last_elemental_skill_clock_;  // the clock of last elemental skill
-  std::vector<Modifier> modifier_list_;
-
  private:
   static const int kAcensionPhaseMaxLevelList[7];  // the maximum level of each
                                                    // acension phase
@@ -384,11 +397,15 @@ class Character {
       kLevelMinCharacterEXPList[91];  // the minimum character EXP of each level
 
   int ascension_phase_;
+  std::vector<struct world::ElementGaugeUnit> attached_element_list_;
   int character_EXP_;
   int constellation_;
   int energy_;
   double fullness_;
   int HP_;
+  double last_elemental_burst_clock_;  // the clock of last elemental burst
+  double last_elemental_skill_clock_;  // the clock of last elemental skill
+  std::vector<Modifier> modifier_list_;
   PlayerEx* playerex_;
   int talent_elemental_burst_level_;
   int talent_elemental_skill_level_;

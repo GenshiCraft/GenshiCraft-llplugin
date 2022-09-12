@@ -398,6 +398,9 @@ bool OnPlayerUseItem(Event::PlayerUseItemEvent& event) {
   return true;
 }
 
-void OnTick() { PlayerEx::OnTick(); }
+void OnTick() {
+  ActorEx::OnTick();
+  PlayerEx::OnTick();
+}
 
 }  // namespace genshicraft

@@ -35,6 +35,7 @@
 #include <vector>
 
 #include "damage.h"
+#include "modifier.h"
 #include "world.h"
 
 namespace genshicraft {
@@ -64,6 +65,13 @@ class ActorEx {
   virtual ~ActorEx();
 
   /**
+   * @brief Add an attached element gauge
+   *
+   * @param gauge The element gauge
+   */
+  virtual void AddAttachedElement(struct world::ElementGaugeUnit gauge);
+
+  /**
    * @brief Get the Actor object
    *
    * @return The Actor object
@@ -78,6 +86,15 @@ class ActorEx {
    * @return The Damage object
    */
   virtual Damage GetAttackDamage() const;
+
+  /**
+   * @brief Get all attached element gauges
+   * 
+   * @return A list of all attached element gauges
+   * 
+   * @note The expiration of the gauges is meaningless.
+   */
+  virtual std::vector<struct world::ElementGaugeUnit> GetAllAttachedElements() const;
 
   /**
    * @brief Get the level
@@ -153,6 +170,7 @@ class ActorEx {
 
   std::vector<struct world::ElementGaugeUnit> attached_element_list_;
   int level_;
+  std::vector<Modifier> modifier_list_;
   Stats stats_;
   long long unique_id_;  // the unique ID
 

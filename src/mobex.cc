@@ -59,7 +59,15 @@ MobEx::~MobEx() { this->SaveData(); }
 void MobEx::ApplyDamage(const Damage& damage) {
   this->latest_damage_ = damage;
 
-  this->latest_damage_.SetVictimAttachedElement(world::ElementType::kPhysical);
+  const auto& attached_element_list = this->GetAllAttachedElements();
+  if (!attached_element_list.empty()) {
+    this->latest_damage_.SetVictimAttachedElement(
+        attached_element_list.at(0).element);
+  } else {
+    this->latest_damage_.SetVictimAttachedElement(
+        world::ElementType::kPhysical);
+  }
+
   this->latest_damage_.SetVictimLevel(this->GetLevel());
   this->latest_damage_.SetVictimStats(this->GetStats());
 

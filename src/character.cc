@@ -48,11 +48,40 @@
 
 namespace genshicraft {
 
-const int Character::kAcensionPhaseMaxLevelList[7] = {20, 40, 50, 60,
-                                                      70, 80, 90};
+void Character::AddAttachedElement(struct world::ElementGaugeUnit gauge) {
+  for (auto& attached_gauge : this->attached_element_list_) {
+    if (attached_gauge.element != gauge.element) {
+      attached_gauge.expiration = GetNowClock() - 1.;  // remove other gauges
+    }
+  }
+  this->attached_element_list_.push_back(gauge);
+}
 
 void Character::AddModifier(Modifier modifier) {
   this->modifier_list_.push_back(modifier);
+}
+
+std::vector<struct world::ElementGaugeUnit> Character::GetAllAttachedElements()
+    const {
+  // Get the attached element list
+  std::vector<struct world::ElementGaugeUnit> gauge_list;
+  for (const auto& attached_gauge : this->attached_element_list_) {
+    for (auto& gauge : gauge_list) {
+      if (attached_gauge.element == gauge.element) {
+        gauge.gauge += attached_gauge.gauge;
+        continue;
+      }
+    }
+    gauge_list.push_back(attached_gauge);
+  }
+
+  // Sort the attached element list
+  auto cmp = [](world::ElementGaugeUnit a, world::ElementGaugeUnit b) {
+    return a.gauge >= b.gauge;  // descending
+  };
+  std::sort(gauge_list.begin(), gauge_list.end(), cmp);
+
+  return gauge_list;
 }
 
 int Character::GetAscensionPhase() const { return this->ascension_phase_; }
@@ -364,12 +393,23 @@ bool Character::IsEnergyFull() const {
 }
 
 void Character::Refresh() {
-  // Refresh the modifiers
   auto now_clock = GetNowClock();
+
+  // Remove expired modifiers
   for (auto it = this->modifier_list_.begin();
        it != this->modifier_list_.end();) {
     if (it->GetExpiration() < now_clock) {
       this->modifier_list_.erase(it);
+    } else {
+      ++it;
+    }
+  }
+
+  // Remove expired gauges
+  for (auto it = this->attached_element_list_.begin();
+       it != this->attached_element_list_.end();) {
+    if (it->expiration < now_clock) {
+      this->attached_element_list_.erase(it);
     } else {
       ++it;
     }
@@ -406,20 +446,6 @@ std::shared_ptr<Character> Character::Make(
 
   throw ExceptionNotACharacter();
 }
-
-const int Character::kLevelMinCharacterEXPList[91] = {
-    0,       0,       1000,    2325,    4025,    6175,    8800,    11950,
-    15675,   20025,   25025,   30725,   37175,   44400,   52450,   61375,
-    71200,   81950,   93675,   106400,  120175,  135050,  151850,  169850,
-    189100,  209650,  231525,  254775,  279425,  305525,  333100,  362200,
-    392850,  425100,  458975,  494525,  531775,  570750,  611500,  654075,
-    698500,  744800,  795425,  848125,  902900,  959800,  1018875, 1080150,
-    1143675, 1209475, 1277600, 1348075, 1424575, 1503625, 1585275, 1669550,
-    1756500, 1846150, 1938550, 2033725, 2131725, 2232600, 2341550, 2453600,
-    2568775, 2687100, 2808625, 2933400, 3061475, 3192875, 3327650, 3465825,
-    3614525, 3766900, 3922975, 4082800, 4246400, 4413825, 4585125, 4760350,
-    4939525, 5122700, 5338925, 5581950, 5855050, 6161850, 6506450, 6893400,
-    7327825, 7815450, 8362650};
 
 Character::Character(PlayerEx* playerex, int ascension_phase, int character_EXP,
                      int constellation, int energy, int HP,
@@ -461,5 +487,22 @@ Character::Character(PlayerEx* playerex, int ascension_phase, int character_EXP,
     throw ExceptionInvalidCharacterData();
   }
 }
+
+const int Character::kAcensionPhaseMaxLevelList[7] = {20, 40, 50, 60,
+                                                      70, 80, 90};
+
+const int Character::kLevelMinCharacterEXPList[91] = {
+    0,       0,       1000,    2325,    4025,    6175,    8800,    11950,
+    15675,   20025,   25025,   30725,   37175,   44400,   52450,   61375,
+    71200,   81950,   93675,   106400,  120175,  135050,  151850,  169850,
+    189100,  209650,  231525,  254775,  279425,  305525,  333100,  362200,
+    392850,  425100,  458975,  494525,  531775,  570750,  611500,  654075,
+    698500,  744800,  795425,  848125,  902900,  959800,  1018875, 1080150,
+    1143675, 1209475, 1277600, 1348075, 1424575, 1503625, 1585275, 1669550,
+    1756500, 1846150, 1938550, 2033725, 2131725, 2232600, 2341550, 2453600,
+    2568775, 2687100, 2808625, 2933400, 3061475, 3192875, 3327650, 3465825,
+    3614525, 3766900, 3922975, 4082800, 4246400, 4413825, 4585125, 4760350,
+    4939525, 5122700, 5338925, 5581950, 5855050, 6161850, 6506450, 6893400,
+    7327825, 7815450, 8362650};
 
 }  // namespace genshicraft

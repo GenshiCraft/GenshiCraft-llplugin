@@ -84,10 +84,22 @@ PlayerEx::PlayerEx(Player* player)
 
 PlayerEx::~PlayerEx() { this->SaveData(); }
 
+void PlayerEx::AddAttachedElement(struct world::ElementGaugeUnit gauge) {
+  this->GetCharacter()->AddAttachedElement(gauge);
+}
+
 void PlayerEx::ApplyDamage(const Damage& damage) {
   this->latest_damage_ = damage;
 
-  this->latest_damage_.SetVictimAttachedElement(world::ElementType::kPhysical);
+  const auto& attached_element_list = this->GetAllAttachedElements();
+  if (!attached_element_list.empty()) {
+    this->latest_damage_.SetVictimAttachedElement(
+        attached_element_list.at(0).element);
+  } else {
+    this->latest_damage_.SetVictimAttachedElement(
+        world::ElementType::kPhysical);
+  }
+
   this->latest_damage_.SetVictimLevel(this->GetLevel());
   this->latest_damage_.SetVictimStats(this->GetStats());
 
@@ -154,6 +166,11 @@ void PlayerEx::ConsumeMora(int value) {
   this->GiveItem("genshicraft:mora_10000", mora_count % 10);
 }
 
+std::vector<struct world::ElementGaugeUnit> PlayerEx::GetAllAttachedElements()
+    const {
+  return this->GetCharacter()->GetAllAttachedElements();
+}
+
 std::vector<std::shared_ptr<Character>> PlayerEx::GetAllCharacters() const {
   return this->character_owned_;
 }
@@ -196,7 +213,8 @@ Damage PlayerEx::GetAttackDamage() const {
           Level::getBlock(this->GetPlayer()->getPosition() - Vec3(0., 1., 0.),
                           this->GetPlayer()->getDimensionId());
 
-      if (!block_under->isEmpty()) {  // if the player is about to hit the ground
+      if (!block_under
+               ->isEmpty()) {  // if the player is about to hit the ground
         if (this->GetVelocity().y < -10.) {
           // High plunge
           return this->GetCharacter()->GetAttackDamage(
@@ -406,6 +424,8 @@ void PlayerEx::OnTick() {
   static std::default_random_engine random_engine;
   static std::uniform_real_distribution<> dist(0, 1);
 
+  auto now_clock = GetNowClock();
+
   for (auto&& playerex : PlayerEx::all_playerex_) {
     // Maintain the world level notice
     int world_level =
@@ -531,8 +551,24 @@ void PlayerEx::OnTick() {
     playerex->last_dimension_id_ = playerex->GetPlayer()->getDimensionId();
     playerex->last_position_ = playerex->GetPlayer()->getPosition();
 
+    // Maintain the attached elements
+    // Add new gauges (the priority matters)
+    if (playerex->GetPlayer()->isOnFire()) {  // 1#
+      playerex->AddAttachedElement(
+          {world::ElementType::kPyro, now_clock + 30., 1.});
+    }
+    if (playerex->GetPlayer()->isInWaterOrRain()) {  // 2#
+      playerex->AddAttachedElement(
+          {world::ElementType::kHydro, now_clock + 30., 1.});
+    }
+
     // Refresh the sidebar
     playerex->sidebar_.Refresh();
+
+    // Refresh the characters
+    for (auto& character : playerex->GetAllCharacters()) {
+      character->Refresh();
+    }
   }
 }
 

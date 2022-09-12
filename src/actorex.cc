@@ -31,10 +31,12 @@
 #include <MC/Actor.hpp>
 #include <MC/ActorUniqueID.hpp>
 #include <MC/Level.hpp>
+#include <algorithm>
 #include <memory>
 #include <random>
 #include <third-party/Base64/Base64.hpp>
 #include <third-party/Nlohmann/json.hpp>
+#include <vector>
 
 #include "damage.h"
 #include "exceptions.h"
@@ -55,7 +57,14 @@ ActorEx::ActorEx(Actor* actor)
 
 ActorEx::~ActorEx() { this->SaveData(); }
 
-int ActorEx::GetLevel() const { return this->level_; }
+void ActorEx::AddAttachedElement(struct world::ElementGaugeUnit gauge) {
+  for (auto& attached_gauge : this->attached_element_list_) {
+    if (attached_gauge.element != gauge.element) {
+      attached_gauge.expiration = GetNowClock() - 1.;  // remove other gauges
+    }
+  }
+  this->attached_element_list_.push_back(gauge);
+}
 
 Actor* ActorEx::GetActor() const {
   return Level::getEntity(ActorUniqueID(this->GetUniqueID()));
@@ -70,6 +79,31 @@ Damage ActorEx::GetAttackDamage() const {
   damage.SetSourceType(Damage::SourceType::kMob);
   return damage;
 }
+
+std::vector<struct world::ElementGaugeUnit> ActorEx::GetAllAttachedElements()
+    const {
+  // Get the attached element list
+  std::vector<struct world::ElementGaugeUnit> gauge_list;
+  for (const auto& attached_gauge : this->attached_element_list_) {
+    for (auto& gauge : gauge_list) {
+      if (attached_gauge.element == gauge.element) {
+        gauge.gauge += attached_gauge.gauge;
+        continue;
+      }
+    }
+    gauge_list.push_back(attached_gauge);
+  }
+
+  // Sort the attached element list
+  auto cmp = [](world::ElementGaugeUnit a, world::ElementGaugeUnit b) {
+    return a.gauge >= b.gauge;  // descending
+  };
+  std::sort(gauge_list.begin(), gauge_list.end(), cmp);
+
+  return gauge_list;
+}
+
+int ActorEx::GetLevel() const { return this->level_; }
 
 Stats ActorEx::GetStats() const { return this->stats_; }
 
@@ -108,32 +142,25 @@ std::shared_ptr<ActorEx> ActorEx::Make(Actor* actor) {
 }
 
 void ActorEx::OnTick() {
+  auto now_clock = GetNowClock();
+
   for (auto&& actor : Level::getAllEntities()) {
+    // Do not process players
+    if (actor->getTypeName() == "minecraft:player") {
+      continue;
+    }
+
     auto actorex = ActorEx::Make(actor);
-    auto now_clock = GetNowClock();
 
     // Maintain the attached elements
     // Add new gauges (the priority matters)
     if (actor->isOnFire()) {  // 1#
-      bool is_modified = false;
-      for (auto& gauge : actorex->attached_element_list_) {
-        if (gauge.element == world::ElementType::kPyro) {
-          gauge.expiration = now_clock + 30.;
-          is_modified = true;
-        } else {
-          gauge.expiration = now_clock - 1.;  // remove the other gauges
-        }
-      }
+      actorex->AddAttachedElement(
+          {world::ElementType::kPyro, now_clock + 30., 1.});
     }
     if (actor->isInWaterOrRain()) {  // 2#
-      bool is_modified = false;
-      for (auto& gauge : actorex->attached_element_list_) {
-        if (gauge.element == world::ElementType::kHydro) {
-          gauge.expiration = now_clock + 30.;
-        } else {
-          gauge.expiration = now_clock - 1.;  // remove the other gauges
-        }
-      }
+      actorex->AddAttachedElement(
+          {world::ElementType::kHydro, now_clock + 30., 1.});
     }
     // Remove expired gauges
     for (auto it = actorex->attached_element_list_.begin();
@@ -196,6 +223,8 @@ void ActorEx::LoadData() {
         world::GetWorldLevel(actor->getPosition(), actor->getDimension()) * 11 +
         dist(random_engine);
 
+    data["attached_element_list"] = nlohmann::json::array();
+
     // Write the data to a tag of the Actor object
     auto tag = Base64::Encode(nlohmann::to_string(data));
     tag = tag.substr(
@@ -206,6 +235,14 @@ void ActorEx::LoadData() {
 
   // Load the data
   this->level_ = data["level"];
+
+  for (const auto& gauge_json : data["attached_element_list"]) {
+    struct world::ElementGaugeUnit gauge = {
+        static_cast<world::ElementType>(gauge_json["element"].get<int>()),
+        gauge_json["expiration"].get<double>(),
+        gauge_json["gauge"].get<double>()};
+    this->attached_element_list_.push_back(gauge);
+  }
 }
 
 void ActorEx::SaveData() {
@@ -233,6 +270,15 @@ void ActorEx::SaveData() {
   data["version"] = MobEx::kActorExDataFormatVersion;
   data["level"] = this->level_;  // the data value should be the most original
                                  // value so do not use this->GetLevel()
+  data["attached_element_list"] = nlohmann::json::array();
+  for (const auto& gauge : this->attached_element_list_) {
+    nlohmann::json gauge_json;
+    gauge_json["element"] = static_cast<int>(gauge.element);
+    gauge_json["expiration"] = gauge.expiration;
+    gauge_json["gauge"] = gauge.gauge;
+
+    data["attached_element_list"].push_back(gauge_json);
+  }
 
   // Write the data to a tag of the Mob object
   auto tag = Base64::Encode(nlohmann::to_string(data));
@@ -254,6 +300,12 @@ nlohmann::json ActorEx::MigrateData(const nlohmann::json& old_data) {
     // Check the accessibility
     data["version"].get<int>();
     data["level"].get<int>();
+
+    for (auto& gauge_json : data["attached_element_list"]) {
+      gauge_json["element"].get<int>();
+      gauge_json["expiration"].get<double>();
+      gauge_json["gauge"].get<double>();
+    }
 
   } catch (const nlohmann::json::exception&) {
     // Return an empty JSON object if the data is invalid

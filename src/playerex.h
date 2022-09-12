@@ -48,6 +48,7 @@
 #include "sidebar.h"
 #include "stats.h"
 #include "weapon.h"
+#include "world.h"
 
 namespace genshicraft {
 
@@ -76,6 +77,13 @@ class PlayerEx final : public MobEx {
   ~PlayerEx();
 
   /**
+   * @brief Add an attached element gauge
+   *
+   * @param gauge The element gauge
+   */
+  void AddAttachedElement(struct world::ElementGaugeUnit gauge) override;
+
+  /**
    * @brief Apply damage to the current character
    *
    * @param damage The damage
@@ -102,6 +110,16 @@ class PlayerEx final : public MobEx {
    * number to consume.
    */
   void ConsumeMora(int value);
+
+  /**
+   * @brief Get all attached element gauges
+   *
+   * @return A list of all attached element gauges
+   *
+   * @note The expiration of the gauges is meaningless.
+   */
+  std::vector<struct world::ElementGaugeUnit> GetAllAttachedElements()
+      const override;
 
   /**
    * @brief Get all characters owned
