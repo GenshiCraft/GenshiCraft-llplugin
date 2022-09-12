@@ -89,6 +89,9 @@ void PlayerEx::AddAttachedElement(struct world::ElementGaugeUnit gauge) {
 }
 
 void PlayerEx::ApplyDamage(const Damage& damage) {
+  static std::default_random_engine random_engine;
+  static std::uniform_real_distribution dist(-0.5, 0.5);
+
   this->latest_damage_ = damage;
 
   const auto& attached_element_list = this->GetAllAttachedElements();
@@ -105,6 +108,24 @@ void PlayerEx::ApplyDamage(const Damage& damage) {
 
   this->GetCharacter()->IncreaseHP(
       static_cast<int>(-std::ceil(this->latest_damage_.Get())));
+
+  // Display floating text
+  if (this->latest_damage_.Get() > 0.001) {
+    auto floating_text = Level::spawnMob(
+        this->GetMob()->getPosition() +
+            Vec3(dist(random_engine), dist(random_engine), dist(random_engine)),
+        this->GetMob()->getDimensionId(), "genshicraft:floating_text");
+
+    std::string type_color_str =
+        (this->latest_damage_.IsTrueDamage()
+             ? ""
+             : world::kElementTypeColor.at(
+                   this->latest_damage_.GetElementType()));
+
+    floating_text->setNameTag(
+        type_color_str +
+        std::to_string(static_cast<int>(this->latest_damage_.Get())));
+  }
 }
 
 void PlayerEx::ConsumeItem(std::string identifier, int value) {
@@ -331,7 +352,19 @@ void PlayerEx::GiveItem(const std::string& identifier, int value) {
 }
 
 void PlayerEx::IncreaseHP(int value) {
+  static std::default_random_engine random_engine;
+  static std::uniform_real_distribution dist(-0.5, 0.5);
+
   this->GetCharacter()->IncreaseHP(value);
+
+  // Display floating text for healing
+  if (value > 0) {
+    auto floating_text = Level::spawnMob(
+        this->GetMob()->getPosition() +
+            Vec3(dist(random_engine), dist(random_engine), dist(random_engine)),
+        this->GetMob()->getDimensionId(), "genshicraft:floating_text");
+    floating_text->setNameTag("§2" + std::to_string(value));
+  }
 }
 
 void PlayerEx::IncreaseStamina(int value) {

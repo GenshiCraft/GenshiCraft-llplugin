@@ -35,6 +35,8 @@
 #include <MC/Dimension.hpp>
 #include <MC/Types.hpp>
 #include <MC/Vec3.hpp>
+#include <map>
+#include <string>
 
 namespace genshicraft {
 
@@ -99,9 +101,7 @@ enum class ElementalReactionType {
   kVaporize
 };
 
-enum class StatusType {
-  kFrozen = 0
-};
+enum class StatusType { kFrozen = 0 };
 
 /**
  * @brief The talent type
@@ -170,6 +170,13 @@ double GetEnemyATKMultiplier(int level);
 void HurtActor(Actor* actor, float damage,
                ActorDamageCause cause = ActorDamageCause_Override,
                bool knockback = false, bool ignite = false);
+
+const std::map<ElementType, std::string> kElementTypeColor = {
+    {ElementType::kAnemo, "§3"},    {ElementType::kCryo, "§b"},
+    {ElementType::kDendro, "§a"},   {ElementType::kElectro, "§d"},
+    {ElementType::kGeo, "§g"},      {ElementType::kHydro, "§9"},
+    {ElementType::kPhysical, "§f"}, {ElementType::kPyro, "§c"},
+};
 
 }  // namespace world
 

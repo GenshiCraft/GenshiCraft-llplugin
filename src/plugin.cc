@@ -113,17 +113,6 @@ void Init() {
 }
 
 bool OnMobHurt(Event::MobHurtEvent& event) {
-  static const std::map<world::ElementType, std::string> kElementTypeColor = {
-      {world::ElementType::kAnemo, "§3"},
-      {world::ElementType::kCryo, "§b"},
-      {world::ElementType::kDendro, "§a"},
-      {world::ElementType::kElectro, "§d"},
-      {world::ElementType::kGeo, "§g"},
-      {world::ElementType::kHydro, "§9"},
-      {world::ElementType::kPhysical, "§f"},
-      {world::ElementType::kPyro, "§c"},
-  };
-
   static std::default_random_engine random_engine;
   static std::uniform_int_distribution dist(-10, 1);
 
@@ -144,13 +133,13 @@ bool OnMobHurt(Event::MobHurtEvent& event) {
   Damage damage;
 
   // Process the damage source
-  std::shared_ptr<PlayerEx> attacker_playerex;
-
   if ((event.mDamageSource->isEntitySource() &&
        event.mDamageSource->getEntity()->getTypeName() == "minecraft:player") ||
       (event.mDamageSource->isEntitySource() &&
        event.mDamageSource->getEntity()->getPlayerOwner() !=
            nullptr)) {  // if the damage is caused by a player
+
+    std::shared_ptr<PlayerEx> attacker_playerex;
 
     // Get the player
     if (event.mDamageSource->getEntity()->getPlayerOwner() !=
@@ -217,10 +206,7 @@ bool OnMobHurt(Event::MobHurtEvent& event) {
     }
   }
 
-  // The victim
-  int victim_HP = 0;
-  int victim_max_HP = 0;
-
+  // Process the victim
   if (event.mMob->isPlayer()) {  // if the victim is a player
 
     event.mDamage = 0;  // not to reduce the native Minecraft health
@@ -235,9 +221,6 @@ bool OnMobHurt(Event::MobHurtEvent& event) {
     playerex->ApplyDamage(damage);
     damage = playerex->GetLastDamage();
 
-    victim_HP = playerex->GetHP();
-    victim_max_HP = playerex->GetStats().GetMaxHP();
-
   } else if (event.mMob->getTypeName().substr(0, 10) ==
              "minecraft:") {  // if the victim is a Minecraft mob
 
@@ -247,14 +230,6 @@ bool OnMobHurt(Event::MobHurtEvent& event) {
     if (!mobex) {
       return false;
     }
-
-    // Maintain the native healing
-    if (mobex->GetLastNativeHealth() < event.mMob->getHealth()) {
-      mobex->IncreaseHP(static_cast<int>(
-          (event.mMob->getHealth() - mobex->GetLastNativeHealth()) *
-          (1. * mobex->GetStats().GetMaxHP() / event.mMob->getMaxHealth())));
-    }
-    mobex->SetLastNativeHealth(event.mMob->getHealth());
 
     mobex->ApplyDamage(damage);
     damage = mobex->GetLastDamage();
@@ -273,24 +248,11 @@ bool OnMobHurt(Event::MobHurtEvent& event) {
     if (mobex->GetHP() == 0) {
       event.mDamage = 999999;  // kill the mob instantly
     }
-
-    victim_HP = mobex->GetHP();
-    victim_max_HP = mobex->GetStats().GetMaxHP();
   }
 
   // Zero-damage hurt indicates failed hurt
   if (damage.Get() < 0.0001 && event.mDamage == 0) {
     return false;
-  }
-
-  // Show the damage value at the action bar
-  if (attacker_playerex) {
-    attacker_playerex->GetPlayer()->sendTitlePacket(
-        kElementTypeColor.at(damage.GetElementType()) +
-            std::to_string(static_cast<int>(damage.Get())) + " §f(" +
-            std::to_string(std::max(victim_HP, 0)) + "§7/" +
-            std::to_string(victim_max_HP) + "§f)",
-        TitleType::SetActionBar, 0, 1, 0);
   }
 
   return true;

@@ -171,6 +171,18 @@ void ActorEx::OnTick() {
         ++it;
       }
     }
+
+    // Mob dedicated processes
+    // Maintain the native healing
+    if (actorex->IsMob()) {
+      auto mobex = std::dynamic_pointer_cast<MobEx>(actorex);
+      if (mobex->GetLastNativeHealth() < actor->getHealth()) {
+        mobex->IncreaseHP(static_cast<int>(
+            (actor->getHealth() - mobex->GetLastNativeHealth()) *
+            (1. * mobex->GetStats().GetMaxHP() / actor->getMaxHealth())));
+      }
+      mobex->SetLastNativeHealth(actor->getHealth());
+    }
   }
 }
 

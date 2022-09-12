@@ -33,9 +33,11 @@
 #include <MC/ActorUniqueID.hpp>
 #include <MC/Level.hpp>
 #include <MC/Mob.hpp>
+#include <MC/Vec3.hpp>
 #include <algorithm>
 #include <memory>
 #include <random>
+#include <string>
 #include <third-party/Base64/Base64.hpp>
 #include <third-party/Nlohmann/json.hpp>
 
@@ -57,6 +59,9 @@ MobEx::MobEx(Mob* mob)
 MobEx::~MobEx() { this->SaveData(); }
 
 void MobEx::ApplyDamage(const Damage& damage) {
+  static std::default_random_engine random_engine;
+  static std::uniform_real_distribution dist(-0.5, 0.5);
+
   this->latest_damage_ = damage;
 
   const auto& attached_element_list = this->GetAllAttachedElements();
@@ -71,7 +76,25 @@ void MobEx::ApplyDamage(const Damage& damage) {
   this->latest_damage_.SetVictimLevel(this->GetLevel());
   this->latest_damage_.SetVictimStats(this->GetStats());
 
-  this->IncreaseHP(static_cast<int>(-damage.Get()));
+  this->IncreaseHP(static_cast<int>(-this->latest_damage_.Get()));
+
+  // Display floating text
+  if (this->latest_damage_.Get() > 0.001) {
+    auto floating_text = Level::spawnMob(
+        this->GetMob()->getPosition() +
+            Vec3(dist(random_engine), dist(random_engine), dist(random_engine)),
+        this->GetMob()->getDimensionId(), "genshicraft:floating_text");
+
+    std::string type_color_str =
+        (this->latest_damage_.IsTrueDamage()
+             ? ""
+             : world::kElementTypeColor.at(
+                   this->latest_damage_.GetElementType()));
+
+    floating_text->setNameTag(
+        type_color_str +
+        std::to_string(static_cast<int>(this->latest_damage_.Get())));
+  }
 }
 
 int MobEx::GetHP() const { return this->HP_; }
@@ -85,11 +108,23 @@ Mob* MobEx::GetMob() const {
 }
 
 void MobEx::IncreaseHP(int value) {
-  this->HP_ -= static_cast<int>(std::ceil(this->latest_damage_.Get()));
+  static std::default_random_engine random_engine;
+  static std::uniform_real_distribution dist(-0.5, 0.5);
+
+  this->HP_ += value;
 
   // Restrict the HP in a reasonable range
   this->HP_ = std::max(this->HP_, 0);
   this->HP_ = std::min(this->HP_, this->GetStats().GetMaxHP());
+
+  // Display floating text for healing
+  if (value > 0) {
+    auto floating_text = Level::spawnMob(
+        this->GetMob()->getPosition() +
+            Vec3(dist(random_engine), dist(random_engine), dist(random_engine)),
+        this->GetMob()->getDimensionId(), "genshicraft:floating_text");
+    floating_text->setNameTag("§2" + std::to_string(value));
+  }
 }
 
 bool MobEx::IsMob() const { return true; }

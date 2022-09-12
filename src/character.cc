@@ -377,13 +377,6 @@ void Character::IncreaseHP(int value) {
   this->HP_ += value;
   this->HP_ = std::max(0, this->HP_);
   this->HP_ = std::min(this->GetStats().GetMaxHP(), this->HP_);
-
-  if (value < 900000) {  // only respawning will reach such a large value
-    this->playerex_->GetPlayer()->sendTitlePacket(
-        ((value > 0) ? "§a+" : "§c-") +
-            std::to_string(static_cast<int>(std::abs(value))),
-        TitleType::SetActionBar, 0, 1, 0);
-  }
 }
 
 bool Character::IsDead() const { return (this->HP_ == 0); }
