@@ -129,12 +129,12 @@ bool OnMobHurt(Event::MobHurtEvent& event) {
 
   // Maintain the poison effect (temporary, for this is just a bug of
   // Minecraft)
-  if (event.mDamageSource->getCause() == ActorDamageCause::Magic) {
+  if (event.mDamageSource->getCause() == ActorDamageCause_Magic) {
     event.mDamage = std::abs(event.mDamage);
   }
 
   // Override damage directly affects the native health
-  if (event.mDamageSource->getCause() == ActorDamageCause::Override) {
+  if (event.mDamageSource->getCause() == ActorDamageCause_Override) {
     return true;
   }
 
@@ -202,12 +202,12 @@ bool OnMobHurt(Event::MobHurtEvent& event) {
 
     damage.SetSourceType(Damage::SourceType::kEnvironment);
 
-    if (event.mDamageSource->getCause() == ActorDamageCause::Contact ||
-        event.mDamageSource->getCause() == ActorDamageCause::Fire ||
-        event.mDamageSource->getCause() == ActorDamageCause::FireTick ||
-        event.mDamageSource->getCause() == ActorDamageCause::Lava ||
-        event.mDamageSource->getCause() == ActorDamageCause::Suffocation ||
-        event.mDamageSource->getCause() == ActorDamageCause::Wither) {
+    if (event.mDamageSource->getCause() == ActorDamageCause_Contact ||
+        event.mDamageSource->getCause() == ActorDamageCause_Fire ||
+        event.mDamageSource->getCause() == ActorDamageCause_FireTick ||
+        event.mDamageSource->getCause() == ActorDamageCause_Lava ||
+        event.mDamageSource->getCause() == ActorDamageCause_Suffocation ||
+        event.mDamageSource->getCause() == ActorDamageCause_Wither) {
       // Reduce the damage of those triggered per tick
       damage.SetTrueDamageProportion(
           0.0025 * event.mDamage);  // damage 5% of the max HP per second

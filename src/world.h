@@ -42,7 +42,7 @@ namespace world {
 
 /**
  * @brief The attack type
- * 
+ *
  */
 enum class AttackType {
   kHit = 0,
@@ -99,9 +99,13 @@ enum class ElementalReactionType {
   kVaporize
 };
 
+enum class StatusType {
+  kFrozen = 0
+};
+
 /**
  * @brief The talent type
- * 
+ *
  */
 enum class TalentType {
   kNormalAttack = 0,
@@ -110,6 +114,12 @@ enum class TalentType {
   k1stAscensionPassive,
   k4thAscensionPassive,
   kUtility
+};
+
+struct ElementGaugeUnit {
+  ElementType element;  // the element type
+  double expiration;    // the expiration time
+  double gauge;         // the gauge of the element
 };
 
 /**
@@ -158,7 +168,7 @@ double GetEnemyATKMultiplier(int level);
  * @note This is just a temporary resolution.
  */
 void HurtActor(Actor* actor, float damage,
-               ActorDamageCause cause = ActorDamageCause::Override,
+               ActorDamageCause cause = ActorDamageCause_Override,
                bool knockback = false, bool ignite = false);
 
 }  // namespace world

@@ -32,8 +32,10 @@
 #include <MC/Actor.hpp>
 #include <memory>
 #include <third-party/Nlohmann/json.hpp>
+#include <vector>
 
 #include "damage.h"
+#include "world.h"
 
 namespace genshicraft {
 
@@ -139,10 +141,17 @@ class ActorEx {
    */
   static std::shared_ptr<ActorEx> Make(Actor* actor);
 
+  /**
+   * @brief This method should execute every tick.
+   *
+   */
+  static void OnTick();
+
  protected:
   bool is_data_saved_ =
       false;  // this flag is used to prevent duplicated data save.
 
+  std::vector<struct world::ElementGaugeUnit> attached_element_list_;
   int level_;
   Stats stats_;
   long long unique_id_;  // the unique ID

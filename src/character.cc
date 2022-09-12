@@ -134,7 +134,7 @@ Stats Character::GetStats() const {
 
   for (const auto& modifier : this->modifier_list_) {
     if (modifier.GetType() == Modifier::Type::kStats) {
-      stats += modifier.GetBaseStats();
+      stats += modifier.Get<Stats>();
     }
   }
 
@@ -368,7 +368,7 @@ void Character::Refresh() {
   auto now_clock = GetNowClock();
   for (auto it = this->modifier_list_.begin();
        it != this->modifier_list_.end();) {
-    if (it->GetExpiredClock() < now_clock) {
+    if (it->GetExpiration() < now_clock) {
       this->modifier_list_.erase(it);
     } else {
       ++it;

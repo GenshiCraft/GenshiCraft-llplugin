@@ -199,18 +199,15 @@ Damage PlayerEx::GetAttackDamage() const {
       if (!block_under->isEmpty()) {  // if the player is about to hit the ground
         if (this->GetVelocity().y < -10.) {
           // High plunge
-          logger.warn("A");
           return this->GetCharacter()->GetAttackDamage(
               world::AttackType::kPlungeHigh);
         } else {
           // Low plunge
-          logger.warn("B");
           return this->GetCharacter()->GetAttackDamage(
               world::AttackType::kPlungeLow);
         }
       }
 
-      logger.warn("C");
       return this->GetCharacter()->GetAttackDamage(
           world::AttackType::kPlungeRegular);
     }
@@ -447,7 +444,7 @@ void PlayerEx::OnTick() {
       // The player drowns if the stamina is used up
       if (playerex->stamina_ == 0) {
         world::HurtActor(playerex->GetPlayer(), 999999.,
-                         ActorDamageCause::Override);
+                         ActorDamageCause_Override);
       }
 
       // Reduce 10.2 stamina per second when swimming dash
@@ -461,7 +458,7 @@ void PlayerEx::OnTick() {
       // The player drowns if the stamina is used up
       if (playerex->stamina_ == 0) {
         world::HurtActor(playerex->GetPlayer(), 999999.,
-                         ActorDamageCause::Override);
+                         ActorDamageCause_Override);
       }
 
       // Reduce 4 stamina per second when swimming
@@ -474,7 +471,7 @@ void PlayerEx::OnTick() {
       // The player drowns if the stamina is used up
       if (playerex->stamina_ == 0) {
         world::HurtActor(playerex->GetPlayer(), 999999.,
-                         ActorDamageCause::Override);
+                         ActorDamageCause_Override);
       }
     } else {
       // Regenerate stamina when idle
@@ -500,7 +497,7 @@ void PlayerEx::OnTick() {
       }
       if (!is_switched) {  // if every character is dead
         world::HurtActor(playerex->GetPlayer(), 999999.,
-                         ActorDamageCause::Override);
+                         ActorDamageCause_Override);
       }
     }
 
@@ -519,7 +516,7 @@ void PlayerEx::OnTick() {
     // Maintain the wither effect (temporary, for this is just a bug of
     // Minecraft)
     if (playerex->GetPlayer()->hasEffect(*MobEffect::WITHER)) {
-      world::HurtActor(playerex->GetPlayer(), 1., ActorDamageCause::Wither);
+      world::HurtActor(playerex->GetPlayer(), 1., ActorDamageCause_Wither);
     }
 
     // Maintain the velocity
@@ -536,10 +533,6 @@ void PlayerEx::OnTick() {
 
     // Refresh the sidebar
     playerex->sidebar_.Refresh();
-
-    if (std::abs(playerex->GetVelocity().y) > 0.0001) {
-      logger.warn(std::to_string(playerex->GetVelocity().y));
-    }
   }
 }
 

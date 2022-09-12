@@ -17,7 +17,7 @@
 #define PLUGIN_VERSION_STATUS PLUGIN_VERSION_DEV
 
 
-#define TARGET_BDS_PROTOCOL_VERSION 544
+#define TARGET_BDS_PROTOCOL_VERSION 545
 
 
 // File Version Information, used in resource.rc

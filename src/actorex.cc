@@ -40,12 +40,16 @@
 #include "exceptions.h"
 #include "mobex.h"
 #include "plugin.h"
+#include "stats.h"
 #include "world.h"
 
 namespace genshicraft {
 
 ActorEx::ActorEx(Actor* actor)
-    : level_(0), unique_id_(actor->getUniqueID().get()) {
+    : attached_element_list_(),
+      level_(0),
+      stats_(Stats()),
+      unique_id_(actor->getUniqueID().get()) {
   // Empty
 }
 
@@ -101,6 +105,46 @@ std::shared_ptr<ActorEx> ActorEx::Make(Actor* actor) {
   actorex->LoadData();
 
   return actorex;
+}
+
+void ActorEx::OnTick() {
+  for (auto&& actor : Level::getAllEntities()) {
+    auto actorex = ActorEx::Make(actor);
+    auto now_clock = GetNowClock();
+
+    // Maintain the attached elements
+    // Add new gauges (the priority matters)
+    if (actor->isOnFire()) {  // 1#
+      bool is_modified = false;
+      for (auto& gauge : actorex->attached_element_list_) {
+        if (gauge.element == world::ElementType::kPyro) {
+          gauge.expiration = now_clock + 30.;
+          is_modified = true;
+        } else {
+          gauge.expiration = now_clock - 1.;  // remove the other gauges
+        }
+      }
+    }
+    if (actor->isInWaterOrRain()) {  // 2#
+      bool is_modified = false;
+      for (auto& gauge : actorex->attached_element_list_) {
+        if (gauge.element == world::ElementType::kHydro) {
+          gauge.expiration = now_clock + 30.;
+        } else {
+          gauge.expiration = now_clock - 1.;  // remove the other gauges
+        }
+      }
+    }
+    // Remove expired gauges
+    for (auto it = actorex->attached_element_list_.begin();
+         it != actorex->attached_element_list_.end();) {
+      if (it->expiration < now_clock) {
+        actorex->attached_element_list_.erase(it);
+      } else {
+        ++it;
+      }
+    }
+  }
 }
 
 void ActorEx::LoadData() {

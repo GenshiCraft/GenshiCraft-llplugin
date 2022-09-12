@@ -30,29 +30,50 @@
 
 #include "modifier.h"
 
-#include "character.h"
 #include "exceptions.h"
 #include "stats.h"
+#include "world.h"
 
 namespace genshicraft {
 
-Modifier::Modifier(Stats stats, double expired_clock)
+template <>
+Modifier::Modifier(const Stats& value, double expiration)
     : id_(Modifier::GenerateID()),
-      expired_clock_(expired_clock),
-      stats_(stats),
+      expiration_(expiration),
+      stats_(value),
       type_(Modifier::Type::kStats) {
   // Empty
 }
 
-double Modifier::GetExpiredClock() const { return this->expired_clock_; }
+template <>
+Modifier::Modifier(const world::StatusType& value, double expiration)
+    : id_(Modifier::GenerateID()),
+      expiration_(expiration),
+      status_(value),
+      type_(Modifier::Type::kStatus) {
+  // Empty
+}
+
+double Modifier::GetExpiration() const { return this->expiration_; }
 
 int Modifier::GetID() const { return this->id_; }
 
-Stats Modifier::GetBaseStats() const {
+template <>
+Stats Modifier::Get<Stats>() const {
   if (this->type_ != Modifier::Type::kStats) {
     throw ExceptionIncorrectModifierType();
   }
+
   return this->stats_;
+}
+
+template <>
+world::StatusType Modifier::Get<world::StatusType>() const {
+  if (this->type_ != Modifier::Type::kStatus) {
+    throw ExceptionIncorrectModifierType();
+  }
+
+  return this->status_;
 }
 
 Modifier::Type Modifier::GetType() const { return this->type_; }
@@ -61,7 +82,5 @@ int Modifier::GenerateID() {
   ++Modifier::latest_id_;
   return Modifier::latest_id_;
 }
-
-int Modifier::latest_id_ = 0;
 
 }  // namespace genshicraft

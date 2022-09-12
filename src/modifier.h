@@ -32,6 +32,7 @@
 #define GENSHICRAFT_MODIFIER_H_
 
 #include "stats.h"
+#include "world.h"
 
 namespace genshicraft {
 
@@ -46,24 +47,25 @@ class Modifier {
    * @brief The modifier type
    *
    */
-  enum class Type { kStats = 0 };
+  enum class Type { kStats = 0, kStatus };
 
   Modifier() = delete;
 
   /**
-   * @brief Construct a new stats Modifier object
+   * @brief Construct a new Modifier
    *
-   * @param stats The stats
-   * @param expired_clock The expired clock
+   * @param value The modifier value
+   * @param expiration The expiration
    */
-  Modifier(Stats stats, double expired_clock);
+  template <typename T>
+  Modifier(const T& value, double expiration);
 
   /**
    * @brief Get the expired clock
    *
    * @return The expired clock
    */
-  double GetExpiredClock() const;
+  double GetExpiration() const;
 
   /**
    * @brief Get the the modifier ID
@@ -73,13 +75,15 @@ class Modifier {
   int GetID() const;
 
   /**
-   * @brief Get the base stats
+   * @brief Get the modifier value
    *
-   * @return The stats
-   * @exception ExceptionIncorrectModifierType The modifier is not a stats
-   * modifier.
+   * @tparam T The type to get
+   * @return The modifier value as the type
+   * @exception ExceptionIncorrectModifierType The modifier cannot be got as the
+   * type
    */
-  Stats GetBaseStats() const;
+  template <typename T>
+  T Get() const;
 
   /**
    * @brief Get the type of the modifier
@@ -88,6 +92,7 @@ class Modifier {
    */
   Type GetType() const;
 
+ private:
   /**
    * @brief Generate an modifier ID
    *
@@ -95,13 +100,15 @@ class Modifier {
    */
   static int GenerateID();
 
- private:
-  int id_;                  // the ID
-  double expired_clock_;    // the clock when the modifier expired
-  Stats stats_;  // the stats
-  Type type_;
+  int id_;             // the ID
+  double expiration_;  // the clock when the modifier expired
+  Type type_;          // the type
 
-  static int latest_id_;  // the latest used ID
+  // The members below are not always in use
+  Stats stats_;               // the stats
+  world::StatusType status_;  // the status
+
+  inline static int latest_id_ = 0;  // the latest used ID
 };
 
 }  // namespace genshicraft
