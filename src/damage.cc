@@ -356,10 +356,6 @@ world::ElementalReactionType Damage::GetElementalReactionType() const {
 }
 
 world::ElementType Damage::GetElementType() const {
-  if (this->IsTrueDamage()) {
-    throw ExceptionNotNormalDamage();
-  }
-
   return this->attack_element_;
 }
 
@@ -433,10 +429,6 @@ bool Damage::IsTrueDamage() const {
 }
 
 void Damage::SetAttackElementType(const world::ElementType& element) {
-  if (this->IsTrueDamage()) {
-    throw ExceptionNotNormalDamage();
-  }
-
   this->attack_element_ = element;
 }
 

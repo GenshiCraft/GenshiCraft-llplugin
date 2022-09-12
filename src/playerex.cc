@@ -106,8 +106,7 @@ void PlayerEx::ApplyDamage(const Damage& damage) {
   this->latest_damage_.SetVictimLevel(this->GetLevel());
   this->latest_damage_.SetVictimStats(this->GetStats());
 
-  this->GetCharacter()->IncreaseHP(
-      static_cast<int>(-std::ceil(this->latest_damage_.Get())));
+  this->IncreaseHP(static_cast<int>(-std::ceil(this->latest_damage_.Get())));
 
   // Display floating text
   if (this->latest_damage_.Get() > 0.001) {
@@ -116,14 +115,8 @@ void PlayerEx::ApplyDamage(const Damage& damage) {
             Vec3(dist(random_engine), dist(random_engine), dist(random_engine)),
         this->GetMob()->getDimensionId(), "genshicraft:floating_text");
 
-    std::string type_color_str =
-        (this->latest_damage_.IsTrueDamage()
-             ? ""
-             : world::kElementTypeColor.at(
-                   this->latest_damage_.GetElementType()));
-
     floating_text->setNameTag(
-        type_color_str +
+        world::kElementTypeColor.at(this->latest_damage_.GetElementType()) +
         std::to_string(static_cast<int>(this->latest_damage_.Get())));
   }
 }
@@ -363,7 +356,7 @@ void PlayerEx::IncreaseHP(int value) {
         this->GetMob()->getPosition() +
             Vec3(dist(random_engine), dist(random_engine), dist(random_engine)),
         this->GetMob()->getDimensionId(), "genshicraft:floating_text");
-    floating_text->setNameTag("§2" + std::to_string(value));
+    floating_text->setNameTag("§2+" + std::to_string(value));
   }
 }
 

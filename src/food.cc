@@ -90,7 +90,7 @@ bool EatFood(PlayerEx* playerex, ItemStack* food) {
       return false;
     }
 
-    playerex->GetCharacter()->IncreaseHP(300);
+    playerex->IncreaseHP(300);
     playerex->GetCharacter()->IncreaseFullness(GetFullnessIncrement(
         0, true, playerex->GetCharacter()->GetStats().GetMaxHP()));
   }

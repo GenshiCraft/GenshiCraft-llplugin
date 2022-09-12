@@ -204,6 +204,12 @@ bool OnMobHurt(Event::MobHurtEvent& event) {
       damage.SetTrueDamageProportion(0.05 *
                                      event.mDamage);  // damage 5% of the max HP
     }
+
+    if (event.mDamageSource->getCause() == ActorDamageCause_Fire ||
+        event.mDamageSource->getCause() == ActorDamageCause_FireTick ||
+        event.mDamageSource->getCause() == ActorDamageCause_Lava) {
+      damage.SetAttackElementType(world::ElementType::kPyro);
+    }
   }
 
   // Process the victim

@@ -85,14 +85,8 @@ void MobEx::ApplyDamage(const Damage& damage) {
             Vec3(dist(random_engine), dist(random_engine), dist(random_engine)),
         this->GetMob()->getDimensionId(), "genshicraft:floating_text");
 
-    std::string type_color_str =
-        (this->latest_damage_.IsTrueDamage()
-             ? ""
-             : world::kElementTypeColor.at(
-                   this->latest_damage_.GetElementType()));
-
     floating_text->setNameTag(
-        type_color_str +
+        world::kElementTypeColor.at(this->latest_damage_.GetElementType()) +
         std::to_string(static_cast<int>(this->latest_damage_.Get())));
   }
 }
@@ -123,7 +117,7 @@ void MobEx::IncreaseHP(int value) {
         this->GetMob()->getPosition() +
             Vec3(dist(random_engine), dist(random_engine), dist(random_engine)),
         this->GetMob()->getDimensionId(), "genshicraft:floating_text");
-    floating_text->setNameTag("§2" + std::to_string(value));
+    floating_text->setNameTag("§2+" + std::to_string(value));
   }
 }
 
