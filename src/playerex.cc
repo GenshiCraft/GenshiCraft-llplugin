@@ -35,22 +35,22 @@
 #include <KVDBAPI.h>
 #include <ScheduleAPI.h>
 
-#include <MC/ActorUniqueID.hpp>
-#include <MC/Block.hpp>
-#include <MC/BlockPos.hpp>
-#include <MC/Container.hpp>
-#include <MC/ItemStack.hpp>
-#include <MC/Level.hpp>
-#include <MC/MobEffect.hpp>
-#include <MC/Player.hpp>
-#include <MC/SimpleContainer.hpp>
-#include <MC/Types.hpp>
+#include <mc/ActorUniqueID.hpp>
+#include <mc/Block.hpp>
+#include <mc/BlockPos.hpp>
+#include <mc/Container.hpp>
+#include <mc/ItemStack.hpp>
+#include <mc/Level.hpp>
+#include <mc/MobEffect.hpp>
+#include <mc/Player.hpp>
+#include <mc/SimpleContainer.hpp>
+#include <mc/Types.hpp>
 #include <algorithm>
 #include <map>
 #include <memory>
 #include <random>
 #include <string>
-#include <third-party/Nlohmann/json.hpp>
+#include <Nlohmann/json.hpp>
 #include <vector>
 
 #include "artifact.h"
@@ -121,7 +121,7 @@ void PlayerEx::ApplyDamage(const Damage& damage) {
   }
 }
 
-void PlayerEx::ConsumeItem(std::string identifier, int value) {
+void PlayerEx::ConsumeItem(const string &identifier, int value) const {
   // Check if the items are enough for consumption
   if (this->GetItemCount(identifier) < value) {
     throw ExceptionItemsNotEnough();
@@ -253,7 +253,7 @@ Damage PlayerEx::GetAttackDamage() const {
 
     // Prevent too frequent attack
     if (GetNowClock() - last_attack_clock < 0.5) {
-      return Damage();
+      return {};
     }
     last_attack_clock = GetNowClock();
 
@@ -277,7 +277,7 @@ std::shared_ptr<Character> PlayerEx::GetCharacter() const {
 
 int PlayerEx::GetHP() const { return this->GetCharacter()->GetHP(); }
 
-int PlayerEx::GetItemCount(std::string identifier) const {
+int PlayerEx::GetItemCount(const string &identifier) const {
   auto& inventory = this->GetPlayer()->getInventory();
 
   int item_count = 0;
@@ -490,7 +490,7 @@ void PlayerEx::OnTick() {
       // The player drowns if the stamina is used up
       if (playerex->stamina_ == 0) {
         world::HurtActor(playerex->GetPlayer(), 999999.,
-                         ActorDamageCause_Override);
+                         ActorDamageCause::Override);
       }
 
       // Reduce 10.2 stamina per second when swimming dash
@@ -504,7 +504,7 @@ void PlayerEx::OnTick() {
       // The player drowns if the stamina is used up
       if (playerex->stamina_ == 0) {
         world::HurtActor(playerex->GetPlayer(), 999999.,
-                         ActorDamageCause_Override);
+                         ActorDamageCause::Override);
       }
 
       // Reduce 4 stamina per second when swimming
@@ -517,7 +517,7 @@ void PlayerEx::OnTick() {
       // The player drowns if the stamina is used up
       if (playerex->stamina_ == 0) {
         world::HurtActor(playerex->GetPlayer(), 999999.,
-                         ActorDamageCause_Override);
+                         ActorDamageCause::Override);
       }
     } else {
       // Regenerate stamina when idle
@@ -543,7 +543,7 @@ void PlayerEx::OnTick() {
       }
       if (!is_switched) {  // if every character is dead
         world::HurtActor(playerex->GetPlayer(), 999999.,
-                         ActorDamageCause_Override);
+                         ActorDamageCause::Override);
       }
     }
 
@@ -562,7 +562,7 @@ void PlayerEx::OnTick() {
     // Maintain the wither effect (temporary, for this is just a bug of
     // Minecraft)
     if (playerex->GetPlayer()->hasEffect(*MobEffect::WITHER)) {
-      world::HurtActor(playerex->GetPlayer(), 1., ActorDamageCause_Wither);
+      world::HurtActor(playerex->GetPlayer(), 1., ActorDamageCause::Wither);
     }
 
     // Maintain the velocity

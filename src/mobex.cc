@@ -30,16 +30,16 @@
 
 #include <GlobalServiceAPI.h>
 
-#include <MC/ActorUniqueID.hpp>
-#include <MC/Level.hpp>
-#include <MC/Mob.hpp>
-#include <MC/Vec3.hpp>
+#include <mc/ActorUniqueID.hpp>
+#include <mc/Level.hpp>
+#include <mc/Mob.hpp>
+#include <mc/Vec3.hpp>
 #include <algorithm>
 #include <memory>
 #include <random>
 #include <string>
-#include <third-party/Base64/Base64.hpp>
-#include <third-party/Nlohmann/json.hpp>
+#include <Base64/Base64.hpp>
+#include <Nlohmann/json.hpp>
 
 #include "actorex.h"
 #include "damage.h"

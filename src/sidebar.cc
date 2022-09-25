@@ -30,8 +30,8 @@
 
 #include "sidebar.h"
 
-#include <MC/Player.hpp>
-#include <MC/Types.hpp>
+#include <mc/Player.hpp>
+#include <mc/Types.hpp>
 #include <cmath>
 #include <string>
 #include <utility>

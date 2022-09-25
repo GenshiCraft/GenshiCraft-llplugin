@@ -31,10 +31,10 @@
 #ifndef GENSHICRAFT_WORLD_H_
 #define GENSHICRAFT_WORLD_H_
 
-#include <MC/Actor.hpp>
-#include <MC/Dimension.hpp>
-#include <MC/Types.hpp>
-#include <MC/Vec3.hpp>
+#include <mc/Actor.hpp>
+#include <mc/Dimension.hpp>
+#include <mc/Types.hpp>
+#include <mc/Vec3.hpp>
 #include <map>
 #include <string>
 
@@ -168,7 +168,7 @@ double GetEnemyATKMultiplier(int level);
  * @note This is just a temporary resolution.
  */
 void HurtActor(Actor* actor, float damage,
-               ActorDamageCause cause = ActorDamageCause_Override,
+               ActorDamageCause cause = ActorDamageCause::Override,
                bool knockback = false, bool ignite = false);
 
 const std::map<ElementType, std::string> kElementTypeColor = {

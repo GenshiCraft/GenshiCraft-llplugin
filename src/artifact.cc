@@ -33,10 +33,10 @@
 #include <EventAPI.h>
 #include <ScheduleAPI.h>
 
-#include <MC/CompoundTag.hpp>
-#include <MC/ItemStack.hpp>
-#include <MC/ListTag.hpp>
-#include <MC/Player.hpp>
+#include <mc/CompoundTag.hpp>
+#include <mc/ItemStack.hpp>
+#include <mc/ListTag.hpp>
+#include <mc/Player.hpp>
 #include <algorithm>
 #include <iomanip>
 #include <map>

@@ -28,14 +28,14 @@
 
 #include "actorex.h"
 
-#include <MC/Actor.hpp>
-#include <MC/ActorUniqueID.hpp>
-#include <MC/Level.hpp>
+#include <mc/Actor.hpp>
+#include <mc/ActorUniqueID.hpp>
+#include <mc/Level.hpp>
 #include <algorithm>
 #include <memory>
 #include <random>
-#include <third-party/Base64/Base64.hpp>
-#include <third-party/Nlohmann/json.hpp>
+#include <Base64/Base64.hpp>
+#include <Nlohmann/json.hpp>
 #include <vector>
 
 #include "damage.h"

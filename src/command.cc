@@ -32,9 +32,9 @@
 
 #include <DynamicCommandAPI.h>
 
-#include <MC/CommandOrigin.hpp>
-#include <MC/CommandOutput.hpp>
-#include <MC/ServerPlayer.hpp>
+#include <mc/CommandOrigin.hpp>
+#include <mc/CommandOutput.hpp>
+#include <mc/ServerPlayer.hpp>
 #include <unordered_map>
 
 #include "menu.h"

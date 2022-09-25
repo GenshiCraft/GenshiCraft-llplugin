@@ -33,9 +33,9 @@
 #include <EventAPI.h>
 #include <ScheduleAPI.h>
 
-#include <MC/CompoundTag.hpp>
-#include <MC/ItemStack.hpp>
-#include <MC/Player.hpp>
+#include <mc/CompoundTag.hpp>
+#include <mc/ItemStack.hpp>
+#include <mc/Player.hpp>
 #include <algorithm>
 #include <memory>
 #include <string>

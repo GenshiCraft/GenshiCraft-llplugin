@@ -31,7 +31,7 @@
 #ifndef GENSHICRAFT_ARTIFACT_H_
 #define GENSHICRAFT_ARTIFACT_H_
 
-#include <MC/ItemStack.hpp>
+#include <mc/ItemStack.hpp>
 #include <map>
 #include <memory>
 #include <string>

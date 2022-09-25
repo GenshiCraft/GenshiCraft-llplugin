@@ -30,11 +30,11 @@
 
 #include "world.h"
 
-#include <MC/Actor.hpp>
-#include <MC/ActorDamageSource.hpp>
-#include <MC/Dimension.hpp>
-#include <MC/Types.hpp>
-#include <MC/Vec3.hpp>
+#include <mc/Actor.hpp>
+#include <mc/ActorDamageSource.hpp>
+#include <mc/Dimension.hpp>
+#include <mc/Types.hpp>
+#include <mc/Vec3.hpp>
 #include <cmath>
 
 namespace genshicraft {

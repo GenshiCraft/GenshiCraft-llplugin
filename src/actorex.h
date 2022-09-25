@@ -29,9 +29,9 @@
 #ifndef GENSHICRAFT_ACTOREX_H_
 #define GENSHICRAFT_ACTOREX_H_
 
-#include <MC/Actor.hpp>
+#include <mc/Actor.hpp>
 #include <memory>
-#include <third-party/Nlohmann/json.hpp>
+#include <Nlohmann/json.hpp>
 #include <vector>
 
 #include "damage.h"

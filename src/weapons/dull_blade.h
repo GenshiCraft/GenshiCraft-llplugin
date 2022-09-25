@@ -31,7 +31,7 @@
 #ifndef GENSHICRAFT_WEAPONS_DULL_BLADE_H_
 #define GENSHICRAFT_WEAPONS_DULL_BLADE_H_
 
-#include <MC/ItemStack.hpp>
+#include <mc/ItemStack.hpp>
 #include <map>
 #include <string>
 

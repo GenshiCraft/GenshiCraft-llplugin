@@ -29,7 +29,7 @@
 #include "aux_data.h"
 
 #include <string>
-#include <third-party/Nlohmann/json.hpp>
+#include <Nlohmann/json.hpp>
 
 namespace genshicraft {
 

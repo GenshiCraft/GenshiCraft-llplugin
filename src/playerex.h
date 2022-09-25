@@ -31,13 +31,13 @@
 #ifndef GENSHICRAFT_PLAYEREX_H_
 #define GENSHICRAFT_PLAYEREX_H_
 
-#include <MC/Player.hpp>
-#include <MC/Types.hpp>
-#include <MC/Vec3.hpp>
+#include <mc/Player.hpp>
+#include <mc/Types.hpp>
+#include <mc/Vec3.hpp>
 #include <map>
 #include <memory>
 #include <string>
-#include <third-party/Nlohmann/json.hpp>
+#include <Nlohmann/json.hpp>
 #include <vector>
 
 #include "artifact.h"
@@ -68,13 +68,13 @@ class PlayerEx final : public MobEx {
    * @note The method ActorEx::LoadData() should be called right after
    * construction.
    */
-  PlayerEx(Player* player);
+  explicit PlayerEx(Player* player);
 
   /**
    * @brief Destroy the PlayerEx object
    *
    */
-  ~PlayerEx();
+  ~PlayerEx() override;
 
   /**
    * @brief Add an attached element gauge
@@ -99,7 +99,7 @@ class PlayerEx final : public MobEx {
    * @exception ExceptionItemsNotEnough The number of the items are fewer than
    * the number to consume.
    */
-  void ConsumeItem(std::string identifier, int value);
+  void ConsumeItem(const string &identifier, int value) const;
 
   /**
    * @brief Consume mora
@@ -165,7 +165,7 @@ class PlayerEx final : public MobEx {
    * @param identifier The identifier of the items
    * @return The number
    */
-  int GetItemCount(std::string identifier) const;
+  int GetItemCount(const string &identifier) const;
 
   /**
    * @brief This method is not allowed to call.

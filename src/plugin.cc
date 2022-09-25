@@ -37,338 +37,328 @@
 #include <ScheduleAPI.h>
 #include <ServerAPI.h>
 
-#include <MC/AbstractArrow.hpp>
-#include <MC/Actor.hpp>
-#include <MC/ActorDamageSource.hpp>
-#include <MC/Container.hpp>
-#include <MC/ItemStack.hpp>
-#include <MC/Player.hpp>
-#include <MC/Types.hpp>
+#include <mc/ActorDamageSource.hpp>
+#include <mc/Container.hpp>
+#include <mc/Player.hpp>
 #include <chrono>
 #include <cmath>
-#include <map>
 #include <memory>
 #include <random>
-#include <third-party/Base64/Base64.hpp>
-#include <third-party/Nlohmann/json.hpp>
+#include <Base64/Base64.hpp>
 
 #include "actorex.h"
 #include "artifact.h"
-#include "character.h"
 #include "command.h"
 #include "damage.h"
-#include "exceptions.h"
 #include "food.h"
 #include "mobex.h"
 #include "playerex.h"
-#include "stats.h"
 #include "version.h"
 #include "weapon.h"
 #include "world.h"
 
 namespace genshicraft {
 
-Logger logger(PLUGIN_NAME);
+    Logger logger(PLUGIN_NAME);
 
-void CheckProtocolVersion() {
+    void CheckProtocolVersion() {
 #ifdef TARGET_BDS_PROTOCOL_VERSION
-  auto currentProtocol = LL::getServerProtocolVersion();
-  if (TARGET_BDS_PROTOCOL_VERSION != currentProtocol) {
-    logger.warn(
-        "Protocol version not match, target version: {}, current version: {}.",
-        TARGET_BDS_PROTOCOL_VERSION, currentProtocol);
-    logger.warn(
-        "This will most likely crash the server, please use the Plugin that "
-        "matches the BDS version!");
-  }
+        auto currentProtocol = ll::getServerProtocolVersion();
+        if (TARGET_BDS_PROTOCOL_VERSION != currentProtocol) {
+            logger.warn(
+                    "Protocol version not match, target version: {}, current version: {}.",
+                    TARGET_BDS_PROTOCOL_VERSION, currentProtocol);
+            logger.warn(
+                    "This will most likely crash the server, please use the Plugin that "
+                    "matches the BDS version!");
+        }
 #endif  // TARGET_BDS_PROTOCOL_VERSION
-}
-
-double GetNowClock() {
-  return static_cast<double>(
-             std::chrono::duration_cast<std::chrono::milliseconds>(
-                 std::chrono::steady_clock::now().time_since_epoch())
-                 .count()) /
-         1000;
-}
-
-void Init() {
-  CheckProtocolVersion();
-
-  Command::Init();
-
-  Event::MobHurtEvent::subscribe_ref(OnMobHurt);
-  Event::PlayerDropItemEvent::subscribe_ref(OnPlayerDropItem);
-  Event::PlayerExperienceAddEvent::subscribe_ref(OnPlayerExperienceAdd);
-  Event::PlayerInventoryChangeEvent::subscribe_ref(OnPlayerInventoryChange);
-  Event::PlayerJoinEvent::subscribe_ref(OnPlayerJoin);
-  Event::PlayerLeftEvent::subscribe_ref(OnPlayerLeft);
-  Event::PlayerOpenContainerEvent::subscribe_ref(OnPlayerOpenContainer);
-  Event::PlayerOpenContainerScreenEvent::subscribe_ref(
-      OnPlayerOpenContainerScreen);
-  Event::PlayerRespawnEvent::subscribe_ref(OnPlayerRespawn);
-  Event::PlayerUseItemEvent::subscribe_ref(OnPlayerUseItem);
-
-  Schedule::repeat(OnTick, 1);
-}
-
-bool OnMobHurt(Event::MobHurtEvent& event) {
-  static std::default_random_engine random_engine;
-  static std::uniform_int_distribution dist(-10, 1);
-
-  // Maintain the poison effect (temporary, for this is just a bug of
-  // Minecraft)
-  if (event.mDamageSource->getCause() == ActorDamageCause_Magic) {
-    event.mDamage = std::abs(event.mDamage);
-  }
-
-  // Override damage directly affects the native health
-  if (event.mDamageSource->getCause() == ActorDamageCause_Override) {
-    return true;
-  }
-
-  int world_level = world::GetWorldLevel(event.mMob->getPosition(),
-                                         event.mMob->getDimension());
-
-  Damage damage;
-
-  // Process the damage source
-  if ((event.mDamageSource->isEntitySource() &&
-       event.mDamageSource->getEntity()->getTypeName() == "minecraft:player") ||
-      (event.mDamageSource->isEntitySource() &&
-       event.mDamageSource->getEntity()->getPlayerOwner() !=
-           nullptr)) {  // if the damage is caused by a player
-
-    std::shared_ptr<PlayerEx> attacker_playerex;
-
-    // Get the player
-    if (event.mDamageSource->getEntity()->getPlayerOwner() !=
-        nullptr) {  // if the damage is indirectly caused by a player
-
-      attacker_playerex = PlayerEx::Get(
-          event.mDamageSource->getEntity()->getPlayerOwner()->getXuid());
-    } else {
-      attacker_playerex = PlayerEx::Get(
-          static_cast<Player*>(event.mDamageSource->getEntity())->getXuid());
     }
 
-    // Check if the PlayerEx object exists
-    if (!attacker_playerex) {
-      return false;  // the damage should not take effect if the player is not
-                     // loaded
+    double GetNowClock() {
+        return static_cast<double>(
+                       std::chrono::duration_cast<std::chrono::milliseconds>(
+                               std::chrono::steady_clock::now().time_since_epoch())
+                               .count()) /
+               1000;
     }
 
-    damage = attacker_playerex->GetAttackDamage();
+    void Init() {
+        CheckProtocolVersion();
 
-    if (!attacker_playerex->GetWeapon()) {  // if the player does not attack
-                                            // with a GenshiCraft weapon
-      damage.SetAttackerAmplifier(
-          event.mDamage);  // the ratio to attacking unarmed
+        Command::Init();
+
+        Event::MobHurtEvent::subscribe_ref(OnMobHurt);
+        Event::PlayerDropItemEvent::subscribe_ref(OnPlayerDropItem);
+        Event::PlayerExperienceAddEvent::subscribe_ref(OnPlayerExperienceAdd);
+        Event::PlayerInventoryChangeEvent::subscribe_ref(OnPlayerInventoryChange);
+        Event::PlayerJoinEvent::subscribe_ref(OnPlayerJoin);
+        Event::PlayerLeftEvent::subscribe_ref(OnPlayerLeft);
+        Event::PlayerOpenContainerEvent::subscribe_ref(OnPlayerOpenContainer);
+        Event::PlayerOpenContainerScreenEvent::subscribe_ref(
+                OnPlayerOpenContainerScreen);
+        Event::PlayerRespawnEvent::subscribe_ref(OnPlayerRespawn);
+        Event::PlayerUseItemEvent::subscribe_ref(OnPlayerUseItem);
+
+        Schedule::repeat(OnTick, 1);
     }
 
-  } else if (event.mDamageSource->isEntitySource() &&
-             event.mDamageSource->getEntity()->getTypeName().substr(0, 10) ==
-                 "minecraft:" &&
-             !event.mDamageSource->getEntity()
-                  ->isPlayer()) {  // if the damage is caused by a native entity
-                                   // that is not a player
+    bool OnMobHurt(Event::MobHurtEvent &event) {
+        static std::default_random_engine random_engine;
+        static std::uniform_int_distribution dist(-10, 1);
 
-    std::shared_ptr<ActorEx> actor;
+        // Maintain the poison effect (temporary, for this is just a bug of
+        // Minecraft)
+        if (event.mDamageSource->getCause() == ActorDamageCause::Magic) {
+            event.mDamage = std::abs(event.mDamage);
+        }
 
-    if (event.mDamageSource->getEntity()->getOwner() !=
-        nullptr) {  // if the actor belongs to another actor
-      actor = ActorEx::Get(
-          event.mDamageSource->getEntity()->getOwner()->getUniqueID());
-    } else {
-      actor = ActorEx::Get(event.mDamageSource->getEntity()->getUniqueID());
+        // Override damage directly affects the native health
+        if (event.mDamageSource->getCause() == ActorDamageCause::Override) {
+            return true;
+        }
+
+        int world_level = world::GetWorldLevel(event.mMob->getPosition(),
+                                               event.mMob->getDimension());
+
+        Damage damage;
+
+        // Process the damage source
+        if ((event.mDamageSource->isEntitySource() &&
+             event.mDamageSource->getEntity()->isPlayer()) ||
+            (event.mDamageSource->isEntitySource() &&
+             event.mDamageSource->getEntity()->getPlayerOwner() !=
+             nullptr)) {  // if the damage is caused by a player
+
+            std::shared_ptr<PlayerEx> attacker_playerex;
+
+            // Get the player
+            if (event.mDamageSource->getEntity()->getPlayerOwner() !=
+                nullptr) {  // if the damage is indirectly caused by a player
+
+                attacker_playerex = PlayerEx::Get(
+                        event.mDamageSource->getEntity()->getPlayerOwner()->getXuid());
+            } else {
+                attacker_playerex = PlayerEx::Get(
+                        static_cast<Player *>(event.mDamageSource->getEntity())->getXuid());
+            }
+
+            // Check if the PlayerEx object exists
+            if (!attacker_playerex) {
+                return false;  // the damage should not take effect if the player is not
+                // loaded
+            }
+
+            damage = attacker_playerex->GetAttackDamage();
+
+            if (!attacker_playerex->GetWeapon()) {  // if the player does not attack
+                // with a GenshiCraft weapon
+                damage.SetAttackerAmplifier(
+                        event.mDamage);  // the ratio to attacking unarmed
+            }
+
+        } else if (event.mDamageSource->isEntitySource() &&
+                   event.mDamageSource->getEntity()->getTypeName().starts_with("minecraft:") &&
+                   !event.mDamageSource->getEntity()
+                           ->isPlayer()) {  // if the damage is caused by a native entity
+            // that is not a player
+
+            std::shared_ptr<ActorEx> actor;
+
+            if (event.mDamageSource->getEntity()->getOwner() !=
+                nullptr) {  // if the actor belongs to another actor
+                actor = ActorEx::Get(
+                        event.mDamageSource->getEntity()->getOwner()->getUniqueID());
+            } else {
+                actor = ActorEx::Get(event.mDamageSource->getEntity()->getUniqueID());
+            }
+
+            actor->SetATKByNativeDamage(event.mDamage);
+
+            damage = actor->GetAttackDamage();
+
+        } else {  // if the damage is caused by the environment
+
+            damage.SetSourceType(Damage::SourceType::kEnvironment);
+
+            if (event.mDamageSource->getCause() == ActorDamageCause::Contact ||
+                event.mDamageSource->getCause() == ActorDamageCause::Fire ||
+                event.mDamageSource->getCause() == ActorDamageCause::FireTick ||
+                event.mDamageSource->getCause() == ActorDamageCause::Lava ||
+                event.mDamageSource->getCause() == ActorDamageCause::Suffocation ||
+                event.mDamageSource->getCause() == ActorDamageCause::Wither) {
+                // Reduce the damage of those triggered per tick
+                damage.SetTrueDamageProportion(
+                        0.0025 * event.mDamage);  // damage 5% of the max HP per second
+            } else {
+                damage.SetTrueDamageProportion(0.05 *
+                                               event.mDamage);  // damage 5% of the max HP
+            }
+
+            if (event.mDamageSource->getCause() == ActorDamageCause::Fire ||
+                event.mDamageSource->getCause() == ActorDamageCause::FireTick ||
+                event.mDamageSource->getCause() == ActorDamageCause::Lava) {
+                damage.SetAttackElementType(world::ElementType::kPyro);
+            }
+        }
+
+        // Process the victim
+        if (event.mMob->isPlayer()) {  // if the victim is a player
+
+            event.mDamage = 0;  // not to reduce the native Minecraft health
+
+            auto playerex = PlayerEx::Get(static_cast<Player *>(event.mMob)->getXuid());
+
+            if (!playerex) {
+                return false;  // the damage should not take effect if the player is not
+                // loaded
+            }
+
+            playerex->ApplyDamage(damage);
+            damage = playerex->GetLastDamage();
+
+        } else if (event.mMob->getTypeName().substr(0, 10) ==
+                   "minecraft:") {  // if the victim is a Minecraft mob
+
+            auto mobex = MobEx::Get(event.mMob->getUniqueID());
+
+            // Avoid SEH exception when dealing with a dead mob
+            if (!mobex) {
+                return false;
+            }
+
+            mobex->ApplyDamage(damage);
+            damage = mobex->GetLastDamage();
+
+            // Calculate the corresponding damage for native health
+            if (damage.Get() >
+                0.0001) {  // only apply the native damage if the damage succeeded
+                event.mDamage = static_cast<float>(
+                        event.mMob->getHealth() -
+                        (1. * mobex->GetHP() / mobex->GetStats().GetMaxHP() *
+                         event.mMob->getMaxHealth()));
+            } else {
+                event.mDamage = 0;
+            }
+
+            if (mobex->GetHP() == 0) {
+                event.mDamage = 999999;  // kill the mob instantly
+            }
+        }
+
+        // Zero-damage hurt indicates failed hurt
+        if (damage.Get() < 0.0001 && event.mDamage == 0) {
+            return false;
+        }
+
+        return true;
     }
 
-    actor->SetATKByNativeDamage(event.mDamage);
+    bool OnPlayerDropItem(Event::PlayerDropItemEvent &event) {
+        // Prevent keeping inventory
+        if (event.mPlayer->getHealth() == 0) {
+            return true;
+        }
 
-    damage = actor->GetAttackDamage();
+        auto playerex = PlayerEx::Get(event.mPlayer->getXuid());
+        if (!playerex->GetPlayer()
+                ->isSneaking()) {  // if the player is pressing Q without Shift
+            if (playerex->GetCharacter()->HasWeapon()) {
+                // Perform elemental burst
 
-  } else {  // if the damage is caused by the environment
+                return false;
+            }
+        } else {  // if the player is pressing Shift + Q
+            playerex->GetMenu().OpenMain();
 
-    damage.SetSourceType(Damage::SourceType::kEnvironment);
+            return false;
+        }
 
-    if (event.mDamageSource->getCause() == ActorDamageCause_Contact ||
-        event.mDamageSource->getCause() == ActorDamageCause_Fire ||
-        event.mDamageSource->getCause() == ActorDamageCause_FireTick ||
-        event.mDamageSource->getCause() == ActorDamageCause_Lava ||
-        event.mDamageSource->getCause() == ActorDamageCause_Suffocation ||
-        event.mDamageSource->getCause() == ActorDamageCause_Wither) {
-      // Reduce the damage of those triggered per tick
-      damage.SetTrueDamageProportion(
-          0.0025 * event.mDamage);  // damage 5% of the max HP per second
-    } else {
-      damage.SetTrueDamageProportion(0.05 *
-                                     event.mDamage);  // damage 5% of the max HP
+        return true;
     }
 
-    if (event.mDamageSource->getCause() == ActorDamageCause_Fire ||
-        event.mDamageSource->getCause() == ActorDamageCause_FireTick ||
-        event.mDamageSource->getCause() == ActorDamageCause_Lava) {
-      damage.SetAttackElementType(world::ElementType::kPyro);
-    }
-  }
+    bool OnPlayerExperienceAdd(Event::PlayerExperienceAddEvent &event) {
+        auto playerex = PlayerEx::Get(event.mPlayer->getXuid());
+        playerex->GetCharacter()->IncreaseEnergy(event.mExp);
 
-  // Process the victim
-  if (event.mMob->isPlayer()) {  // if the victim is a player
-
-    event.mDamage = 0;  // not to reduce the native Minecraft health
-
-    auto playerex = PlayerEx::Get(static_cast<Player*>(event.mMob)->getXuid());
-
-    if (!playerex) {
-      return false;  // the damage should not take effect if the player is not
-                     // loaded
+        return true;
     }
 
-    playerex->ApplyDamage(damage);
-    damage = playerex->GetLastDamage();
+    bool OnPlayerRespawn(Event::PlayerRespawnEvent &event) {
+        PlayerEx::OnPlayerRespawn(event.mPlayer);
 
-  } else if (event.mMob->getTypeName().substr(0, 10) ==
-             "minecraft:") {  // if the victim is a Minecraft mob
-
-    auto mobex = MobEx::Get(event.mMob->getUniqueID());
-
-    // Avoid SEH exception when dealing with a dead mob
-    if (!mobex) {
-      return false;
+        return true;
     }
 
-    mobex->ApplyDamage(damage);
-    damage = mobex->GetLastDamage();
+    bool OnPlayerInventoryChange(Event::PlayerInventoryChangeEvent &event) {
+        auto playerex = PlayerEx::Get(event.mPlayer->getXuid());
+        if (!playerex) {  // if the player is not loaded
+            return true;
+        }
 
-    // Calculate the corresponding damage for native health
-    if (damage.Get() >
-        0.0001) {  // only apply the native damage if the damage succeeded
-      event.mDamage = static_cast<float>(
-          event.mMob->getHealth() -
-          (1. * mobex->GetHP() / mobex->GetStats().GetMaxHP() *
-           event.mMob->getMaxHealth()));
-    } else {
-      event.mDamage = 0;
+        if (Weapon::CheckIsWeapon(event.mNewItemStack)) {
+            Weapon::Make(event.mNewItemStack, playerex.get());
+        }
+
+        if (Artifact::CheckIsArtifact(event.mNewItemStack)) {
+            Artifact::Make(event.mNewItemStack, playerex.get());
+        }
+
+        if (food::CheckIsFood(event.mNewItemStack)) {
+            food::RegisterFood(playerex.get(), event.mNewItemStack);
+        }
+
+        return true;
     }
 
-    if (mobex->GetHP() == 0) {
-      event.mDamage = 999999;  // kill the mob instantly
+    bool OnPlayerJoin(Event::PlayerJoinEvent &event) {
+        PlayerEx::LoadPlayer(event.mPlayer);
+
+        return true;
     }
-  }
 
-  // Zero-damage hurt indicates failed hurt
-  if (damage.Get() < 0.0001 && event.mDamage == 0) {
-    return false;
-  }
+    bool OnPlayerLeft(Event::PlayerLeftEvent &event) {
+        PlayerEx::UnloadPlayer(event.mPlayer);
 
-  return true;
-}
-
-bool OnPlayerDropItem(Event::PlayerDropItemEvent& event) {
-  // Prevent keeping inventory
-  if (event.mPlayer->getHealth() == 0) {
-    return true;
-  }
-
-  auto playerex = PlayerEx::Get(event.mPlayer->getXuid());
-  if (!playerex->GetPlayer()
-           ->isSneaking()) {  // if the player is pressing Q without Shift
-    if (playerex->GetCharacter()->HasWeapon()) {
-      // Perform elemental burst
-
-      return false;
+        return true;
     }
-  } else {  // if the player is pressing Shift + Q
-    playerex->GetMenu().OpenMain();
 
-    return false;
-  }
+    bool OnPlayerOpenContainer(Event::PlayerOpenContainerEvent &event) {
+        auto playerex = PlayerEx::Get(event.mPlayer->getXuid());
+        playerex->SetIsOpeningContainer(true);
 
-  return true;
-}
-
-bool OnPlayerExperienceAdd(Event::PlayerExperienceAddEvent& event) {
-  auto playerex = PlayerEx::Get(event.mPlayer->getXuid());
-  playerex->GetCharacter()->IncreaseEnergy(event.mExp);
-
-  return true;
-}
-
-bool OnPlayerRespawn(Event::PlayerRespawnEvent& event) {
-  PlayerEx::OnPlayerRespawn(event.mPlayer);
-
-  return true;
-}
-
-bool OnPlayerInventoryChange(Event::PlayerInventoryChangeEvent& event) {
-  auto playerex = PlayerEx::Get(event.mPlayer->getXuid());
-  if (!playerex) {  // if the player is not loaded
-    return true;
-  }
-
-  if (Weapon::CheckIsWeapon(event.mNewItemStack)) {
-    Weapon::Make(event.mNewItemStack, playerex.get());
-  }
-
-  if (Artifact::CheckIsArtifact(event.mNewItemStack)) {
-    Artifact::Make(event.mNewItemStack, playerex.get());
-  }
-
-  if (food::CheckIsFood(event.mNewItemStack)) {
-    food::RegisterFood(playerex.get(), event.mNewItemStack);
-  }
-
-  return true;
-}
-
-bool OnPlayerJoin(Event::PlayerJoinEvent& event) {
-  PlayerEx::LoadPlayer(event.mPlayer);
-
-  return true;
-}
-
-bool OnPlayerLeft(Event::PlayerLeftEvent& event) {
-  PlayerEx::UnloadPlayer(event.mPlayer);
-
-  return true;
-}
-
-bool OnPlayerOpenContainer(Event::PlayerOpenContainerEvent& event) {
-  auto playerex = PlayerEx::Get(event.mPlayer->getXuid());
-  playerex->SetIsOpeningContainer(true);
-
-  return true;
-}
-
-bool OnPlayerOpenContainerScreen(Event::PlayerOpenContainerScreenEvent& event) {
-  auto playerex = PlayerEx::Get(event.mPlayer->getXuid());
-  if (!playerex->IsOpeningContainer() &&
-      !playerex->GetPlayer()->isSneaking()) {  // if the player is pressing E
-                                               // without pressing Shift
-    if (playerex->GetCharacter()->HasWeapon()) {
-      // Perform elemental skill
-
-      return false;
+        return true;
     }
-  }
 
-  playerex->SetIsOpeningContainer(false);
-  return true;
-}
+    bool OnPlayerOpenContainerScreen(Event::PlayerOpenContainerScreenEvent &event) {
+        auto playerex = PlayerEx::Get(event.mPlayer->getXuid());
+        if (!playerex->IsOpeningContainer() &&
+            !playerex->GetPlayer()->isSneaking()) {  // if the player is pressing E
+            // without pressing Shift
+            if (playerex->GetCharacter()->HasWeapon()) {
+                // Perform elemental skill
 
-bool OnPlayerUseItem(Event::PlayerUseItemEvent& event) {
-  if (food::CheckIsFood(event.mItemStack)) {
-    auto playerex = PlayerEx::Get(event.mPlayer->getXuid());
+                return false;
+            }
+        }
 
-    return food::EatFood(playerex.get(), event.mItemStack);
-  }
+        playerex->SetIsOpeningContainer(false);
+        return true;
+    }
 
-  return true;
-}
+    bool OnPlayerUseItem(Event::PlayerUseItemEvent &event) {
+        if (food::CheckIsFood(event.mItemStack)) {
+            auto playerex = PlayerEx::Get(event.mPlayer->getXuid());
 
-void OnTick() {
-  ActorEx::OnTick();
-  PlayerEx::OnTick();
-}
+            return food::EatFood(playerex.get(), event.mItemStack);
+        }
+
+        return true;
+    }
+
+    void OnTick() {
+        ActorEx::OnTick();
+        PlayerEx::OnTick();
+    }
 
 }  // namespace genshicraft

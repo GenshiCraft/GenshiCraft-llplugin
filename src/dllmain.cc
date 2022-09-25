@@ -14,9 +14,9 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call,
                       LPVOID lpReserved) {
   switch (ul_reason_for_call) {
     case DLL_PROCESS_ATTACH:
-      LL::registerPlugin(
+      ll::registerPlugin(
           PLUGIN_NAME, PLUGIN_INTRODUCTION,
-          LL::Version(PLUGIN_VERSION_MAJOR, PLUGIN_VERSION_MINOR,
+          ll::Version(PLUGIN_VERSION_MAJOR, PLUGIN_VERSION_MINOR,
                       PLUGIN_VERSION_REVISION, PLUGIN_LLVERSION_STATUS),
           std::map<std::string, std::string>{
 #ifdef PLUGIN_AUTHOR

@@ -31,7 +31,7 @@
 #ifndef GENSHICRAFT_FOOD_H_
 #define GENSHICRAFT_FOOD_H_
 
-#include <MC/ItemStack.hpp>
+#include <mc/ItemStack.hpp>
 #include <map>
 #include <string>
 

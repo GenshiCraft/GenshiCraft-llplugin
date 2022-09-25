@@ -33,9 +33,9 @@
 #include <FormUI.h>
 #include <ScheduleAPI.h>
 
-#include <MC/ItemStack.hpp>
-#include <MC/Player.hpp>
-#include <MC/SimpleContainer.hpp>
+#include <mc/ItemStack.hpp>
+#include <mc/Player.hpp>
+#include <mc/SimpleContainer.hpp>
 #include <map>
 #include <memory>
 #include <string>

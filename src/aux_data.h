@@ -30,7 +30,7 @@
 #define GENSHICRAFT_AUX_DATA_H_
 
 #include <string>
-#include <third-party/Nlohmann/json.hpp>
+#include <Nlohmann/json.hpp>
 
 namespace genshicraft {
 

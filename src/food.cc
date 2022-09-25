@@ -30,7 +30,7 @@
 
 #include "food.h"
 
-#include <MC/ItemStack.hpp>
+#include <mc/ItemStack.hpp>
 #include <map>
 #include <string>
 #include <vector>

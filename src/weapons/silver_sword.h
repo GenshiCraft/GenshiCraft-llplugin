@@ -31,7 +31,7 @@
 #ifndef GENSHICRAFT_WEAPONS_SILVER_SWORD_H_
 #define GENSHICRAFT_WEAPONS_SILVER_SWORD_H_
 
-#include <MC/ItemStack.hpp>
+#include <mc/ItemStack.hpp>
 #include <string>
 
 #include "character.h"

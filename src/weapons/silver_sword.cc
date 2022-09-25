@@ -30,7 +30,7 @@
 
 #include "silver_sword.h"
 
-#include <MC/ItemStack.hpp>
+#include <mc/ItemStack.hpp>
 #include <string>
 
 #include "character.h"

@@ -29,9 +29,9 @@
 #ifndef GENSHICRAFT_MOBEX_H_
 #define GENSHICRAFT_MOBEX_H_
 
-#include <MC/Mob.hpp>
+#include <mc/Mob.hpp>
 #include <memory>
-#include <third-party/Nlohmann/json.hpp>
+#include <Nlohmann/json.hpp>
 
 #include "actorex.h"
 #include "damage.h"
